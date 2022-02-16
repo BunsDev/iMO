@@ -8,7 +8,7 @@ import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
-contract QD is ERC20Pausable {
+contract QD is ERC20Pausable, Ownable {
 
     using SafeERC20 for ERC20;
     using SafeMath for uint256;
@@ -25,8 +25,7 @@ contract QD is ERC20Pausable {
     // In cents
 
     constructor(
-        address _usdt,
-        address _founder
+        address _usdt
     ) ERC20("QuiD", "QD") {
         // TODO: Change
         usdt = _usdt;
@@ -35,14 +34,17 @@ contract QD is ERC20Pausable {
         deployment_date = block.timestamp;
 
         // Mint 100k Quid for founder
-        _mint(_founder, 100_000 * 10 ** _QD_DECIMALS);
+        _mint(_msgSender(), 100_000 * 10 ** _QD_DECIMALS);
 
-        // Pause contract
+        // Pause token transfers
         _pause();
+
+        // By default, owner is set to msg.sender
     }
 
     function mint(uint amount) external {
         require(amount > 0, "QD: MINT_R1");
+        require(block.timestamp < deployment_date + AUCTION_LENGTH, "QD: MINT_R2");
 
         // price = ((now - deployment_date) // auction_length) * (final_price - start_price) + start_price
         
@@ -55,6 +57,10 @@ contract QD is ERC20Pausable {
         _mint(_msgSender(), amount);
 
         ERC20(usdt).safeTransferFrom(_msgSender(), address(this), cost_in_usdt);
+    }
+
+    function withdraw(uint amount) external onlyOwner {
+        ERC20(usdt).safeTransfer(owner(), amount);
     }
 
     function unpauseAfter42Days() external {
