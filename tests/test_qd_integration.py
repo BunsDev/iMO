@@ -13,7 +13,7 @@ class StateMachineQdIntegration:
 
     def __init__(cls, acs, Test_Erc20, Qd):
         print(f'StateMachineQdIntegration.__init__')
-        
+
         # Accounts
         cls.acs      = acs
         cls.alice    = acs[0]
@@ -42,15 +42,18 @@ class StateMachineQdIntegration:
         qd_balance_bob_final = self.qd.balanceOf(self.bob)
         assert qd_balance_bob_initial + qd_amount == qd_balance_bob_final
     
-    def rule_advance_time(self):
+    def rule_advance_time(self, st_uint):
         print(f'{inspect.currentframe().f_code.co_name} called with params:')
         print(get_params(locals()))
         # sleep 
-        chain.sleep(24 * 60 * 60)
+        # chain.sleep(20 * 24 * 60 * 60)
+        chain.sleep(st_uint % 10 ** 6)
             
     def rule_unpause(self):
         print(f'{inspect.currentframe().f_code.co_name} called with params:')
         print(get_params(locals()))
+        if not self.paused:
+            return
         auction_start  = self.qd.auction_start()
         auction_length = self.qd.AUCTION_LENGTH()
         auction_end    = auction_start + auction_length
@@ -86,7 +89,7 @@ class StateMachineQdIntegration:
         print(get_params(locals()))
         # owner (alice) can withdraw
         balance_usdt_initial = self.usdt.balanceOf(self.qd.address)
-        to_withdraw = st_uint % balance_usdt_initial
+        to_withdraw = st_uint % balance_usdt_initial if balance_usdt_initial else 0
         self.qd.withdraw(to_withdraw)
         balance_usdt_final = self.usdt.balanceOf(self.qd.address)
         assert balance_usdt_initial - to_withdraw == balance_usdt_final
