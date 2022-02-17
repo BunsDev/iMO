@@ -25,9 +25,6 @@ class StateMachineQdIntegration:
         # Contracts
         cls.usdt = Test_Erc20.deploy()
         cls.qd   = Qd.deploy(cls.usdt.address)
-        
-        # State
-        cls.paused = True
 
     
     def rule_mint(self, st_uint):
@@ -46,43 +43,7 @@ class StateMachineQdIntegration:
         print(f'{inspect.currentframe().f_code.co_name} called with params:')
         print(get_params(locals()))
         # sleep 
-        # chain.sleep(20 * 24 * 60 * 60)
-        chain.sleep(st_uint % 10 ** 6)
-            
-    def rule_unpause(self):
-        print(f'{inspect.currentframe().f_code.co_name} called with params:')
-        print(get_params(locals()))
-        if not self.paused:
-            return
-        auction_start  = self.qd.auction_start()
-        auction_length = self.qd.AUCTION_LENGTH()
-        auction_end    = auction_start + auction_length
-        
-        if chain.time() >= auction_end:
-            self.qd.unpauseAfter42Days()
-            self.paused = False
-        else:
-            with brownie.reverts('QD: UNPAUSE_AFTER_42_DAYS_R1'):
-                self.qd.unpauseAfter42Days()
-                
-    def rule_transfer_from(self):
-        print(f'{inspect.currentframe().f_code.co_name} called with params:')
-        print(get_params(locals()))
-        if self.paused:
-            with brownie.reverts('Pausable: paused'):
-                self.qd.transferFrom(self.alice.address, self.charlie.address, 0)
-        else:
-            self.qd.transferFrom(self.alice.address, self.charlie.address, 0)
-                
-    def rule_transfer(self):
-        print(f'{inspect.currentframe().f_code.co_name} called with params:')
-        print(get_params(locals()))
-        if self.paused:
-            with brownie.reverts('Pausable: paused'):
-                self.qd.transfer(self.charlie.address, 0)    
-        else:
-            self.qd.transfer(self.charlie.address, 0)
-    
+        chain.sleep(20 * 24 * 60 * 60)    
                 
     def rule_withdraw(self, st_uint):
         print(f'{inspect.currentframe().f_code.co_name} called with params:')
