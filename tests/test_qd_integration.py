@@ -32,12 +32,39 @@ class StateMachineQdIntegration:
         print(get_params(locals()))
         qd_balance_bob_initial = self.qd.balanceOf(self.bob)
         qd_amount = max(10 ** 24, st_uint % 10 ** 30) # up to 1M QD, but at least 1 QD
+        auction_end = self.get_auction_end()
+        print(f'auction_end = {auction_end}')
+        print(f'chain.time() = {chain.time()}')
+        if chain.time() >= auction_end:
+            print('AUCTION is over; should revert.')
+            with brownie.reverts('QD: MINT_R2'):
+                self.qd.mint(qd_amount, self.from_bob)
+            return
+
+        print(f'qd_amount = {qd_amount}')
         usdt_needed = self.qd.qd_amount_to_usdt_amount(qd_amount, chain.time())
         self.usdt.unprotectedMint(self.bob, usdt_needed)
         self.usdt.approve(self.qd.address, usdt_needed, self.from_bob)
-        self.qd.mint(qd_amount, self.from_bob)
-        qd_balance_bob_final = self.qd.balanceOf(self.bob)
-        assert qd_balance_bob_initial + qd_amount == qd_balance_bob_final
+
+        time_elapsed = chain.time() - self.qd.auction_start()
+        qd_total_supply = self.qd.totalSupply()
+        print(f'time_elapsed = {time_elapsed}')
+        print(f'qd_total_supply = {qd_total_supply}')
+
+        arithmetic_diff = qd_amount + qd_total_supply - 514_285 * 10 ** 24 * time_elapsed // (24 * 60 * 60)
+
+        print(f'arithmetic_diff = {arithmetic_diff}')
+
+        total_supply_cap = self.qd.get_total_supply_cap()
+        print(f'total_supply_cap = {total_supply_cap}')
+
+        if arithmetic_diff > 10:
+            with brownie.reverts('QD: MINT_R3'):
+                self.qd.mint(qd_amount, self.from_bob)
+        elif arithmetic_diff < - 10:
+            self.qd.mint(qd_amount, self.from_bob)
+            qd_balance_bob_final = self.qd.balanceOf(self.bob)
+            assert qd_balance_bob_initial + qd_amount == qd_balance_bob_final
     
     def rule_advance_time(self, st_uint):
         print(f'{inspect.currentframe().f_code.co_name} called with params:')
@@ -54,6 +81,12 @@ class StateMachineQdIntegration:
         self.qd.withdraw(to_withdraw)
         balance_usdt_final = self.usdt.balanceOf(self.qd.address)
         assert balance_usdt_initial - to_withdraw == balance_usdt_final
+        
+    def get_auction_end(self) -> int:
+        auction_start  = self.qd.auction_start()
+        auction_length = self.qd.AUCTION_LENGTH()
+        auction_end    = auction_start + auction_length
+        return auction_end
         
 
 # We can only pass external data to StateMachine in this function
