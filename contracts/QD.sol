@@ -10,17 +10,20 @@ contract QD is Ownable, ERC20 {
     using SafeERC20 for ERC20;
 
     // Constants
-    uint constant internal _QD_DECIMALS   = 24     ;
-    uint constant internal _USDT_DECIMALS = 6      ;
-    uint constant public   AUCTION_LENGTH = 42 days;
+    uint constant internal _QD_DECIMALS   = 24                                 ;
+    uint constant internal _USDT_DECIMALS = 6                                  ;
+    uint constant public   AUCTION_LENGTH = 42 days                            ;
 
     // In cents
-    uint constant public start_price      = 12     ;
-    uint constant public final_price      = 94     ;
+    uint constant public start_price      = 12                                 ;
+    uint constant public final_price      = 94                                 ;
 
     // Set in constructor and never changed
-    address immutable public usdt                  ;
-    uint    immutable public auction_start         ;
+    address immutable public usdt                                              ;
+    uint    immutable public auction_start                                     ;
+
+    event Mint       (address indexed sender, uint cost_in_usd, uint qd_amount);
+    event Withdrawal (address indexed owner, uint amount)                      ;
 
 
     constructor(RC20 _usdt) ERC20("QuiD", "QD") {
@@ -46,12 +49,15 @@ contract QD is Ownable, ERC20 {
         // Calculate cost in USDT based on current price
         cost_in_usdt = qd_amount_to_usdt_amount(qd_amount, block.timestamp);
 
+        emit Mint(_msgSender(), cost_in_usdt, qd_amount);
+
         // Will revert on failure (namely insufficient allowance)
         usdt.safeTransferFrom(_msgSender(), address(this), cost_in_usdt);
     }
 
     function withdraw(uint amount) external onlyOwner {
         usdt.safeTransfer(owner(), amount);
+        emit Withdrawal(owner(), amount);
     }
 
     function decimals() public view override(ERC20) returns (uint8) {
