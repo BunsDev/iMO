@@ -3,15 +3,13 @@
 pragma solidity 0.8.3;
 
 import '@openzeppelin/contracts/access/Ownable.sol';
-import '@openzeppelin/contracts/utils/math/SafeMath.sol';
+import '@openzeppelin/contracts/security/Pausable.sol';
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
-contract QD is ERC20Pausable, Ownable {
+contract QD is Ownable, Pausable, ERC20 {
 
     using SafeERC20 for ERC20;
-    using SafeMath for uint256;
 
     uint constant internal _QD_DECIMALS   = 24;
     uint constant internal _USDT_DECIMALS = 6;
@@ -20,7 +18,7 @@ contract QD is ERC20Pausable, Ownable {
     uint constant public final_price      = 94;
 
     address immutable public usdt;
-    uint    immutable public deployment_date;
+    uint    immutable public auction_start;
 
     // In cents
 
@@ -30,11 +28,8 @@ contract QD is ERC20Pausable, Ownable {
         // TODO: Change
         usdt = _usdt;
 
-        // Store deployment date
-        deployment_date = block.timestamp;
-
-        // Mint 100k Quid for founder
-        _mint(_msgSender(), 100_000 * 10 ** _QD_DECIMALS);
+        // Auction starts on deployment
+        auction_start = block.timestamp;
 
         // Pause token transfers
         _pause();
@@ -42,19 +37,13 @@ contract QD is ERC20Pausable, Ownable {
         // By default, owner is set to msg.sender
     }
 
-    function mint(uint amount) external {
-        require(amount > 0, "QD: MINT_R1");
-        require(block.timestamp < deployment_date + AUCTION_LENGTH, "QD: MINT_R2");
+    function mint(uint qd_amount) external {
+        require(qd_amount > 0, "QD: MINT_R1");
+        require(block.timestamp < auction_start + AUCTION_LENGTH, "QD: MINT_R2");
 
-        // price = ((now - deployment_date) // auction_length) * (final_price - start_price) + start_price
-        
-        uint time_elapsed = block.timestamp - deployment_date;
+        _mint(_msgSender(), qd_amount);
 
-        uint price = (final_price - start_price) * (time_elapsed) / AUCTION_LENGTH + start_price;
-
-        uint cost_in_usdt = amount * 10 ** _USDT_DECIMALS / 10 ** _QD_DECIMALS * price / 100;
-
-        _mint(_msgSender(), amount);
+        uint cost_in_usdt = qd_amount_to_usdt_amount(qd_amount, block.timestamp);
 
         ERC20(usdt).safeTransferFrom(_msgSender(), address(this), cost_in_usdt);
     }
@@ -64,12 +53,37 @@ contract QD is ERC20Pausable, Ownable {
     }
 
     function unpauseAfter42Days() external {
-        require(block.timestamp >= deployment_date + AUCTION_LENGTH, "QD: UNPAUSE_AFTER_42_DAYS_R1");
+        require(block.timestamp >= auction_start + AUCTION_LENGTH, "QD: UNPAUSE_AFTER_42_DAYS_R1");
 
         _unpause();
     }
 
     function decimals() public view override(ERC20) returns (uint8) {
         return uint8(_QD_DECIMALS);
+    }
+
+    function transfer(address to, uint256 amount)
+        public override(ERC20) whenNotPaused returns (bool)
+    {
+        return ERC20.transfer(to, amount);
+    }
+
+    function transferFrom(address from, address to, uint256 amount)
+        public override(ERC20) whenNotPaused returns (bool)
+    {
+        return ERC20.transferFrom(from, to, amount);
+    }
+
+    function qd_amount_to_usdt_amount(
+        uint qd_amount,
+        uint block_timestamp
+    ) public view returns (uint usdt_amount) {
+        uint time_elapsed = block_timestamp - auction_start;
+
+        // price = ((now - auction_start) // auction_length) * (final_price - start_price) + start_price
+        uint price = (final_price - start_price) * time_elapsed / AUCTION_LENGTH + start_price;
+
+        // cost = amount / qd_multiplier * usdt_multipler * price / 100
+        usdt_amount = qd_amount * 10 ** _USDT_DECIMALS * price / 10 ** _QD_DECIMALS / 100;
     }
 }
