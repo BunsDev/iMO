@@ -2,6 +2,3 @@ compiler:
     solc:
         remappings:
             - "@openzeppelin=node_modules/@openzeppelin"
-hypothesis:
-    max_examples: 30
-    stateful_step_count: 500
