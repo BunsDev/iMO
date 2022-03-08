@@ -77,7 +77,9 @@ def test_mint_over_supply_cap(
     time_elapsed = random.randint(START - current_time, END - current_time)
     chain.sleep(time_elapsed)
 
-    amount = qd.get_total_supply_cap(current_time + time_elapsed + 1) - qd.totalSupply() + 1
+    # QD can distribute up to 5 QD per second
+    # Add 10 here just in case ganache increments block.timestamp
+    amount = qd.get_total_supply_cap(current_time + time_elapsed + 1) - qd.totalSupply() + 10
 
     with brownie.reverts('QD: MINT_R3'):
         qd.mint(amount, alice, from_alice)
