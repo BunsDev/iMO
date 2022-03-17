@@ -3,12 +3,13 @@ from decimal import Decimal
 
 from brownie.network.account import Account
 
-gmt_plus_2 = timezone(timedelta(hours=2))
+# gmt_plus_2 = timezone(timedelta(hours=2))
+gmt = timezone(timedelta(hours=0))
 START = int(datetime(
     year = 2022,
     month = 3,
-    day = 8,
-    tzinfo=gmt_plus_2
+    day = 16,
+    tzinfo = gmt,
 ).timestamp())
 LENGTH = int(timedelta(days=54).total_seconds())
 END = START + LENGTH

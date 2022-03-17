@@ -61,12 +61,22 @@ def test_mint_from_owner(
     current_time = chain.time()
     chain.sleep(START - current_time)
     
-    first_time_cost = Decimal('5.4e10')
+    first_time_cost   = Decimal('1.62e11')
+    marginal_cost_inc = Decimal('5.4e10')
 
-    execute_mint_from_owner(qd, usdt, owner, first_time_cost * (2 * count - 1))
+    execute_mint_from_owner(
+        qd = qd,
+        usdt = usdt,
+        owner = owner,
+        cost = first_time_cost + marginal_cost_inc * (2 * count - 2)
+    )
     
-    # next one is twice as expensive
-    execute_mint_from_owner(qd, usdt, owner, first_time_cost * 2 * count)
+    execute_mint_from_owner(
+        qd = qd,
+        usdt = usdt,
+        owner = owner,
+        cost = first_time_cost + marginal_cost_inc * (2 * count - 1)
+    )
 
 def test_mint_over_supply_cap(
     qd: QDType,
@@ -79,7 +89,8 @@ def test_mint_over_supply_cap(
 
     # QD can distribute up to 5 QD per second
     # Add 10 here just in case ganache increments block.timestamp
-    amount = qd.get_total_supply_cap(current_time + time_elapsed + 1) - qd.totalSupply() + 10
+    amount = qd.get_total_supply_cap(current_time + time_elapsed + 1) - qd.totalSupply() \
+        + 10 + 2 * Decimal('2.7e30')
 
     with brownie.reverts('QD: MINT_R3'):
         qd.mint(amount, alice, from_alice)

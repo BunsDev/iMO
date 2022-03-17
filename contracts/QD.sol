@@ -63,8 +63,8 @@ contract QD is Ownable, ERC20 {
             private_minted += qd_amt;   
         } else {
             require(qd_amt >= 100_000_000_000_000_000_000_000_000, "QD: MINT_R1"); // $100 minimum
-            require(totalSupply() - private_minted <= get_total_supply_cap(block.timestamp), "QD: MINT_R3"); // Cap minting
             require(block.timestamp >= SALE_START && block.timestamp < SALE_START + SALE_LENGTH, "QD: MINT_R2"); // Too late
+            require(totalSupply() - private_minted <= get_total_supply_cap(block.timestamp), "QD: MINT_R3"); // Cap minting
 
             cost_in_usdt = qd_amt_to_usdt_amt(qd_amt, block.timestamp); 
             aid = cost_in_usdt * 22 / 100; // 22% wartime tax to UA
