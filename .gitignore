@@ -4,7 +4,7 @@ __pycache__
 .hypothesis/
 build/
 reports/
-
+.DS_Store
 node_modules/
 
 bt.ansi
