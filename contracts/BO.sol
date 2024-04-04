@@ -72,8 +72,8 @@ contract BO is ERC20, ReentrancyGuard {
     uint internal _PRICE; // TODO comment out after finish testing
     uint internal _POINTS; // used in withdraw; weights (medianiser)
     struct Pod { // Used in all Pools, and in individual Pledges
-        uint credit; // for SP, it gets credited with QD from !BO
-        uint debit; // for SP, ETH is what gets debited by the LP
+        uint credit; // SP credits LP with debt valued in ETH
+        uint debit; // LP debits sDAI from SP for ^^^^^^^^^^^
         // credit is also used for fee voting; debit: fee charging
     } 
     struct Owe {
