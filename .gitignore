@@ -1,10 +1,15 @@
-__pycache__
-.env
-.history
-.hypothesis/
-build/
-reports/
 .DS_Store
-node_modules/
+node_modules
+.env
 
-bt.ansi
+# Hardhat files
+/cache
+/artifacts
+
+# TypeChain files
+/typechain
+/typechain-types
+
+# solidity-coverage files
+/coverage
+/coverage.json
