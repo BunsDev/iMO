@@ -1,5 +1,4 @@
 
-# !ntermittent [Mold](https://github.com/hacker-DOM/single-collateral-dai/blob/main/src/fab.sol#L142) Offering
 
 The cost of using fiat...is having to pay taxes,   
 the cost of using Ethereum: having to pay gas;  
