@@ -1,5 +1,5 @@
 
-# !ntermittent Bread Offering
+# !ntermittent [Mold](https://github.com/hacker-DOM/single-collateral-dai/blob/main/src/fab.sol#L142) Offering
 
 The cost of using fiat...is having to pay taxes,   
 the cost of using Ethereum: having to pay gas;  
@@ -12,16 +12,18 @@ crypto volatility leveraging (both long and short ETH).
 Quid Labs is in the business of researching financial markets, and  
 developing blockchain-based infrastructure for them, foreseeably.   
 
-!BO is *not* an [ICO](https://twitter.com/ceterispar1bus/status/1747212170960466316)...QuidMint Foundation (the parent entity of Quid Labs)  
-oversees !BO as an educational project...for current and future students.  
+!MO is *not* an [ICO](https://twitter.com/ceterispar1bus/status/1747212170960466316)...QuidMint Foundation (the parent entity of Quid Labs)  
+oversees !MO as an educational project...for current and future students.  
 
 The word "token" shares a root with Germanic/Dutch words for "teach";  
 please refer to the [WhyPaper](http://mirror.xyz/quid.eth) for details (the core meme is *grain* of salt).  
 
-The only way to mint more QD is by !BO, or good trading.  
+The only way to mint more QD is by !MO, or good trading.  
 There are three types of QD. Two types are `_balances`:  
 matured (redeemable) and in the process of maturing...  
 3rd type is used only to offset costs (not transferrable).
+
+
 
 
 It's becoming more common for ETH to be perceived
@@ -42,7 +44,7 @@ is worth $1 in ETH...gives us a neat way to
  do
 accounting through liability assets: QDebt, a synthetic reflection of  
 
-principal-protected QD notes, created with instruments (!BO) that...  
+principal-protected QD notes, created with instruments (!MO) that...  
 emulate the characteristics of a zero-coupon bond and a call option, 
 
 which may be swapped for a put (by **S**elling**P**uts),   
@@ -56,9 +58,9 @@ for
 12 Steps (after you step on it enough you just quit). 
 
 QU!D achieves bank run deterrence differently...  
-Bills minted in !BO take a year to mature before  
+Bills minted in !MO take a year to mature before  
 they may become redeemable for sDAI...on the  
-cusp of a new !BO (depositors are incentivised  
+cusp of a new !MO (depositors are incentivised  
 to restake for another year's worth of gains)...  
 
 "threatened by shadows at night, exposed in the light,"  
