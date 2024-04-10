@@ -10,21 +10,21 @@ for Liquidity  Management and Derivatives
 Requested Funding: 64,000 ARB  
 Payment Address: `quid.eth`
 
-I built on a simplified ERC404 (took zero out of it  
-and make it a zero coupon) call it ERC64 (44 + 20)  
+I built a simplified ERC404 (took zero out of it,  
+and made it a zero coupon) call it ERC64 (44 + 20)  
 including a UniV3 incentivisation provision (Lock).  
 
 The funds for the grant will be used to   
 pay for audits (contract testing costs),   
 and minor development costs (frontend).  
 
-- **Costs:** 64000 ARB, 3 months 
+- **Costs:** 64000 ARB, 2 months 
     - **Maintenance:** 42000 USD
       - Audit: 30000 USD
       - Counsel retainer & annual fees 
         - (Cayman & BVI): 12000 USD
   - **R&D Costs:** 22000 USD
-    - **Full-Time Equivalent (FTE)**: 3
+    - **Full-Time Equivalent (FTE)**: 2
       - Designer / Reactooor
       - Economist / Solidity
 

@@ -36,15 +36,15 @@ contract MO is ERC20 { // KISS for 404
     address constant public WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; // BP liquidity mining
     // all deposits of msg.value get converted into WETH as well, enables Lock.sol's ^^^^^^^^^ ^^^^^^
     
-    mapping(address => uint) public _immature; // QD balances
+    mapping(address => Pod) public _immature; // QD from last 2 !MO...
     uint constant public ONE = 1e18; uint constant public DIGITS = 18;
     uint constant public MAX_PER_DAY = 7_777_777 * ONE; // supply cap
-    uint constant public DURATION = 46 days; // ends on the 47th day:
-    uint constant public START_PRICE = 53 * CENT; // .54 actually...
-    uint constant public TARGET = 357000000 * ONE; // !MO mint target
-    uint constant public STACK = C_NOTE * 100;
-    uint constant public CENT = ONE / 100; 
+    uint constant public TARGET = 35700 * STACK; // !MO mint target
+    uint constant public START_PRICE = 53 * CENT; // .54 actually
+    uint constant public LENT = 46 days; // ends on the 47th day
+    uint constant public STACK = C_NOTE * 100; // 10_000 in QD.
     uint constant public C_NOTE = 100 * ONE; 
+    uint constant public CENT = ONE / 100; 
     
     event Minted (address indexed reciever, uint cost_in_usd, uint amt); // by !MO
     // Events are emitted, so only when we emit profits for someone do we call...
@@ -52,8 +52,8 @@ contract MO is ERC20 { // KISS for 404
     event clappedShort (address indexed owner, address indexed clipper, uint fee); // then you know amt
     event Voted (address indexed voter, uint vote); // only emit when increasing
     
-    AggregatorV3Interface public chainlink; // Uni TWAP? TODO with:
-    uint constant public MO_FEE =  54000000000000000; // 1.477M sDAI
+    AggregatorV3Interface public chainlink; // TWAP?
+    uint constant public MO_FEE =  54000000000000000; 
     uint constant public MO_CUT =  22000000000000000; 
     uint constant public MIN_CR = 108080808080808080; 
     uint constant public MIN_APR =  8080808080808080;               
@@ -81,11 +81,11 @@ contract MO is ERC20 { // KISS for 404
         // credit used for fee voting; debit for fee charging
     } 
     struct Owe {
-        uint points; // time-weighted contribution to solvency 
-        Pod long; // debit = last timestamp of long APR payment
-        Pod short; // debit = last timestamp of short APR payment
+        Pod long; // debit = last timestamp of long APR payment...
+        Pod short; // debit = last timestamp of short APR payment...
         bool dance; // pay...✌🏻xAPR for peace of mind, and flip debt
         bool grace; // ditto ^^^^^ pro-rated _fold, but no ^^^^ ^^^^ 
+        uint points; // time-weighted contributions to solvency 
     }
     struct Pool { Pod long; Pod short; } // LP
     /* Quote from a movie called...The Prestige
@@ -109,9 +109,8 @@ contract MO is ERC20 { // KISS for 404
 
     constructor(address _lock_address) ERC20("QU!Dao", "QD") { 
         require(_msgSender() == QUID_ETH, "MO: wrong deployer");
-        require(sdai.approve(lock, type(uint256).max - 1),
-                                    "MO: approval failed"
-        ); _MO[0].start = 1717171717; lock = _lock_address; 
+        require(sdai.approve(lock, 1477741 * ONE * 16), "NO");
+         _MO[0].start = 1717171717; lock = _lock_address; 
         feeTargets = [MIN_APR, 85000000000000000,  90000000000000000,
            95000000000000000, 100000000000000000, 105000000000000000,
           110000000000000000, 115000000000000000, 120000000000000000,
@@ -145,16 +144,23 @@ contract MO is ERC20 { // KISS for 404
      * for QD balances that are still maturing  
      */
     function transfer(address recipient, uint256 amount) public override returns (bool) {
-       _send(_msgSender(), recipient, amount); return true;
+        uint price = _get_price();
+        Pledge memory pledge = _get_pledge( 
+            _msgSender(), price, false, _msgSender()
+        ); _send(_msgSender(), recipient, amount); return true;
     }
 
     function transferFrom(address from, address to, uint256 value) public override returns (bool) {
+        uint price = _get_price();
         _spendAllowance(from, _msgSender(), value);
-        _send(from, to, value); return true;
+        Pledge memory pledge = _get_pledge( 
+            _msgSender(), price, false, _msgSender()
+        );  _send(from, to, value); return true;
     }
 
     function balanceOf(address account) public view override returns (uint256) {
-        return super.balanceOf(account) + _immature[account];
+        return super.balanceOf(account) + _immature[account].debit +  _immature[account].credit;
+        // matured QD ^^^^^^^ in the process of maturing as ^^^^^^ and just starting to mature...
     }
 
     function _ratio(uint _multiplier, uint _numerator, uint _denominator) internal pure returns (uint ratio) {
@@ -179,14 +185,14 @@ contract MO is ERC20 { // KISS for 404
     function _send(address from, address to, uint256 value) internal {
         require(from != address(0) && to == address(0), 
                "MO::transfer: passed in zero address");
-        uint delta;
-        if (value > balanceOf(from)) {
+        uint delta; // character
+        if (value > balanceOf(from)) { 
             delta = value - balanceOf(from);
-            value -= delta;
-            _immature[from] -= delta;
-            if (to != address(this)) { 
-                _immature[to] += delta;
-            } else { _burn(from, delta);
+            value -= delta; // having a property 
+            _immature[from].credit -= delta; // is not 
+            if (to != address(this)) { // same 
+                _immature[to].credit += delta; // as 
+            } else { _burn(from, delta); // value
                      _mint(address(this), delta);
             } // we never transfer QD back from
             // (this) to pledge, so safe to mix
@@ -236,16 +242,15 @@ contract MO is ERC20 { // KISS for 404
             if (old_vote <= data.apr) {   
                 data.sum_w_k -= old_stake;
             }
-        }
-        uint index = (new_vote - MIN_APR) / delta;
+        } uint index = (new_vote 
+            - MIN_APR) / delta;
         if (new_stake != 0) {
-            data.weights[index] += new_stake;
             data.total += new_stake;
             if (new_vote <= data.apr) {
                 data.sum_w_k += new_stake;
             }		  
-        }
-        uint mid_stake = data.total / 2;
+            data.weights[index] += new_stake;
+        } uint mid_stake = data.total / 2;
         if (data.total != 0 && mid_stake != 0) {
             if (data.apr > new_vote) {
                 while (data.k >= 1 && (
@@ -268,44 +273,55 @@ contract MO is ERC20 { // KISS for 404
     function _get_pledge(address addr, uint price, bool must_exist, address caller) 
         internal returns (Pledge memory pledge) { pledge = Pledges[addr]; require(
             !must_exist || pledge.last != 0, "MO: pledge must exist"); 
-            bool clapped = false; uint old_points = 0;  uint grace = 0; 
-        if (pledge.last != 0) {
-            Pod memory SPod = pledge.dam; old_points = pledge.owe.points;
+            bool clapped = false; uint old_points; uint grace; uint time;
+        if ((_YEAR % 2 == 1) && (_immature[addr].credit > 0)) {
+             if (_immature[addr].debit == 0) {
+                _immature[addr].debit = _immature[addr].credit;
+                _immature[addr].credit = 0;
+             }
+        } else if (_immature[addr].debit > 0) { // 2 4 6...
+            // debit is credit from 0 for 2...2 for 4
+            _mint(addr, _immature[addr].debit); 
+            _immature[addr].debit = 0;
+        } 
+        if (pledge.last != 0) { Pod memory SPod = pledge.dam; 
+            old_points = pledge.owe.points; _POINTS -= old_points;
+            time = pledge.owe.long.debit > block.timestamp ? 0 : 
+                        block.timestamp - pledge.owe.long.debit; 
             // wait oh wait oh wait oh wait oh wait oh wait oh wait...oh
             uint fee = caller == addr ? 0 : MIN_APR / 100; // liquidator
             uint sp_value = balanceOf(_msgSender()) + SPod.credit +
                                       _ratio(price, SPod.debit, ONE); 
             if (pledge.love.long.debit > 0) { // owes blood to the SP
                 Pod memory LPod = pledge.love.long;
-                if (pledge.owe.long.debit == 0) { sp_value = 0;
+                if (pledge.owe.long.debit == 0) { sp_value = 0; // for line 311
                     pledge.owe.long.debit = block.timestamp;
-                }   if (pledge.owe.dance) { grace = 1;
+                }   if (pledge.owe.dance) { grace = 1; 
                     if (pledge.owe.grace) { // 15% per 6 months
                         grace = fee * pledge.owe.long.debit;
-                    }
-                }   (LPod, SPod, clapped) = _return_pledge(addr, SPod, LPod, 
-                    price, block.timestamp - pledge.owe.long.debit, grace, 
-                    false // long pledge
-                );
+                    } 
+                }   (LPod, SPod, clapped) = _fetch_pledge(addr, 
+                           SPod, LPod, price, time, grace, false
+                ); 
                 if (clapped) { fee *= LPod.debit / ONE;
                     // as per Alfred Mitchell-Innes' Credit Theory of Money
                     if (pledge.owe.dance) { // flip long (credit conversion)
                         // blood.credit += fee; TODO??
                         if (fee > 0) { LPod.debit -= fee; } 
-                        love.short.credit += LPod.credit;
                         love.short.debit += LPod.debit;
-                        pledge.love.short.credit = LPod.credit;
+                        love.short.credit += LPod.credit;
                         pledge.love.short.debit = LPod.debit;
-                        pledge.owe.short.debit = block.timestamp;
+                        pledge.love.short.credit = LPod.credit;
+                        pledge.owe.short.debit = block.timestamp + 1 days;
                     }   else if (fee > 0) { blood.credit -= fee; 
                         emit clappedLong(addr, caller, fee);
                     }   pledge.love.long.credit = 0;
                         pledge.love.long.debit = 0;
                         pledge.owe.long.debit = 0; 
-                } else { pledge.love.long.credit = LPod.credit;
-                        pledge.love.long.debit = LPod.debit;
+                } else { pledge.love.long.debit = LPod.debit; 
+                        pledge.love.long.credit = LPod.credit;
                         // only update timestamp if charged otherwise can
-                        // keep resetting timestamp before an hour passes
+                        // keep resetting timestamp before 10 minutes pass
                         // and never get charged APR at all (costs gas tho)
                         if (sp_value > balanceOf(_msgSender()) + SPod.credit +
                                                  _ratio(price, SPod.debit, ONE)) {
@@ -314,25 +330,26 @@ contract MO is ERC20 { // KISS for 404
             } // pledges should never be short AND a long at the same time
             else if (pledge.love.short.debit > 0) { // that's why ELSE if
                 Pod memory LPod = pledge.love.short;
+                time = pledge.owe.short.debit > block.timestamp ? 0 : 
+                        block.timestamp - pledge.owe.short.debit; 
                 if (pledge.owe.short.debit == 0) { // edge case
                     pledge.owe.short.debit = block.timestamp;
                 }   if (pledge.owe.dance) { grace = 1;
                     if (pledge.owe.grace) {  // 15% per 6 months
-                        grace = grace = fee * pledge.owe.short.debit;
+                        grace = fee * pledge.owe.short.debit;
                     }
-                }   (LPod, SPod, clapped) = _return_pledge(addr, SPod, LPod, 
-                    price, block.timestamp - pledge.owe.short.debit, grace, 
-                    true
+                }   (LPod, SPod, clapped) = _fetch_pledge(addr, 
+                           SPod, LPod, price, time, grace, true
                 );
                 if (clapped) { fee *= LPod.debit / ONE;
-                    // as per Alfred Mitchell-Innes' Credit Theory of Money
+                    // as per Alfred Mitchell-Innes' Credit Theory of Money...
                     if (pledge.owe.dance) { // flip short (credit conversion)
                         if (fee > 0) { LPod.debit += fee; }
                         love.long.credit += LPod.credit;
                         love.long.debit += LPod.debit;
                         pledge.love.long.credit = LPod.credit;
                         pledge.love.long.debit = LPod.debit;
-                        pledge.owe.long.debit = block.timestamp;   
+                        pledge.owe.long.debit = block.timestamp + 1 hours;   
                     }   if (fee > 0) { blood.credit -= fee; 
                         emit clappedShort(addr, caller, fee);
                     }   pledge.love.short.credit = 0;
@@ -351,10 +368,11 @@ contract MO is ERC20 { // KISS for 404
                 }
             }
             if (balanceOf(addr) > 0) { // update points
-                uint since = (block.timestamp - pledge.last) / 1 hours;
-                uint points = (since *
-                    (balanceOf(addr) + pledge.dam.credit) / ONE
-                );  pledge.owe.points += points; _POINTS += points; 
+                pledge.owe.points += (
+                    ((block.timestamp - pledge.last) / 1 hours) 
+                    * (balanceOf(addr) + pledge.dam.credit) / ONE
+                );  
+                // _POINTS += points; TODO
                 blood.credit; // is subtracted from 
                 // rebalance fee targets (governance)
                 if (pledge.owe.long.credit != 0) { 
@@ -368,8 +386,9 @@ contract MO is ERC20 { // KISS for 404
                         pledge.owe.short.credit, true
                     );
                 }
+                _POINTS += pledge.owe.points;
             }
-        } pledge.last = block.timestamp;
+        } pledge.last = block.timestamp; // TODO check
     }
 
     // ------------ OPTIONAL -----------------
@@ -380,21 +399,19 @@ contract MO is ERC20 { // KISS for 404
         // if you over-collat by 8% x scale
         // then you get a discount from APR
         // that is exactly proportional...
-    // } TODO ??
-    // discount from scale
 
-    // duece is a semaphor...0 is false, 1 if dance no grace, otherwise both dance and grace...
+    // dance is more than a semaphor...0 is false, 1 is dance no grace, otherwise both are true
     // Delight is the meaning, Oneg (charged eighth element)...demeaning is “loved” in reverse.
-    function _return_pledge(address addr, Pod memory SPod, Pod memory LPod, 
+    function _fetch_pledge(address addr, Pod memory SPod, Pod memory LPod, 
         uint price, uint time_delta, uint dance, bool short) internal 
         returns (Pod memory, Pod memory, bool clapped) {
         // "though eight is not enough...no,
         // it's like switch [lest you] bust: 
         // now your whole [pledge] is dust" ~ Basta Rhymes, et. al.
-        if (time_delta >= 1 hours) { // there's 8760 hours per year 
-            time_delta /= 1 hours; uint owe = (dance > 0) ? 2 : 1; 
+        if (time_delta >= 10 minutes) { // 525555 minutes per year
             uint apr = short ? shortMedian.apr : longMedian.apr; 
-            owe *= (apr * LPod.debit * time_delta) / (8760 * ONE);
+            time_delta /= 10 minutes; uint owe = (dance > 0) ? 2 : 1; 
+            owe *= (apr * LPod.debit * time_delta) / (525555 * ONE);
             // try to pay with SP deposit: QD if long or ETH if short 
             uint most = short ? _min(SPod.debit, owe) : _min(SPod.credit, owe);
             if (owe > 0 && most > 0) { 
@@ -412,10 +429,9 @@ contract MO is ERC20 { // KISS for 404
                 _send(addr, address(this), most);
                 owe -= most; blood.credit += most;
                 if (short && owe > 0) { owe = _ratio(owe, price, ONE);
-                    most = _min(SPod.credit, owe);
-                    SPod.credit -= most;
-                    blood.credit += most; // TODO double check if double spend
-                    owe -= most;
+                    most = _min(SPod.credit, owe); SPod.credit -= most;
+                    // TODO double check if double spend
+                    blood.credit += most; owe -= most;
                 } else if (owe > 0) { 
                     owe = _ratio(ONE, owe, price); // convert owe to be units of ETH
                     most = _min(SPod.debit, owe);
@@ -424,14 +440,17 @@ contract MO is ERC20 { // KISS for 404
                     blood.debit -= most;
                     owe -= most;
                 }   if (owe > 0) { // pledge cannot pay APR (delinquent)
-                    (LPod, SPod, clapped) = _fold(addr, 
-                     LPod, SPod, dance, short, price);
+                    if (dance > 1) {
+                        (LPod, SPod, clapped) = _fold(addr, 
+                        LPod, SPod, 0, short, price);
+                    }
                 } 
-            } 
-        }   if (_blush(price, LPod.credit, LPod.debit, short) < ONE) {
+            }
+            if (_blush(price, LPod.credit, LPod.debit, short) < ONE) {
                 (LPod, SPod, clapped) = _fold(addr, LPod, SPod, 
                                         dance, short, price);
-            } return (LPod, SPod, clapped);
+            }  
+        }   return (LPod, SPod, clapped);
     }
     
     // "Don't get no better than this, you catch my drift?
@@ -444,7 +463,7 @@ contract MO is ERC20 { // KISS for 404
     function _fold(address owner, Pod memory LPod, Pod memory SPod, 
                    uint dance, bool short, uint price) internal 
                    returns (Pod memory, Pod memory, bool folded) {
-        uint in_qd = _ratio(price, LPod.credit, ONE);
+        uint in_qd = _ratio(price, LPod.credit, ONE); folded = true;
         if (short && in_qd > 0) {
             if (LPod.debit > in_qd) { // profitable
                 LPod.debit -= in_qd; // return debited
@@ -471,11 +490,11 @@ contract MO is ERC20 { // KISS for 404
                             love.short.credit -= in_eth; delta -= most; 
                         } if (delta > 0) { // use _balances
                             most = _min(balanceOf(owner), delta);
-                            if (most > 0) {
+                            if (most > 0) { delta -= most;
                                 _send(owner, address(this), most);
-                                blood.credit += most; delta -= most;
+                                blood.credit += most; 
                                 in_eth = _ratio(ONE, most, price);
-                                LPod.credit -= in_eth;
+                                LPod.credit -= in_eth; 
                                 love.short.credit -= in_eth;
                             }
                         } if (delta > 0) { in_eth = _ratio(ONE, delta, price);
@@ -490,10 +509,10 @@ contract MO is ERC20 { // KISS for 404
                     love.short.debit -= in_qd; blood.credit += in_qd;
                     love.short.credit -= _min(LPod.credit,
                         _ratio(ONE, in_qd, price)
-                    );
+                    ); folded = false;
                 } else { love.short.credit -= LPod.credit;
-                         love.short.debit -= LPod.debit;
-                }   
+                         love.short.debit -= LPod.debit;  
+                }  // either dance state was 0 or zero...
             }
         } else if (in_qd > 0) { // leveraged long 
             if (in_qd > LPod.debit) { // profitable  
@@ -533,20 +552,21 @@ contract MO is ERC20 { // KISS for 404
                 if (dance > 1) { in_qd = _min(dance, LPod.debit);
                     love.long.debit -= in_qd; blood.credit += in_qd;
                     love.long.credit -= _min(LPod.credit,
-                        _ratio(ONE, in_qd, price)
-                    );
+                                        _ratio(ONE, in_qd, price));
+                                        folded = false;
                 } else { love.long.credit -= LPod.credit;
                          love.long.debit -= LPod.debit;
                 } 
             }
         } return (LPod, SPod, folded);
     }
+    // 
 
     /*«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-*/
     /*                      BASIC OPERATIONS                      */
     /*-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»*/
-
-    // "lookin' too hot...simmer down...or soon you'll get:"
+    // freeze...mint...vote...borrow...withdraw...fold...deposit...
+    // "lookin' too hot...simmer down...or soon you'll get:" 
     function drop(address[] memory pledges) external {
         uint price = _get_price(); 
         for (uint i = 0; i < pledges.length; i++ ) {
@@ -554,7 +574,7 @@ contract MO is ERC20 { // KISS for 404
         } 
     }
 
-    function protect(bool grace) external { uint price = _get_price(); 
+    function freeze(bool grace) external { uint price = _get_price(); 
         Pledge memory pledge = _get_pledge(_msgSender(), price, true, _msgSender());
         if (grace) { pledge.owe.dance = true; pledge.owe.grace = true; } else {
             pledge.owe.dance = !pledge.owe.dance;
@@ -568,17 +588,16 @@ contract MO is ERC20 { // KISS for 404
         uint dance = pledge.owe.dance ? 1 : 0;
         if (short) { (,SPod,) = _fold(_msgSender(), pledge.love.short, 
                                       SPod, dance, true, price);
-            pledge.dam = SPod;
             pledge.love.short.credit = 0;
             pledge.love.short.debit = 0;
             pledge.owe.short.debit = 0;
         } else { (,SPod,) = _fold(_msgSender(), pledge.love.long,
                                   SPod, dance, false, price);
-            pledge.dam = SPod;
             pledge.love.long.credit = 0;
             pledge.love.long.debit = 0;
             pledge.owe.long.debit = 0;
-        }   Pledges[_msgSender()] = pledge;
+        }   pledge.dam = SPod;
+        Pledges[_msgSender()] = pledge; 
     }
 
     function vote(uint apr, bool short) external {
@@ -654,19 +673,23 @@ contract MO is ERC20 { // KISS for 404
             payable(_msgSender()).transfer(most);
         } 
         else { 
+
             require(amt >= 1, "MO::withdraw: must be over 1000");
             
             
             // FIXME withdraw from temporary balances if current MO failed ??
             
             // BLOOD.CREDIT OVER TIME (TOTAL POINTS)
-            // WILL GET ITS SHARE OF THE BP AT THE END            
+            // WILL GET ITS SHARE OF THE BP AT THE END 
+
+                       
 
             
             uint least = _min(balanceOf(_msgSender()), amt);
 
-            // TODO calculate half for the whole year if the timestamp is 
-            // over the first start date + 6 months
+            // TODO calculate half for the whole year 
+            // if timestamp is over the first start
+            // date + 6 months, 1/16 of excess 
             require(_MO[_YEAR].start > block.timestamp,
                 "MO::withdraw: takes 1 year for QD to mature, redemption has a time window"
             );
@@ -676,7 +699,8 @@ contract MO is ERC20 { // KISS for 404
             love.short.debit + love.long.debit + // LP collat
             _ratio(price, brood.debit, ONE) + // ETH ownd by all pledges
             _ratio(price, blood.debit, ONE); // ETH owned by specific pledges
-        
+
+            // 1/16th or 1/8th 
             uint liabilities = brood.credit + // QDebt from !MO 
             _ratio(price, love.long.credit, ONE) + // synthetic ETH collat
             _ratio(price, love.short.credit, ONE);  // synthetic ETH debt
@@ -699,56 +723,55 @@ contract MO is ERC20 { // KISS for 404
     // "honey won’t you break some bread, just let it crack" ~ Rapture, by Robert 
     function mint(uint amount, address beneficiary) external returns (uint cost) {
         require(beneficiary != address(0), "MO::mint: can't mint to the zero address");
-        require(block.timestamp >= _MO[_YEAR].start, "MO::mint: can't mint before start date"); 
+        require(block.timestamp >= _MO[_YEAR].start, 
+        "MO::mint: can't mint before start date"); 
         // TODO allow roll over QD value in sDAI from last !MO into new !MO...
-        // determine what the excess debt was from the last MO 
-        if (block.timestamp >= _MO[_YEAR].start + DURATION + 188 days) {
-            if (_MO[_YEAR].minted >= TARGET) {
-                sdai.transferFrom(address(this), lock, 
-                    _MO[_YEAR].locked * MO_FEE / ONE
-                );
-            }
-            _YEAR += 1; // "same level, the same rebel that never settled"
-            require(_YEAR < 16, "MO::mint: already had our final !MO");
-            _MO[_YEAR].start = block.timestamp + DURATION; // restart into new !MO
-            // but first, we have our withdrawal (QD redemption) window // TODO 404
-
-        } else { // minting QD has a time window (!MO duration)
+        if (block.timestamp >= _MO[_YEAR].start + LENT + 144 weeks) { // 6 months
+            if (_MO[_YEAR].minted >= TARGET) { // _MO[_YEAR].locked * MO_FEE / ONE
+                sdai.transferFrom(address(this), lock, 1477741 * ONE); // ^  
+                _MO[_YEAR].locked = 272222222 * ONE; // minus 0.54% of sDAI
+            }   _YEAR += 1; // "same level, 
+            //  the same rebel that never 
+            //  settled" in _get_owe()... 
+            require(_YEAR <= 16, "MO::mint: already had our final !MO");
+            _MO[_YEAR].start = block.timestamp + LENT; // in the next !MO
+        } else if (_YEAR < 16) { // forte vento, LENT gives time to update
             require(amount >= C_NOTE, "MO::mint: below minimum mint amount");
             uint in_days = ((block.timestamp - _MO[_YEAR].start) / 1 days) + 1; 
             require(in_days < 47, "MO::mint: current !MO is over"); 
             cost = (in_days * CENT + START_PRICE) * (amount / ONE);
-            uint old_MO;
-            for (uint year = 0; year < _YEAR; year++) {
-                old_MO = _MO[_YEAR].minted - _MO[_YEAR].burned;
-            }   uint supply_cap = in_days * MAX_PER_DAY + old_MO; // TODO total supply
+            uint supply_cap = in_days * MAX_PER_DAY + totalSupply();
             if (Pledges[beneficiary].last == 0) { // init. pledge
                 Pledges[beneficiary].last = block.timestamp;
-                _approve(beneficiary, address(this), type(uint256).max - 1);
+                _approve(beneficiary, address(this),
+                          type(uint256).max - 1);
             }
             _MO[_YEAR].locked += cost; _MO[_YEAR].minted += amount;
-            uint cut = MO_CUT * amount / ONE; // 0.22% 777,742 QD 
-            _immature[beneficiary] += amount - cut;
-            _mint(lock, cut); blood.credit += cost; // SP sDAI
             brood.credit += amount; // the debt associated with QD
             // balances belongs to everyone, not to any individual;
-            // amount gets decremented by APR payments made in QD 
-            require(supply_cap >= brood.credit, 
-            "MO::mint: supply cap exceeded");
+            // amount gets decremented by APR payments made in QD
+            uint cut = MO_CUT * amount / ONE; // 0.22% 777,742 QD
+            _immature[beneficiary].credit += amount - cut; // QD
+            _mint(lock, cut); blood.credit += cost; // SP sDAI
+            emit Minted(beneficiary, cost, amount); // in this
+            require(supply_cap >= brood.credit,
+            "MO::mint: supply cap exceeded"); 
 
             // TODO helper function
             // for how much credit to mint
             // based on target (what was minted before) and what is surplus from fold
-
+            // different input to _get_owe()
+            
+            // brood.credit 
             // TODO add amt to pledge.dam.credit ??
             
             sdai.transferFrom(_msgSender(), address(this), cost); // TODO approve in frontend
-            emit Minted(beneficiary, cost, amount); // in this !MO...
+            
         }
     }
 
     function borrow(uint amount, bool short) external payable { // amount is in QD 
-        require(block.timestamp >= _MO[0].start + DURATION &&
+        require(block.timestamp >= _MO[0].start + LENT &&
                 _MO[0].minted >= TARGET, "MO::borrow: early");    
         uint price = _get_price(); uint debit; uint credit; 
         Pledge memory pledge = _get_pledge( //  
@@ -801,6 +824,7 @@ contract MO is ERC20 { // KISS for 404
             debit = pledge.love.short.debit; credit = pledge.love.short.credit;
         }
         // TODO limit total blood in love
+        // use _get_owe() for scale from  
         require(_blush(price, credit, debit, short) >= MIN_CR &&
         (blood.credit / 5 > debit) && sp_value > (debit * max / ONE), 
         "MO::borrow: taking on more leverage than considered healthy"

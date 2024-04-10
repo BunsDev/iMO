@@ -1,8 +1,8 @@
 .DS_Store
 node_modules
 .env
-grant.md
 
+package-lock.json
 /test/MO.js
 
 # Hardhat files
