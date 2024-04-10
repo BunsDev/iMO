@@ -1,16 +1,26 @@
 //SPDX-License-Identifier: AGPL-3.0-or-later
 
-pragma solidity =0.7.6;
+pragma solidity =0.8.0;
 pragma abicoder v2;
 
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+
+interface INonfungiblePositionManager is IERC721 {
+    function positions(uint256 tokenId) external
+        view returns (uint96 nonce,address operator,
+            address token0, address token1, uint24 fee,
+            int24 tickLower, int24 tickUpper, uint128 liquidity,
+            uint256 feeGrowthInside0LastX128,
+            uint256 feeGrowthInside1LastX128,
+            uint128 tokensOwed0, uint128 tokensOwed1
+        );
+}
 
 /**
- * @title UniLock...like a Ulock for...elect Rick's bicycle of the mind
- * @dev Lock is a contract that lock users' Uniswap LP stakes (V3 only)
+ * @title Lock
+ * @dev lock users' Uniswap LP stakes (V3 only)
  *
  * rationale: https://docs.uniswap.org/contracts/v3/guides/liquidity-mining/overview
  * Contract keeps track of the durations of each deposit. Rewards are paid individually
@@ -20,11 +30,10 @@ import "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.s
  *
  */
 
-contract Lock is ReentrancyGuard {
+contract Lock {
     // minimum duration of being in the vault before 
     // withdraw can be called (triggering reward payment)
-    uint public minLockDuration;
-    
+    uint public minLockDuration; 
     uint public weeklyReward;
     uint public unlockTime;
     
@@ -61,8 +70,8 @@ contract Lock is ReentrancyGuard {
     mapping(address => mapping(uint => uint)) public depositTimestamps; // for liquidity providers
     INonfungiblePositionManager public immutable nonfungiblePositionManager;
 
-    event SetWeeklyReward(uint reward);
     event SetMinLockDuration(uint duration);
+    event SetWeeklyReward(uint reward);
 
     event SetMaxTotalUSDT(uint maxTotal);
     event SetMaxTotalWETH(uint maxTotal);
@@ -130,6 +139,7 @@ contract Lock is ReentrancyGuard {
      */
     function setWeeklyReward(uint _newReward) external onlyOwners {
         weeklyReward = _newReward;
+        // TODO get weth from BP.debit
         emit SetWeeklyReward(_newReward);
     }
 
@@ -311,7 +321,7 @@ contract Lock is ReentrancyGuard {
     /**
      * @dev Withdraw UniV3 LP deposit from vault (changing the owner back to original)
      */
-    function withdrawToken(uint tokenId) external nonReentrant {
+    function withdrawToken(uint tokenId) external {
         uint timestamp = depositTimestamps[msg.sender][tokenId]; // verify a deposit exists
         require(timestamp > 0, "Lock::withdraw: no owner exists for this tokenId");
         require( // how long this deposit has been in the vault
@@ -382,7 +392,7 @@ contract Lock is ReentrancyGuard {
      * Stakers underwrite captive insurance for
      * the relay (against outages in mevAuction)
      */
-    function deposit(uint tokenId) external nonReentrant {
+    function deposit(uint tokenId) external {
         (address token0, address token1, uint128 liquidity) = _getPositionInfo(tokenId);
         require(token1 == QD, "Uni::deposit: improper token id");
         // usually this means that the owner of the position already closed it

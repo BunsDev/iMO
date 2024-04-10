@@ -1,14 +1,14 @@
 import '@nomiclabs/hardhat-ethers'
-import '@nomiclabs/hardhat-etherscan'
-import '@nomiclabs/hardhat-waffle'
 import '@typechain/hardhat'
+import '@nomicfoundation/hardhat-toolbox'
 import 'hardhat-contract-sizer'
+import '@nomicfoundation/hardhat-verify'
 import { HardhatUserConfig } from 'hardhat/config'
 import { SolcUserConfig } from 'hardhat/types'
 import 'solidity-coverage'
 
 const DEFAULT_COMPILER_SETTINGS: SolcUserConfig = {
-  version: '0.7.6',
+  version: '0.8.0',
   settings: {
     optimizer: {
       enabled: true,
@@ -83,14 +83,6 @@ const config: HardhatUserConfig = {
     disambiguatePaths: true,
     runOnCompile: false,
   },
-}
-
-if (process.env.ETHERSCAN_API_KEY) {
-  config.etherscan = {
-    // Your API key for Etherscan
-    // Obtain one at https://etherscan.io/
-    apiKey: process.env.ETHERSCAN_API_KEY,
-  }
 }
 
 export default config
