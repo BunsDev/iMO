@@ -2,40 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity =0.8.0; 
 // pragma experimental SMTChecker;
-
-/**
-  THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL CONTRIBUTORS 
-  BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
-  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-  HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCL. NEGLIGENCE 
-  OR OTHERWISE) ARISING IN ANY WAY DUE TO USE OF THIS SOFTWARE, BEING ADVISED OF THE POSSIBILITY OF SUCH DAMAGE...
- */
-
-import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
+import "hardhat/console.sol"; // TODO comment out
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./Dependencies/AggregatorV3Interface.sol";
-// import "./Dependencies/ERC404.sol";
-import "hardhat/console.sol"; // TODO comment out
-interface ICollection is IERC721 {
-    function latestTokenId() external view returns (uint256);
-} // transfer F8N tokenId to 1 lucky clapped pledge per !MO
-// pledge may transfer it back to QUID_ETH to receive prize
-
-// "Get a deposit; then I divided" MO,
-// stands for 2 things: More Options;
-// Made Offering...mold it as you see
-// "there’s no life except by [debt], 
-// no vision but by..the faith...that 
-// I could bring" pair of dice to BP...
-contract MO is ERC20 { // KISS for 404 
+contract MO is ERC20 { 
     IERC20 public sdai; address public lock; // multi-purpose locker (OpEx)...
+    address constant public WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address constant public SDAI = 0x83F20F44975D03b1b09e64809B757c47f942BEeA;
-    address constant public F8N = 0x3B3ee1931Dc30C1957379FAc9aba94D1C48a5405; // youtu.be/sitXeGjm4Mc
-    address constant public QUID_ETH = 0x42cc020Ef5e9681364ABB5aba26F39626F1874A4; // ERC404 deployer
-    address constant public WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; // BP liquidity mining
-    // all deposits of msg.value get converted into WETH as well, enables Lock.sol's ^^^^^^^^^ ^^^^^^
-    
+    address constant public QUID = 0x42cc020Ef5e9681364ABB5aba26F39626F1874A4;
     mapping(address => Pod) public _immature; // QD from last 2 !MO...
     uint constant public ONE = 1e18; uint constant public DIGITS = 18;
     uint constant public MAX_PER_DAY = 7_777_777 * ONE; // supply cap
@@ -44,12 +18,13 @@ contract MO is ERC20 { // KISS for 404
     uint constant public LENT = 46 days; // ends on the 47th day
     uint constant public STACK = C_NOTE * 100; // 10_000 in QD.
     uint constant public C_NOTE = 100 * ONE; 
+    uint constant public RACK = STACK / 10;
     uint constant public CENT = ONE / 100; 
     
     event Minted (address indexed reciever, uint cost_in_usd, uint amt); // by !MO
     // Events are emitted, so only when we emit profits for someone do we call...
-    event clappedLong (address indexed owner, address indexed clipper, uint fee); // if you know the fee
-    event clappedShort (address indexed owner, address indexed clipper, uint fee); // then you know amt
+    event clappedLong (address indexed owner, address indexed clipper, uint fee); 
+    event clappedShort (address indexed owner, address indexed clipper, uint fee);
     event Voted (address indexed voter, uint vote); // only emit when increasing
     
     AggregatorV3Interface public chainlink; // TWAP?
@@ -65,13 +40,13 @@ contract MO is ERC20 { // KISS for 404
         uint k; // approximate index of median (+/- 1)
     } Medianiser public longMedian; // between 8-21%
     Medianiser public shortMedian; // 2 distinct fees
-    struct Offering { 
+    Offering[16] public _MO; // been working on this 
+    struct Offering { // since like 2016, no kidding
         uint start; // date 
         uint locked; // sDAI
         uint minted; // QD
         uint burned; // ^
     }
-    Offering[16] public _MO;
     uint internal _YEAR; // actually half a year, every 6 months
     uint internal _PRICE; // TODO comment out when finish testing
     uint internal _POINTS; // used in withdraw; weights (medianiser)
@@ -80,35 +55,31 @@ contract MO is ERC20 { // KISS for 404
         uint debit; // LP debits sDAI of SP for ^^^^^^ ^^ ^^^
         // credit used for fee voting; debit for fee charging
     } 
-    struct Owe {
+    struct Owe { uint points; // time-weighted, matured _balances  
         Pod long; // debit = last timestamp of long APR payment...
         Pod short; // debit = last timestamp of short APR payment...
-        bool dance; // pay...✌🏻xAPR for peace of mind, and flip debt
+        bool dance; // pay...✌🏻xAPR for peace of mine, and flip debt
         bool grace; // ditto ^^^^^ pro-rated _fold, but no ^^^^ ^^^^ 
-        uint points; // time-weighted contributions to solvency 
     }
     struct Pool { Pod long; Pod short; } // LP
     /* Quote from a movie called...The Prestige
         The first part is called "The Pledge"... 
-        The magician shows you something ordinary: 
+        The imagineer shows you something ordinary: 
         a certificate of deposit, or a CD. Inspect  
         to see if it's...indeed un-altered, normal 
     */
-    mapping (address => Pledge) Pledges; // to love;
-    struct Pledge { // last love...owe...dam (blood)
+    mapping (address => Pledge) Pledges; // to work;
+    struct Pledge {
         uint last; // timestamp of last state update
-        Pool love; // debt and collat (long OR short)
-        Owe owe; // all kinds of utility variables
-        Pod dam; // debit is ETH, credit QD profit 
-    }  
-    Pool internal love; // LP
-    // a.k.a. Liability Pool
-    Pod internal brood; // BP
-    // youtu.be/tcMcNFialH4
-    Pod internal blood; // SP
-
+        Pool work; // debt and collat (long OR short)
+        Pod carry; // debit is ETH, credit QD profit 
+        Owe dues; // all kinds of utility variables
+    }   
+    Pod internal wind; // debit (cold); credit (heat) 
+    Pod internal carry; // as in cost of carry
+    Pool internal work; // LP (Liability Pool)
     constructor(address _lock_address) ERC20("QU!Dao", "QD") { 
-        require(_msgSender() == QUID_ETH, "MO: wrong deployer");
+        require(_msgSender() == QUID, "MO: wrong deployer");
         require(sdai.approve(lock, 1477741 * ONE * 16), "NO");
          _MO[0].start = 1717171717; lock = _lock_address; 
         feeTargets = [MIN_APR, 85000000000000000,  90000000000000000,
@@ -274,121 +245,123 @@ contract MO is ERC20 { // KISS for 404
         internal returns (Pledge memory pledge) { pledge = Pledges[addr]; require(
             !must_exist || pledge.last != 0, "MO: pledge must exist"); 
             bool clapped = false; uint old_points; uint grace; uint time;
+        
         if ((_YEAR % 2 == 1) && (_immature[addr].credit > 0)) {
-             if (_immature[addr].debit == 0) {
+            require(block.timestamp >= _MO[0].start + LENT &&
+                _MO[0].minted >= TARGET, "MO::borrow: early"); 
+            if (_immature[addr].debit == 0) {
                 _immature[addr].debit = _immature[addr].credit;
                 _immature[addr].credit = 0;
-             }
-        } else if (_immature[addr].debit > 0) { // 2 4 6...
-            // debit is credit from 0 for 2...2 for 4
+            }
+            
+        } else if (_immature[addr].debit > 0) { // !MO # 2 4 6 8...
+            // debit for 2 is credit from 0...then for 2 from 4...
             _mint(addr, _immature[addr].debit); 
             _immature[addr].debit = 0;
-        } 
-        if (pledge.last != 0) { Pod memory SPod = pledge.dam; 
-            old_points = pledge.owe.points; _POINTS -= old_points;
-            time = pledge.owe.long.debit > block.timestamp ? 0 : 
-                        block.timestamp - pledge.owe.long.debit; 
+        } // else if ()
+        if (pledge.last != 0) { Pod memory SPod = pledge.carry; 
+            old_points = pledge.dues.points; _POINTS -= old_points;
+            time = pledge.dues.long.debit > block.timestamp ? 0 : 
+                        block.timestamp - pledge.dues.long.debit; 
             // wait oh wait oh wait oh wait oh wait oh wait oh wait...oh
             uint fee = caller == addr ? 0 : MIN_APR / 100; // liquidator
             uint sp_value = balanceOf(_msgSender()) + SPod.credit +
                                       _ratio(price, SPod.debit, ONE); 
-            if (pledge.love.long.debit > 0) { // owes blood to the SP
-                Pod memory LPod = pledge.love.long;
-                if (pledge.owe.long.debit == 0) { sp_value = 0; // for line 311
-                    pledge.owe.long.debit = block.timestamp;
-                }   if (pledge.owe.dance) { grace = 1; 
-                    if (pledge.owe.grace) { // 15% per 6 months
-                        grace = fee * pledge.owe.long.debit;
+            if (pledge.work.long.debit > 0) { // owes carry to the SP
+                Pod memory LPod = pledge.work.long;
+                if (pledge.dues.long.debit == 0) { sp_value = 0; // for line 311
+                    pledge.dues.long.debit = block.timestamp;
+                }   if (pledge.dues.dance) { grace = 1; 
+                    if (pledge.dues.grace) { // 15% per 6 months
+                        grace = fee * pledge.dues.long.debit;
                     } 
                 }   (LPod, SPod, clapped) = _fetch_pledge(addr, 
                            SPod, LPod, price, time, grace, false
                 ); 
                 if (clapped) { fee *= LPod.debit / ONE;
                     // as per Alfred Mitchell-Innes' Credit Theory of Money
-                    if (pledge.owe.dance) { // flip long (credit conversion)
-                        // blood.credit += fee; TODO??
+                    if (pledge.dues.dance) { // flip long (credit conversion)
+                        // carry.credit += fee; TODO??
                         if (fee > 0) { LPod.debit -= fee; } 
-                        love.short.debit += LPod.debit;
-                        love.short.credit += LPod.credit;
-                        pledge.love.short.debit = LPod.debit;
-                        pledge.love.short.credit = LPod.credit;
-                        pledge.owe.short.debit = block.timestamp + 1 days;
-                    }   else if (fee > 0) { blood.credit -= fee; 
+                        work.short.debit += LPod.debit;
+                        work.short.credit += LPod.credit;
+                        pledge.work.short.debit = LPod.debit;
+                        pledge.work.short.credit = LPod.credit;
+                        pledge.dues.short.debit = block.timestamp + 1 days;
+                    }   else if (fee > 0) { carry.credit -= fee; 
                         emit clappedLong(addr, caller, fee);
-                    }   pledge.love.long.credit = 0;
-                        pledge.love.long.debit = 0;
-                        pledge.owe.long.debit = 0; 
-                } else { pledge.love.long.debit = LPod.debit; 
-                        pledge.love.long.credit = LPod.credit;
+                    }   pledge.work.long.credit = 0;
+                        pledge.work.long.debit = 0;
+                        pledge.dues.long.debit = 0; 
+                } else { pledge.work.long.debit = LPod.debit; 
+                        pledge.work.long.credit = LPod.credit;
                         // only update timestamp if charged otherwise can
                         // keep resetting timestamp before 10 minutes pass
                         // and never get charged APR at all (costs gas tho)
                         if (sp_value > balanceOf(_msgSender()) + SPod.credit +
                                                  _ratio(price, SPod.debit, ONE)) {
-                                                 pledge.owe.long.debit = block.timestamp; } 
-                }   pledge.dam = SPod; if (fee > 0) { Pledges[caller].dam.credit += fee; }
+                                                 pledge.dues.long.debit = block.timestamp; } 
+                }   pledge.carry = SPod; if (fee > 0) { Pledges[caller].carry.credit += fee; }
             } // pledges should never be short AND a long at the same time
-            else if (pledge.love.short.debit > 0) { // that's why ELSE if
-                Pod memory LPod = pledge.love.short;
-                time = pledge.owe.short.debit > block.timestamp ? 0 : 
-                        block.timestamp - pledge.owe.short.debit; 
-                if (pledge.owe.short.debit == 0) { // edge case
-                    pledge.owe.short.debit = block.timestamp;
-                }   if (pledge.owe.dance) { grace = 1;
-                    if (pledge.owe.grace) {  // 15% per 6 months
-                        grace = fee * pledge.owe.short.debit;
+            else if (pledge.work.short.debit > 0) { // that's why ELSE if
+                Pod memory LPod = pledge.work.short;
+                time = pledge.dues.short.debit > block.timestamp ? 0 : 
+                        block.timestamp - pledge.dues.short.debit; 
+                if (pledge.dues.short.debit == 0) { // edge case
+                    pledge.dues.short.debit = block.timestamp;
+                }   if (pledge.dues.dance) { grace = 1;
+                    if (pledge.dues.grace) {  // 15% per 6 months
+                        grace = fee * pledge.dues.short.debit;
                     }
                 }   (LPod, SPod, clapped) = _fetch_pledge(addr, 
                            SPod, LPod, price, time, grace, true
                 );
                 if (clapped) { fee *= LPod.debit / ONE;
                     // as per Alfred Mitchell-Innes' Credit Theory of Money...
-                    if (pledge.owe.dance) { // flip short (credit conversion)
+                    if (pledge.dues.dance) { // flip short (credit conversion)
                         if (fee > 0) { LPod.debit += fee; }
-                        love.long.credit += LPod.credit;
-                        love.long.debit += LPod.debit;
-                        pledge.love.long.credit = LPod.credit;
-                        pledge.love.long.debit = LPod.debit;
-                        pledge.owe.long.debit = block.timestamp + 1 hours;   
-                    }   if (fee > 0) { blood.credit -= fee; 
+                        work.long.credit += LPod.credit;
+                        work.long.debit += LPod.debit;
+                        pledge.work.long.credit = LPod.credit;
+                        pledge.work.long.debit = LPod.debit;
+                        pledge.dues.long.debit = block.timestamp + 1 hours;   
+                    }   if (fee > 0) { carry.credit -= fee; 
                         emit clappedShort(addr, caller, fee);
-                    }   pledge.love.short.credit = 0;
-                        pledge.love.short.debit = 0;
-                        pledge.owe.short.debit = 0; 
+                    }   pledge.work.short.credit = 0;
+                        pledge.work.short.debit = 0;
+                        pledge.dues.short.debit = 0; 
                 } else { 
-                    pledge.love.short.credit = LPod.credit;
-                    pledge.love.short.debit = LPod.debit;
+                    pledge.work.short.credit = LPod.credit;
+                    pledge.work.short.debit = LPod.debit;
                     if (sp_value > balanceOf(_msgSender()) + SPod.credit +
                                              _ratio(price, SPod.debit, ONE)) {
-                        pledge.owe.short.debit = block.timestamp; 
-                    }   pledge.owe.short.debit = block.timestamp;
-                }   pledge.dam = SPod;
+                        pledge.dues.short.debit = block.timestamp; 
+                    }   pledge.dues.short.debit = block.timestamp;
+                }   pledge.carry = SPod;
                 if (fee > 0) {
-                    Pledges[caller].dam.credit += fee;
+                    Pledges[caller].carry.credit += fee;
                 }
             }
-            if (balanceOf(addr) > 0) { // update points
-                pledge.owe.points += (
+            if (balanceOf(addr) > 0) { 
+                pledge.dues.points += (
                     ((block.timestamp - pledge.last) / 1 hours) 
-                    * (balanceOf(addr) + pledge.dam.credit) / ONE
-                );  
-                // _POINTS += points; TODO
-                blood.credit; // is subtracted from 
+                    * (balanceOf(addr) + pledge.carry.credit) / ONE
+                ); 
+                // carry.credit; // is subtracted from 
                 // rebalance fee targets (governance)
-                if (pledge.owe.long.credit != 0) { 
-                    _medianise(pledge.owe.points, 
-                        pledge.owe.long.credit, old_points, 
-                        pledge.owe.long.credit, false
+                if (pledge.dues.long.credit != 0) { 
+                    _medianise(pledge.dues.points, 
+                        pledge.dues.long.credit, old_points, 
+                        pledge.dues.long.credit, false
                     );
-                } if (pledge.owe.short.credit != 0) {
-                    _medianise(pledge.owe.points, 
-                        pledge.owe.short.credit, old_points, 
-                        pledge.owe.short.credit, true
+                } if (pledge.dues.short.credit != 0) {
+                    _medianise(pledge.dues.points, 
+                        pledge.dues.short.credit, old_points, 
+                        pledge.dues.short.credit, true
                     );
-                }
-                _POINTS += pledge.owe.points;
+                }   _POINTS += pledge.dues.points;
             }
-        } pledge.last = block.timestamp; // TODO check
+        }   pledge.last = block.timestamp; // TODO check
     }
 
     // ------------ OPTIONAL -----------------
@@ -400,65 +373,63 @@ contract MO is ERC20 { // KISS for 404
         // then you get a discount from APR
         // that is exactly proportional...
 
-    // dance is more than a semaphor...0 is false, 1 is dance no grace, otherwise both are true
-    // Delight is the meaning, Oneg (charged eighth element)...demeaning is “loved” in reverse.
+    // dance is a semaphor...0 is false, 1 is just dance, or grace us too
     function _fetch_pledge(address addr, Pod memory SPod, Pod memory LPod, 
-        uint price, uint time_delta, uint dance, bool short) internal 
+        uint price, uint delta, uint dance, bool short) internal 
         returns (Pod memory, Pod memory, bool clapped) {
         // "though eight is not enough...no,
         // it's like switch [lest you] bust: 
         // now your whole [pledge] is dust" ~ Basta Rhymes, et. al.
-        if (time_delta >= 10 minutes) { // 525555 minutes per year
+        if (delta >= 10 minutes) { // 52704 x 10 mins per year
             uint apr = short ? shortMedian.apr : longMedian.apr; 
-            time_delta /= 10 minutes; uint owe = (dance > 0) ? 2 : 1; 
-            owe *= (apr * LPod.debit * time_delta) / (525555 * ONE);
-            // try to pay with SP deposit: QD if long or ETH if short 
-            uint most = short ? _min(SPod.debit, owe) : _min(SPod.credit, owe);
-            if (owe > 0 && most > 0) { 
-                if (short) { // from the SP deposit
-                    brood.debit += most;
-                    blood.debit -= most;
-                    SPod.debit -= most; 
-                    owe -= _ratio(price, most, ONE);
-                } else { SPod.credit -= most;
-                    blood.credit += most; // TODO double check if double spend
-                    owe -= most;
-                }
-            } if (owe > 0) { // SP deposit in QD was insufficient to pay pledge's APR
-                most = _min(balanceOf(addr), owe);
-                _send(addr, address(this), most);
-                owe -= most; blood.credit += most;
-                if (short && owe > 0) { owe = _ratio(owe, price, ONE);
-                    most = _min(SPod.credit, owe); SPod.credit -= most;
-                    // TODO double check if double spend
-                    blood.credit += most; owe -= most;
-                } else if (owe > 0) { 
-                    owe = _ratio(ONE, owe, price); // convert owe to be units of ETH
-                    most = _min(SPod.debit, owe);
-                    brood.debit += most;
-                    SPod.debit -= most;
-                    blood.debit -= most;
-                    owe -= most;
-                }   if (owe > 0) { // pledge cannot pay APR (delinquent)
-                    if (dance > 1) {
-                        (LPod, SPod, clapped) = _fold(addr, 
-                        LPod, SPod, 0, short, price);
-                    }
-                } 
-            }
-            if (_blush(price, LPod.credit, LPod.debit, short) < ONE) {
+            delta /= 10 minutes; uint owe = (dance > 0) ? 2 : 1; 
+            owe *= (apr * LPod.debit * delta) / (52704 * ONE);
+            delta = _blush(price, LPod.credit, LPod.debit, short);
+            if (delta < ONE) {
                 (LPod, SPod, clapped) = _fold(addr, LPod, SPod, 
                                         dance, short, price);
-            }  
+            }  else { 
+            // if (delta > MIN_CR) { // TODO APR discount based on CR/MIN_CR
+                // }
+                // try to pay with SP deposit: QD if long or ETH if short 
+                uint most = short ? _min(SPod.debit, owe) : _min(SPod.credit, owe);
+                if (owe > 0 && most > 0) { 
+                    if (short) { // from the SP deposit
+                        wind.debit += most;
+                        carry.debit -= most;
+                        SPod.debit -= most; 
+                        owe -= _ratio(price, most, ONE);
+                    } else { SPod.credit -= most;
+                        carry.credit += most; // TODO double check if double spend
+                        owe -= most;
+                    }
+                    // TODO the user's own _immature balance
+                } if (owe > 0) { // SP deposit in QD was insufficient to pay pledge's APR
+                    most = _min(balanceOf(addr), owe);
+                    _send(addr, address(this), most);
+                    owe -= most; carry.credit += most;
+                    if (short && owe > 0) { owe = _ratio(owe, price, ONE);
+                        most = _min(SPod.credit, owe); SPod.credit -= most;
+                        // TODO double check if double spend
+                        carry.credit += most; owe -= most;
+                    } else if (owe > 0) { owe = _ratio(ONE, owe, price); 
+                        most = _min(SPod.debit, owe); wind.debit += most;
+                        SPod.debit -= most; carry.debit -= most; owe -= most;
+                    }   if (owe > 0) { // pledge cannot pay APR (delinquent)
+                        (LPod, SPod, clapped) = _fold(addr, 
+                            LPod, SPod, 0, short, price);
+                    } 
+                }   
+            } 
         }   return (LPod, SPod, clapped);
     }
     
     // "Don't get no better than this, you catch my drift?
     // So close no matter how far, rage be in it like you 
-    // couldn’t believe...or love like one could scarcely 
+    // couldn’t believe...or work like one could scarcely 
     // imagine...if one isn’t satisfied, indulge the latter
     // ‘neath the halo of a street-lamp...I fold my collar
-    // to the cold and damp...know when to hold 'em...know 
+    // to the cold and carryp...know when to hold 'em...know 
     // when to..."
     function _fold(address owner, Pod memory LPod, Pod memory SPod, 
                    uint dance, bool short, uint price) internal 
@@ -467,13 +438,13 @@ contract MO is ERC20 { // KISS for 404
         if (short && in_qd > 0) {
             if (LPod.debit > in_qd) { // profitable
                 LPod.debit -= in_qd; // return debited
-                blood.credit += in_qd; // amount to SP
+                carry.credit += in_qd; // amount to SP
                 // since we canceled all the credit then
                 // surplus debit is the pledge's profit
                 SPod.credit += LPod.debit; // 
-                // FIXME increase brood.credit...???...as it were,
-                // PROFIT CAME AT THE EXPENSE OF BLOOD (everyone):
-                // brood.credit += pledge.love.short.debit;
+                // FIXME increase wind.credit...???...as it were,
+                // PROFIT CAME AT THE EXPENSE OF carry (everyone):
+                // wind.credit += pledge.work.short.debit;
             } else { // "Lightnin' strikes and the court lights get dim"
                 if (dance == 0) {
                     uint delta = (in_qd * MIN_CR) / ONE - LPod.debit;
@@ -487,31 +458,31 @@ contract MO is ERC20 { // KISS for 404
                         uint most = _min(SPod.credit, delta);
                         if (most > 0) { in_eth = _ratio(ONE, most, price);
                             LPod.credit -= in_eth; SPod.credit -= most;
-                            love.short.credit -= in_eth; delta -= most; 
+                            work.short.credit -= in_eth; delta -= most; 
                         } if (delta > 0) { // use _balances
                             most = _min(balanceOf(owner), delta);
                             if (most > 0) { delta -= most;
                                 _send(owner, address(this), most);
-                                blood.credit += most; 
+                                carry.credit += most; 
                                 in_eth = _ratio(ONE, most, price);
                                 LPod.credit -= in_eth; 
-                                love.short.credit -= in_eth;
+                                work.short.credit -= in_eth;
                             }
                         } if (delta > 0) { in_eth = _ratio(ONE, delta, price);
-                            blood.debit -= in_eth; SPod.debit -= in_eth;
-                            brood.debit += in_eth; LPod.credit -= in_eth;
-                            love.short.credit -= in_eth;                            
+                            carry.debit -= in_eth; SPod.debit -= in_eth;
+                            wind.debit += in_eth; LPod.credit -= in_eth;
+                            work.short.credit -= in_eth;                            
                         } 
                     } 
-                } if (folded && dance == 0) { blood.credit += LPod.debit; } // TODO cover grace
+                } if (folded && dance == 0) { carry.credit += LPod.debit; } // TODO cover grace
             } if (folded) { 
                 if (dance > 1) { in_qd = _min(dance, LPod.debit);
-                    love.short.debit -= in_qd; blood.credit += in_qd;
-                    love.short.credit -= _min(LPod.credit,
+                    work.short.debit -= in_qd; carry.credit += in_qd;
+                    work.short.credit -= _min(LPod.credit,
                         _ratio(ONE, in_qd, price)
                     ); folded = false;
-                } else { love.short.credit -= LPod.credit;
-                         love.short.debit -= LPod.debit;  
+                } else { work.short.credit -= LPod.credit;
+                         work.short.debit -= LPod.debit;  
                 }  // either dance state was 0 or zero...
             }
         } else if (in_qd > 0) { // leveraged long 
@@ -519,8 +490,8 @@ contract MO is ERC20 { // KISS for 404
                 in_qd -= LPod.debit; // remainder = profit
                 SPod.credit += in_qd;
                 // return the debited amount to the SP
-                blood.credit += LPod.debit; // FIXME 
-                // brood.credit += in_qd; 
+                carry.credit += LPod.debit; // FIXME 
+                // wind.credit += in_qd; 
                 // SOMETIMES WE NEED TO ADD DEBT
                 // if this was not credit from actual ETH deposited
                 // but virtual credit based on sDAI
@@ -534,28 +505,28 @@ contract MO is ERC20 { // KISS for 404
                         // decrement ETH first because it's falling
                         in_eth = _ratio(ONE, delta, price);
                         uint most = _min(SPod.debit, in_eth);
-                        if (most > 0) { blood.debit -= most; // remove ETH from SP
-                            SPod.debit -= most; brood.debit += most; // sell ETH to BP
-                            LPod.credit += most; love.short.credit += most;
+                        if (most > 0) { carry.debit -= most; // remove ETH from SP
+                            SPod.debit -= most; wind.debit += most; // sell ETH to WP
+                            LPod.credit += most; work.short.credit += most;
                             delta -= _ratio(price, most, ONE);
-                        } if (delta > 0) { blood.credit += most;
+                        } if (delta > 0) { carry.credit += most;
                             most = _min(SPod.credit, delta); 
                             SPod.credit -= most; LPod.debit -= most;
-                            love.long.debit -= most; delta -= most;   
-                        } if (delta > 0) { blood.credit += delta;
+                            work.long.debit -= most; delta -= most;   
+                        } if (delta > 0) { carry.credit += delta;
                             _send(owner, address(this), delta);
-                            LPod.debit -= delta; love.long.debit -= delta;   
+                            LPod.debit -= delta; work.long.debit -= delta;   
                         }
                     } 
-                } if (folded && dance == 0) { blood.credit += LPod.debit; }
+                } if (folded && dance == 0) { carry.credit += LPod.debit; }
             } if (folded) {
                 if (dance > 1) { in_qd = _min(dance, LPod.debit);
-                    love.long.debit -= in_qd; blood.credit += in_qd;
-                    love.long.credit -= _min(LPod.credit,
+                    work.long.debit -= in_qd; carry.credit += in_qd;
+                    work.long.credit -= _min(LPod.credit,
                                         _ratio(ONE, in_qd, price));
                                         folded = false;
-                } else { love.long.credit -= LPod.credit;
-                         love.long.debit -= LPod.debit;
+                } else { work.long.credit -= LPod.credit;
+                         work.long.debit -= LPod.debit;
                 } 
             }
         } return (LPod, SPod, folded);
@@ -576,27 +547,27 @@ contract MO is ERC20 { // KISS for 404
 
     function freeze(bool grace) external { uint price = _get_price(); 
         Pledge memory pledge = _get_pledge(_msgSender(), price, true, _msgSender());
-        if (grace) { pledge.owe.dance = true; pledge.owe.grace = true; } else {
-            pledge.owe.dance = !pledge.owe.dance;
-            pledge.owe.grace = false;
+        if (grace) { pledge.dues.dance = true; pledge.dues.grace = true; } else {
+            pledge.dues.dance = !pledge.dues.dance;
+            pledge.dues.grace = false;
         }   Pledges[_msgSender()] = pledge;
     }
 
     function fold(bool short) external { uint price = _get_price(); 
         Pledge memory pledge = _get_pledge(_msgSender(), price, true, _msgSender());
-        Pod memory SPod = pledge.dam;
-        uint dance = pledge.owe.dance ? 1 : 0;
-        if (short) { (,SPod,) = _fold(_msgSender(), pledge.love.short, 
+        Pod memory SPod = pledge.carry;
+        uint dance = pledge.dues.dance ? 1 : 0;
+        if (short) { (,SPod,) = _fold(_msgSender(), pledge.work.short, 
                                       SPod, dance, true, price);
-            pledge.love.short.credit = 0;
-            pledge.love.short.debit = 0;
-            pledge.owe.short.debit = 0;
-        } else { (,SPod,) = _fold(_msgSender(), pledge.love.long,
+            pledge.work.short.credit = 0;
+            pledge.work.short.debit = 0;
+            pledge.dues.short.debit = 0;
+        } else { (,SPod,) = _fold(_msgSender(), pledge.work.long,
                                   SPod, dance, false, price);
-            pledge.love.long.credit = 0;
-            pledge.love.long.debit = 0;
-            pledge.owe.long.debit = 0;
-        }   pledge.dam = SPod;
+            pledge.work.long.credit = 0;
+            pledge.work.long.debit = 0;
+            pledge.dues.long.debit = 0;
+        }   pledge.carry = SPod;
         Pledges[_msgSender()] = pledge; 
     }
 
@@ -610,13 +581,13 @@ contract MO is ERC20 { // KISS for 404
             _msgSender(), price, true, _msgSender()
         );
         if (short) {
-            old_vote = pledge.owe.short.credit;
-            pledge.owe.short.credit = apr;
+            old_vote = pledge.dues.short.credit;
+            pledge.dues.short.credit = apr;
         } else {
-            old_vote = pledge.owe.long.credit;
-            pledge.owe.long.credit = apr;
+            old_vote = pledge.dues.long.credit;
+            pledge.dues.long.credit = apr;
         }
-        _medianise(pledge.owe.points, apr, pledge.owe.points, old_vote, short);
+        _medianise(pledge.dues.points, apr, pledge.dues.points, old_vote, short);
         Pledges[_msgSender()] = pledge;
     }
 
@@ -628,28 +599,28 @@ contract MO is ERC20 { // KISS for 404
         if (!sp) { uint most;
             _send(_msgSender(), address(this), amount);
             if (long) {
-                most = _min(amount, pledge.love.long.debit);
-                pledge.love.long.debit -= most;
-                love.long.debit -= most;
+                most = _min(amount, pledge.work.long.debit);
+                pledge.work.long.debit -= most;
+                work.long.debit -= most;
                 amount -= most;
             } else { // we can't decrease the short debit because
                 // that would simply decrease profits in fold()
                 uint eth = _ratio(ONE, amount, price);
-                most = _min(eth, pledge.love.short.credit);
-                pledge.love.short.credit -= eth;
-                love.short.credit -= eth;
+                most = _min(eth, pledge.work.short.credit);
+                pledge.work.short.credit -= eth;
+                work.short.credit -= eth;
                 most = _ratio(price, most, ONE);
                 amount -= most;
             }
             // TODO helper function gets rate
-            blood.credit += most; // interchanging QD/sDAI consider ratio
+            carry.credit += most; // interchanging QD/sDAI consider ratio
             // if the outside environment is saltier than the organism... 
-            // eliminating water helps prevent harmful organisms brooding.
+            // eliminating water helps prevent harmful organisms winding.
             // water diffuses to dilute the salt. The organism dries out.
             // Liquidated debt is still wet. If fold is profitable for the
             // borrower, that's like a liquidation for the lender. If the 
             // borrower is liquidated, it's like being on their win side.
-            if (amount > 0) { pledge.dam.credit += amount; }
+            if (amount > 0) { pledge.carry.credit += amount; }
         }
         else if (two_pledges) { _send(_msgSender(), beneficiary, amount); }
         else { // not two_pledges && not SP
@@ -657,30 +628,28 @@ contract MO is ERC20 { // KISS for 404
         }   Pledges[beneficiary] = pledge;
     }
 
-    // "You're a beast...that I was raising...you're
-    // a [lease] that I was twistin' and it wears you 
-    // like a gown...in my [loan sum] advocation..."
     function withdraw(uint amt, bool qd) external {
         uint most; uint cr; uint price = _get_price();
         Pledge memory pledge = _get_pledge(_msgSender(), price, true, _msgSender());
         if (!qd) { // withdrawal only from SP...use borrow() or fold() for LP
             // the LP balance is a synthetic (virtual) representation of ETH
             // pledges only care about P&L, which can only be withdrawn in QD 
-            most = _min(pledge.dam.debit, amt);
-            pledge.dam.debit -= most;
-            blood.debit -= most;
+            most = _min(pledge.carry.debit, amt);
+            pledge.carry.debit -= most;
+            carry.debit -= most;
             // require(address(this).balance > most, "MO::withdraw: deficit ETH");
             payable(_msgSender()).transfer(most);
         } 
         else { 
-
-            require(amt >= 1, "MO::withdraw: must be over 1000");
+            require(super.balanceOf(_msgSender()) >= amt, 
+                    "MO::withdraw: insufficient QD balance");
+            require(amt >= RACK, "MO::withdraw: must be over 1000");
             
             
             // FIXME withdraw from temporary balances if current MO failed ??
             
-            // BLOOD.CREDIT OVER TIME (TOTAL POINTS)
-            // WILL GET ITS SHARE OF THE BP AT THE END 
+            // carry.CREDIT OVER TIME (TOTAL POINTS)
+            // WILL GET ITS SHARE OF THE WP AT THE END 
 
                        
 
@@ -695,17 +664,19 @@ contract MO is ERC20 { // KISS for 404
             );
             
             
-            uint assets = blood.credit + // SP
-            love.short.debit + love.long.debit + // LP collat
-            _ratio(price, brood.debit, ONE) + // ETH ownd by all pledges
-            _ratio(price, blood.debit, ONE); // ETH owned by specific pledges
+            uint assets = carry.credit + // idle work
+            work.short.debit + work.long.debit + // work is carry loaned out 
+            _ratio(price, wind.debit, ONE) + // ETH owned by pledges pro rata
+            _ratio(price, carry.debit, ONE); // ETH owned by specific pledges
+
+
 
             // 1/16th or 1/8th 
-            uint liabilities = brood.credit + // QDebt from !MO 
-            _ratio(price, love.long.credit, ONE) + // synthetic ETH collat
-            _ratio(price, love.short.credit, ONE);  // synthetic ETH debt
+            uint liabilities = wind.credit + // QDebt from !MO 
+            _ratio(price, work.long.credit, ONE) + // synthetic ETH collat
+            _ratio(price, work.short.credit, ONE);  // synthetic ETH debt
             
-            // TODO to dissolvency (BP into SP)
+            // TODO to dissolvency (WP into SP)
             
             // dilute the value of the eth
             if (liabilities > assets) {
@@ -715,7 +686,7 @@ contract MO is ERC20 { // KISS for 404
             }
             // frequency and wavelength, half of liquidations stay til the next MO?
             
-            blood.credit -= least; _burn(_msgSender(), amt); 
+            carry.credit -= least; _burn(_msgSender(), amt); 
             sdai.transferFrom(address(this), _msgSender(), amt);
         }
     }
@@ -730,13 +701,12 @@ contract MO is ERC20 { // KISS for 404
             if (_MO[_YEAR].minted >= TARGET) { // _MO[_YEAR].locked * MO_FEE / ONE
                 sdai.transferFrom(address(this), lock, 1477741 * ONE); // ^  
                 _MO[_YEAR].locked = 272222222 * ONE; // minus 0.54% of sDAI
-            }   _YEAR += 1; // "same level, 
-            //  the same rebel that never 
-            //  settled" in _get_owe()... 
+            }   _YEAR += 1; // "same level, the same
+            //  rebel that never settled" in _get_owe()
             require(_YEAR <= 16, "MO::mint: already had our final !MO");
             _MO[_YEAR].start = block.timestamp + LENT; // in the next !MO
         } else if (_YEAR < 16) { // forte vento, LENT gives time to update
-            require(amount >= C_NOTE, "MO::mint: below minimum mint amount");
+            require(amount >= RACK, "MO::mint: below minimum mint amount"); 
             uint in_days = ((block.timestamp - _MO[_YEAR].start) / 1 days) + 1; 
             require(in_days < 47, "MO::mint: current !MO is over"); 
             cost = (in_days * CENT + START_PRICE) * (amount / ONE);
@@ -747,14 +717,14 @@ contract MO is ERC20 { // KISS for 404
                           type(uint256).max - 1);
             }
             _MO[_YEAR].locked += cost; _MO[_YEAR].minted += amount;
-            brood.credit += amount; // the debt associated with QD
+            wind.credit += amount; // the debt associated with QD
             // balances belongs to everyone, not to any individual;
             // amount gets decremented by APR payments made in QD
             uint cut = MO_CUT * amount / ONE; // 0.22% 777,742 QD
             _immature[beneficiary].credit += amount - cut; // QD
-            _mint(lock, cut); blood.credit += cost; // SP sDAI
+            _mint(lock, cut); carry.credit += cost; // SP sDAI
             emit Minted(beneficiary, cost, amount); // in this
-            require(supply_cap >= brood.credit,
+            require(supply_cap >= wind.credit,
             "MO::mint: supply cap exceeded"); 
 
             // TODO helper function
@@ -762,8 +732,8 @@ contract MO is ERC20 { // KISS for 404
             // based on target (what was minted before) and what is surplus from fold
             // different input to _get_owe()
             
-            // brood.credit 
-            // TODO add amt to pledge.dam.credit ??
+            // wind.credit 
+            // TODO add amt to pledge.carry.credit ??
             
             sdai.transferFrom(_msgSender(), address(this), cost); // TODO approve in frontend
             
@@ -776,58 +746,48 @@ contract MO is ERC20 { // KISS for 404
         uint price = _get_price(); uint debit; uint credit; 
         Pledge memory pledge = _get_pledge( //  
             _msgSender(), price, false, _msgSender()
-        );
-        // the only way you can love long and short at the same time is if... 
-        // there is more life in your years than there are years in your life.
-        // religion exists because the only way to live a good life is to agree
-        // to think a certain way about what is a good death is...or good debt.
-        if (short) { 
-            require(pledge.love.long.debit == 0 
-            && pledge.owe.long.debit == 0, // timestmap
-            "MO::borrow: pledge is already long");
-        } else { 
-            require(pledge.love.short.debit == 0 
-            && pledge.owe.short.debit == 0, // timestamp
+        );  if (short) { 
+                require(pledge.work.long.debit == 0 
+                && pledge.dues.long.debit == 0, // timestmap
+                "MO::borrow: pledge is already long");
+        } else { require(pledge.work.short.debit == 0 
+            && pledge.dues.short.debit == 0, // timestamp
             "MO::borrow: pledge is already short");
         }
-        uint sp_value = balanceOf(_msgSender()) + pledge.dam.credit +
-        _ratio(price, pledge.dam.debit, ONE); 
+        uint sp_value = balanceOf(_msgSender()) + pledge.carry.credit + _ratio(
+             price, pledge.carry.debit, ONE); uint old = carry.credit * 85 / 100;
         uint eth = _ratio(ONE, amount, price); // amount of ETH being credited...
-        uint max = pledge.owe.dance ? 2 : 1; // used in require for max borrowable
-         
-        if (!short) { max *= longMedian.apr; eth += msg.value; // BP
+        uint max = pledge.dues.dance ? 2 : 1; // used in require(max borrowable)
+        if (!short) { max *= longMedian.apr; eth += msg.value; // WP
             // we are crediting the pledge's long with virtual credit 
             // in units of ETH (its sDAI value is owed back to the SP) 
-            pledge.love.long.credit += eth; love.long.credit += eth;
+            pledge.work.long.credit += eth; work.long.credit += eth;
             // deposit() of QD to this LP side reduces credit value
             // we debited (in sDAI) by drawing from SP and recording 
             // the total value debited, and value of the ETH credit
             // will determine the P&L of the position in the future
-            pledge.love.long.debit += amount; blood.credit -= amount;
+            pledge.work.long.debit += amount; carry.credit -= amount;
             // incrementing a liability...LP...decrementing an asset^
-            love.long.debit += amount; brood.debit += msg.value; 
+            work.long.debit += amount; wind.debit += msg.value; 
             // essentially debit is the collat backing the credit
-            debit = pledge.love.long.debit; credit = pledge.love.long.credit;
+            debit = pledge.work.long.debit; credit = pledge.work.long.credit;
         } else { max *= shortMedian.apr; // see above for explanation
-            pledge.love.short.credit += eth; love.short.credit += eth;
+            pledge.work.short.credit += eth; work.short.credit += eth;
             // deposit() of QD to this LP side reduces debits owed that
             // we debited (in sDAI) by drawing from SP and recording it
-            pledge.love.short.debit += amount; blood.credit -= amount;
-    
-            eth = _min(msg.value, pledge.love.short.credit);
-            pledge.love.short.credit -= eth; // there's no way
-            love.short.credit -= eth; // to burn actual ETH so
-            brood.debit += eth; // ETH belongs to all pledges
-            eth = msg.value - eth; pledge.dam.debit += eth;
-            blood.debit += eth; love.short.debit += amount; 
+            pledge.work.short.debit += amount; carry.credit -= amount;
+            eth = _min(msg.value, pledge.work.short.credit);
+            pledge.work.short.credit -= eth; // there's no way
+            work.short.credit -= eth; // to burn actual ETH so
+            wind.debit += eth; // ETH belongs to all pledges
+            eth = msg.value - eth; pledge.carry.debit += eth;
+            carry.debit += eth; work.short.debit += amount; 
             
-            debit = pledge.love.short.debit; credit = pledge.love.short.credit;
-        }
-        // TODO limit total blood in love
-        // use _get_owe() for scale from  
-        require(_blush(price, credit, debit, short) >= MIN_CR &&
-        (blood.credit / 5 > debit) && sp_value > (debit * max / ONE), 
-        "MO::borrow: taking on more leverage than considered healthy"
+            debit = pledge.work.short.debit; credit = pledge.work.short.credit;
+        }   require(old > work.short.credit + work.long.credit, "MO::borrow");
+        require(_blush(price, credit, debit, short) >= MIN_CR && // too much...
+        (carry.credit / 5 > debit) && sp_value > (debit * max * MIN_APR / ONE), 
+            "MO::borrow: taking on more leverage than considered healthy"
         ); Pledges[_msgSender()] = pledge; // write to storage last 
     }
 }

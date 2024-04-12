@@ -6,6 +6,7 @@ pragma abicoder v2;
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';
 
 interface INonfungiblePositionManager is IERC721 {
     function positions(uint256 tokenId) external
@@ -17,6 +18,12 @@ interface INonfungiblePositionManager is IERC721 {
             uint128 tokensOwed0, uint128 tokensOwed1
         );
 }
+
+interface ICollection is IERC721 {
+    function latestTokenId() external view returns (uint256);
+} // transfer F8N tokenId to 1 lucky clapped pledge per !MO
+// pledge may transfer it back to QUID_ETH to receive prize
+
 
 /**
  * @title Lock
@@ -30,12 +37,11 @@ interface INonfungiblePositionManager is IERC721 {
  *
  */
 
-contract Lock {
+contract Lock is IERC721Receiver {
     // minimum duration of being in the vault before 
     // withdraw can be called (triggering reward payment)
     uint public minLockDuration; 
     uint public weeklyReward;
-    uint public unlockTime;
     
     uint public immutable deployed; // timestamp when contract was deployed
     IERC20 public immutable weth;
@@ -62,6 +68,7 @@ contract Lock {
     
     // ERC20 addresses TODO change QD (BO) contract deployed address
     address constant QD = 0x42cc020Ef5e9681364ABB5aba26F39626F1874A4; 
+    address constant F8N = 0x3B3ee1931Dc30C1957379FAc9aba94D1C48a5405;
     address constant USDT = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     
@@ -175,19 +182,26 @@ contract Lock {
         emit SetMaxTotalWETH(_newMaxTotalWETH);
     }
 
-    constructor(uint _unlockTime, address[] memory _owners) {
-        require(_owners.length == 5, "owners required");
+     function onERC721Received(
+        address,
+        address from,
+        uint256 tokenId,
+        bytes calldata data
+    ) external override returns (bytes4) { 
+        uint lambo = ICollection(F8N).latestTokenId();
+        require(tokenId == lambo && address(this) 
+                == ICollection(F8N).ownerOf(lambo),
+                ""); //giveAway youtu.be/sitXeGjm4Mc
+    }
+
+    constructor(address[] memory _owners) {
+        require(_owners.length == 3, "owners required");
         for (uint256 i = 0; i < _owners.length; i++) {
             address owner = _owners[i];
             require(owner != address(0), "invalid owner");
             require(!isOwner[owner], "owner not unique");
             isOwner[owner] = true; owners.push(owner);
         }
-        require( // TODO remove
-            block.timestamp < _unlockTime,
-            "Unlock time should be in the future"
-        );
-        unlockTime = _unlockTime; // TODO unused
         deployed = block.timestamp;
         minLockDuration = 1 weeks;
 
@@ -205,7 +219,7 @@ contract Lock {
     }
 
      /**
-     * @dev 
+     * @dev This multiSig only does transfer transactions (no arbitrary data)
      * @param _to hardcoded, address of QD transaction will be executed ON
      * @param _value amount to send
      * @param _eth bool for whether to send ether or QD (if bool is false )
@@ -214,7 +228,8 @@ contract Lock {
     function submitTransaction(address _to, uint256 _value, bool _eth, bytes memory _data)
         public
         onlyOwners
-    {
+    { 
+        // require(_to == QD || _to == sDAI || _to == WETH, "")
         uint256 txIndex = transactions.length;
         // constrain to 
         transactions.push(
@@ -311,13 +326,6 @@ contract Lock {
         );
     }
     
-    function withdraw() public onlyOwners {
-        console.log("Unlock time is %o and block timestamp is %o", unlockTime, block.timestamp);
-        require(block.timestamp >= unlockTime, "You can't withdraw yet");
-        emit Withdraw(address(this).balance, block.timestamp);
-        // payable(owner()).transfer(address(this).balance); TODO
-    }
-
     /**
      * @dev Withdraw UniV3 LP deposit from vault (changing the owner back to original)
      */

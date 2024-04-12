@@ -30,7 +30,8 @@ and minor development costs (frontend).
 
 ### Team Members:
 
-Before Euromaidan, Ukraine had one of the world's first central bank-tethered digital currencies, issued by a licensed company whose EIN was 36**42**51**42** (without the use of DLT). I interned there as a paralegal before helping build the precursor to Liquity on EOS, then worked for Bancor. Later, I joined Dom in auditing THOR and bZx at CertiK (we also took turns consulting on side-projects at Liquity, fuzzing and DSproxy, respectively).
+Before Euromaidan, Ukraine had one of the world's first central bank-tethered digital currencies, issued by a licensed company whose EIN was 36**42**51**42** (without the use of DLT). I interned there as a paralegal before learning C at through http://42.fr
+After than, I helped build the precursor to Liquity on EOS, then worked for Bancor. Later, I joined Dom in auditing THOR and bZx at CertiK (we also took turns consulting on side-projects at Liquity, fuzzing and DSproxy, respectively). Given the above, I appreciate the fact that Ethereum public keys are 42 characters long, Arbitrum's chainId starts with 42, `quid.eth`'s public key starts with 42, and sDAI's ends with 42. 
 
 ### Project Overview:
 

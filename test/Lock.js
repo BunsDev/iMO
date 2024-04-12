@@ -8,14 +8,6 @@ const { expect } = require("chai");
 const axios = require('axios')
 // require('dotenv').config()
 
-// Table of Contents (features tested)
-// ----------------------------------.
-// Voting, and update weighted median| 
-// Full Liquidations, and Redemptions|
-// Deposits, Withdrawals, and top-ups|
-// Transfers, Allowances, and borrows|
-// ----------------------------------^
-
 
 const SUBGRAPH_URL = 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3'
 
