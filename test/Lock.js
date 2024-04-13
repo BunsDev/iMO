@@ -63,18 +63,6 @@ QD_UNIv3_TOKEN_IDS_QUERY_WETH = `
 
 // main() 
 
-
-describe("Token contract", function () {
-  it("Deployment should assign the total supply of tokens to the owner", async function () {
-    const [owner] = await ethers.getSigners();
-
-    const hardhatToken = await ethers.deployContract("Token");
-
-    const ownerBalance = await hardhatToken.balanceOf(owner.address);
-    expect(1000000).to.equal(ownerBalance);
-  });
-});
-
 describe("Lock", function () {
   // We define a fixture to reuse the same setup in every test.
   // We use loadFixture to run this setup once, snapshot that state,
