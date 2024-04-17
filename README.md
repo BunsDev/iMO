@@ -1,4 +1,4 @@
-## !ntermittently Made Offering
+## !ntermittently Made Offering (in my opinion)
 
 The cost of using fiat...is having to pay taxes,   
 the cost of using Ethereum: having to pay gas;  
@@ -6,24 +6,37 @@ subsidising protection bootstraps tokens' value.
 
 Following this line of circular reasoning, we produce a  
 specialised system of rewards/penalties for protected  
-crypto volatility leveraging (both long and short ETH).    
+crypto volatility leveraging (both long and short ETH).
+
+The original Phat Farm slogan was "the new American Dream"...  
+DeFi farming tried to deliver by making something from nothing.
+
+Can't really do that (turns out), but you *can* make nothing from  
+ something (liquidation),
+so when you *truly* have something, you  
+ might just be able to make something more of it than you think,   
+ like Fat Moe's from the classic  *Once Upon a Time in America*...
 
 Quid Labs is in the business of researching financial markets, and  
-developing blockchain-based infrastructure for them, foreseeably.   
+developing (blockchain-based) infrastructure for their "*quidditas*"
 
-!MO is *not* an [ICO](https://twitter.com/ceterispar1bus/status/1747212170960466316)...QuidMint Foundation (the parent entity of Quid Labs)...  
-oversees !MO as an educational project...for currents and futures students.  
 
-The title !MO was inspired by Imogen Heap's collab with Clams Casino.  
-The word "token" shares a root with Germanic/Dutch
-words for "teach",  
-sin, debt, and gilt (same word in Sanskrit)...see [WhyPaper](http://mirror.xyz/quid.eth) for details...  
+!MO uses the word "offering", but it is *not* an [ICO](https://twitter.com/ceterispar1bus/status/1747212170960466316)...where, usually,  
+  prices start around 0 and are expected to grow by at least 100%. 
+
+QuidMint Foundation (parent entity of Quid Labs) over-  
+sees !MO as an educational project for futures students.  
+
+!MO is inspired by Imogen Heap's legendary collab w/ Clams Casino.  
+The word *token* shares a root with Germanic/Dutch
+words for *teach*:  
+sin, debt, and gilt (same word in Sanskrit); see [WhyPaper](http://mirror.xyz/quid.eth) for details.
 
 
 The only way to mint more QD is by !MO, or good trading.  
 There are three types of QD. Two types are `_balances`:  
-matured (redeemable) and in the process of maturing...  
-3rd type is used only to offset costs (not transferrable).
+matured (redeemable), in the process of `_maturing`, 3rd  
+type, finally, is for `carry` costs (transferrable internally)...
 
 
 
@@ -38,6 +51,15 @@ APR payments
 and liquidated collateral are retained perpetually as 
 contrib. to PCV).
 
+The main assumption for making the protocol work  
+is that a majority of the QD will be utilised in `work`  
+most of the time, so it requires customers with an  
+appetite (and also a tolerance) for risk, provided  
+as a service which they're continously paying for.  
+
+The yield embedded in discounts for QD solves   
+the "cold-start problem" of incentivising a risk  
+marketplace like this to come together at all...  
 
 Since it's about 50% USDC, but minted against 
 150% over-collat ETH,   
@@ -65,20 +87,20 @@ churned balance sheets. Due to its lack of algebraic
 pontification, it doesn't merit a LaTeX paper, but  
 neither should it lose out in terms of profitability.
 
+Isoquants are lines on a topographic map. Not so
+quant, but constraints defined a feasible region.
+Solutions always occur at a corner. 
+
 
 ### not quite cross-margin, but similar idea...
 
-A `_balance` of QD is always staked in SP by default.   
-However, staked doesn't mean illiquid...QD balances  
+Every QD `_balance` is auto-staked (for solvency)...  
+however, staked doesn't mean illiquid...QD balances  
 may always be `transfer`ed, but there is no way to  
-"unstake". This simply means that upon redemption  
+*unstake*. This simply means that...upon redemption  
 for 1 sDAI (after a balance has matured) there is the  
+possibility of dilution, with respect to `_get_owe`...
 
-possibility of dilution, with respect to the
-extent  
- to which assets exceed liabilities then...there's  
-no way to unstake, only redeem the QD...stakes   
-can be transferred freely by ERC20 `transfer`.  
 
 To let liquidated debt (or anything wet) dry  
  quickly: spread it thinly over a large area…  
@@ -95,14 +117,14 @@ is greater than collat. There's no collat surplus (~10%)
 as there would be if they started at collat/debt of 1.1.
 
 
-If borrowers pay double the APR rate, this allows for   
-exercising an option (which protocol would exercise  
-instead of them if they only paid 1x the rate). Option  
-to treat their `work` as vice versa, (swap directions)  
-or to slowly liquidated their position over time (pro  
-rated price) as long as they continue paying 2x for  
-the privilege of retaining their perfection rights... 
-
+If borrowers pay double APR, this allows them to  
+exercise an option (the protocol would exercise it   
+instead of them if only 1x rate was paid) to treat  
+their `work` as vice versa (swapping directions),  
+or to slowly liquidate the position over time (pro  
+rated price) provided they continue paying 2x for  
+the privilege of retaining their perfection rights   
+(originally a concept from liens and mortgages).
 
 ### it's the def...erral reserve not...federal...
 
@@ -110,7 +132,7 @@ Deferral reserve is probably the favorite feature,
 like that well-known parable about the 11th hour  
 featuring two bulls sauntering down a hill, but  
 the most relevant version here is the parable of  
-the Chinese farmer. Not about stalling, comrade.
+the Chinese farmer (also reflected by John 13:7).
 
 We never know if the bad things actually happen...  
 in our best interests. As such, there's no concept  
@@ -128,8 +150,8 @@ should be included. Theatre's a feature, not a bug.
 Though we save on gas from not having to compound   
 depositors constantly, we spend a bit of gas keeping  
 the voted median (for APR) perpetually up to date,  
-using a time-weighted aggregate of SP stakes in QD.  
-This same weight is also applied in crystallisation...
+using a time-weighted aggregate of 
+This same weight is also applied in crystallisation.
 
 
 

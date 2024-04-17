@@ -182,20 +182,27 @@ contract Lock is IERC721Receiver {
         emit SetMaxTotalWETH(_newMaxTotalWETH);
     }
 
-     function onERC721Received(
-        address,
-        address from,
-        uint256 tokenId,
+    // NFT foundation.app/@quid
+    function onERC721Received( 
+        address, 
+        address from, // previous owner
+        uint256 tokenId, 
         bytes calldata data
     ) external override returns (bytes4) { 
-        uint lambo = ICollection(F8N).latestTokenId();
-        require(tokenId == lambo && address(this) 
-                == ICollection(F8N).ownerOf(lambo),
-                ""); //giveAway youtu.be/sitXeGjm4Mc
+        uint lambo = 16508; // youtu.be/sitXeGjm4Mc  
+        uint shirt = 42; // TODO fix
+        // ICollection(F8N).latestTokenId();
+        if(tokenId == lambo && address(this) 
+            == ICollection(F8N).ownerOf(lambo)) {
+                sdai.transfer(from, 608358);
+        } else if (tokenId == shirt && address(this) 
+            == ICollection(F8N).ownerOf(shirt)) {
+                sdai.transfer(from, 69383);
+        }
     }
 
     constructor(address[] memory _owners) {
-        require(_owners.length == 3, "owners required");
+        require(_owners.length == 6, "owners required");
         for (uint256 i = 0; i < _owners.length; i++) {
             address owner = _owners[i];
             require(owner != address(0), "invalid owner");
@@ -230,6 +237,11 @@ contract Lock is IERC721Receiver {
         onlyOwners
     { 
         // require(_to == QD || _to == sDAI || _to == WETH, "")
+
+        // TODO transfer the lambo NFT or the shirt NFT
+        // through off-chain randomness for lottery winner
+        // 
+
         uint256 txIndex = transactions.length;
         // constrain to 
         transactions.push(
@@ -268,7 +280,7 @@ contract Lock is IERC721Receiver {
         Transaction storage transaction = transactions[_txIndex];
 
         require(
-            transaction.numConfirmations == 3,
+            transaction.numConfirmations == 4,
             "cannot execute tx"
         );
 
@@ -392,14 +404,7 @@ contract Lock is IERC721Receiver {
         emit Withdrawal(tokenId, msg.sender, totalReward);
     }
 
-    /**
-     * @dev This is one way of treating deposits.
-     * Instead of deposit function implementation,
-     * user might manually transfer their NFT
-     * and this would trigger onERC721Received.
-     * Stakers underwrite captive insurance for
-     * the relay (against outages in mevAuction)
-     */
+   
     function deposit(uint tokenId) external {
         (address token0, address token1, uint128 liquidity) = _getPositionInfo(tokenId);
         require(token1 == QD, "Uni::deposit: improper token id");

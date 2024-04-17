@@ -1,50 +1,52 @@
 ## UNISWAP-ARBITRUM GRANT PROGRAM (UAGP)
 
   
-Proposer: Quid Labs  
+Proposer: QuidMint Foundation
 Project Title: QU!D  
+Contractor: Quid Labs
 
 Request for Proposal (RFP): New Protocols   
 for Liquidity  Management and Derivatives
 
-Requested Funding: 64,000 ARB  
+Requested Funding: 66,000 ARB  
 Payment Address: `quid.eth`
+Foudation Address: PO Box 144, 3119 9 Forum Lane.
 
-I built a simplified ERC404 (took zero out of it,  
-and made it a zero coupon) call it ERC64 (44 + 20)  
-including a UniV3 incentivisation provision (Lock).  
+Quid Labs' public key ends with 4A4, so what we did
+was build a simplified ERC404 (took the zero coupon
+out of it, and turned it into an asset), which also
+includes a UniV3 incentivisation provision (Lock).  
 
-The funds for the grant will be used to   
-pay for audits (contract testing costs),   
-and minor development costs (frontend).  
+The funds for the grant will be used to  
+pay for audits (contract testing costs),    
+and minor development costs (frontend),  
+as well as integrations (partnerships).    
 
-- **Costs:** 64000 ARB, 2 months 
+- **Costs:** 66000 ARB, 2 months 
     - **Maintenance:** 42000 USD
       - Audit: 30000 USD
       - Counsel retainer & annual fees 
         - (Cayman & BVI): 12000 USD
-  - **R&D Costs:** 22000 USD
-    - **Full-Time Equivalent (FTE)**: 2
+  - **R&D Costs:** 24000 USD
+    - **Full-Time Equivalent (FTE)**: 2-3
       - Designer / Reactooor
       - Economist / Solidity
 
 ### Team Members:
 
-Before Euromaidan, Ukraine had one of the world's first central bank-tethered digital currencies, issued by a licensed company whose EIN was 36**42**51**42** (without the use of DLT). I interned there as a paralegal before learning C at through http://42.fr
-After than, I helped build the precursor to Liquity on EOS, then worked for Bancor. Later, I joined Dom in auditing THOR and bZx at CertiK (we also took turns consulting on side-projects at Liquity, fuzzing and DSproxy, respectively). Given the above, I appreciate the fact that Ethereum public keys are 42 characters long, Arbitrum's chainId starts with 42, `quid.eth`'s public key starts with 42, and sDAI's ends with 42. 
+Before Euromaidan, Ukraine had one of the world's first central bank-tethered digital currencies, issued by a licensed company whose EIN was 36**42**51**42** (without the use of DLT). I interned there as a paralegal before learning C through http://42.fr
+
+After that, I helped build the precursor to Liquity on EOS, then worked for Bancor. Later, I joined Dom in auditing THOR and bZx at CertiK (we also took turns consulting on side-projects at Liquity, fuzzing and DSproxy, respectively). Meek is our junior developer (lieutenant); he was Dom's student at RareSkills.
 
 ### Project Overview:
 
 Derivatives derive their value from an underlying asset.
-The token we’ve developed derives it value from sDAI, and of course, the same value underlying said asset…which is demand for borrowing and lending ETH.
-The first paragraph in our README describes how to classify our token.
-for capital deepening. We will use Uniswap v4 for capital widening in V2.
+The capital deepening token we’ve developed derives it value from sDAI, and of course, the same value underlying said asset…which is demand for borrowing and lending ETH.
+The first paragraph in our README describes how to classify our token. We will use Uniswap v4 for capital widening in V2.
 
 ### Use of funds, milestones, and goals (KPIs):
 
-Mile…stones is from Sisyphus…carried pet rocks up a long way.
-
-- Launch: May 31st
+- Launch: May 31st (or June 27th)
 - User Adoption: 357M QD in    
  Q2
 same minted within Q4.  
@@ -56,7 +58,9 @@ same minted within Q4.
 
 ### Milestones:
 
-  This project seeks to extend the capabilities of Uniswap by introducing advanced financial instruments, thereby broadening its user base and utility. Furthermore, by adhering to the principles of decentralized finance and the UAGP Code of Conduct,  We believe that we can try something new in a way which may bring a lot of liquidity, and do so successfully, benefitting the entire Arbitrum ecosystem as a result, prioritizing transparency, and user empowerment.
+  ETH public keys are 42 characters, Arbitrum's chainId starts with 42, sDAI's public key ends with 42🐝, `quid.eth`'s starts with 42. 
+
+  This project seeks to extend the capabilities of decentralised finance by introducing simple financial instruments that solve a complex problem, while adhering to the principles of UAGP Code of Conduct (and the 42 Laws of Ma'at), prioritizing transparency, and user empowerment, bringing liquidity, benefitting the entire Arbitrum ecosystem as a result.
 
 
 ### Milestone 1 - audit and frontend:
