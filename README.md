@@ -14,8 +14,7 @@ DeFi farming tried to deliver by making something from nothing.
 Can't really do that (turns out), but you *can* make nothing from  
  something (liquidation),
 so when you *truly* have [something](https://www.instagram.com/p/ChkumrXLNIp/), you  
- might just have made [offering](https://twitter.com/utotranslucence/status/1736562765421261219) MO than you think,   
- like Fat Moe's from the classic  *Once Upon a Time in America*...
+ like Fat Moe's from the classic  *Once Upon a Time in America*...  
 
 Quid Labs is in the business of researching financial markets, and  
 developing (blockchain-based) infrastructure for their "*quidditas*"
