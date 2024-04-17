@@ -13,8 +13,8 @@ DeFi farming tried to deliver by making something from nothing.
 
 Can't really do that (turns out), but you *can* make nothing from  
  something (liquidation),
-so when you *truly* have something, you  
- might just be able to make something more of it than you think,   
+so when you *truly* have [something](https://www.instagram.com/p/ChkumrXLNIp/), you  
+ might just have made [offering](https://twitter.com/utotranslucence/status/1736562765421261219) MO than you think,   
  like Fat Moe's from the classic  *Once Upon a Time in America*...
 
 Quid Labs is in the business of researching financial markets, and  
@@ -87,12 +87,12 @@ churned balance sheets. Due to its lack of algebraic
 pontification, it doesn't merit a LaTeX paper, but  
 neither should it lose out in terms of profitability.
 
-Isoquants are lines on a topographic map. Not so
-quant, but constraints defined a feasible region.
-Solutions always occur at a corner. 
+Isoquants are lines on a topographic map. Not so  
+quant, but constraints defined a feasible region.  
+Solutions always eclipse us at a corner somewhere.  
 
 
-### not quite cross-margin, but similar idea...
+### not quite [cross-margin](https://github.com/QuidLabs/legacy/blob/master/contracts/vigorlending/src/vigorlending.cpp#L2554), edging on next !MO
 
 Every QD `_balance` is auto-staked (for solvency)...  
 however, staked doesn't mean illiquid...QD balances  
