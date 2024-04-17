@@ -147,11 +147,9 @@ Governance is one of the coolest features in DeFi.
 It's easy to get it wrong, but that doesn't mean it  
 should be included. Theatre's a feature, not a bug.  
 
-Though we save on gas from not having to compound   
+Though we save on gas from not having to compound...   
 depositors constantly, we spend a bit of gas keeping  
-the voted median (for APR) perpetually up to date,  
-using a time-weighted aggregate of 
-This same weight is also applied in crystallisation.
+the voted median (for APR) perpetually up to date... 
 
 
 
