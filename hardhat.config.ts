@@ -8,7 +8,7 @@ import { SolcUserConfig } from 'hardhat/types'
 import 'solidity-coverage'
 
 const DEFAULT_COMPILER_SETTINGS: SolcUserConfig = {
-  version: '0.8.0',
+  version: '0.8.8',
   settings: {
     optimizer: {
       enabled: true,

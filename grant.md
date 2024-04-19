@@ -41,8 +41,7 @@ After that, I helped build the precursor to Liquity on EOS, then worked for Banc
 ### Project Overview:
 
 Derivatives derive their value from an underlying asset.
-The capital deepening token we’ve developed derives it value from sDAI, and of course, the same value underlying said asset…which is demand for borrowing and lending ETH.
-The first paragraph in our README describes how to classify our token. We will use Uniswap v4 for capital widening in V2.
+The capital deepening token we’ve developed derives it value from sDAI, and of course, the same value underlying said asset…which is demand for borrowing and lending ETH. The first paragraph in our README describes how to classify our token.
 
 ### Use of funds, milestones, and goals (KPIs):
 
@@ -71,8 +70,6 @@ The majority of the work for this milestone is devoted to testing this implement
 frontend functionality.
 
 We already have a contract dedicated to Uniswap, incentivising V3 liquidity deposits.
-The plan for V2 is to use a Pachira adapter which extend the usefuless of these 
-deposits to be directly usable as collateral (like sDAI).
 
 Also as part of the 1st milestone, we will extend the existing QU!D frontend to serve as a fully featured, standalone web application for the protocol (currently just allows minting,
 and seeing some basic stats: e.g. P&L...who minted...time left to mint).

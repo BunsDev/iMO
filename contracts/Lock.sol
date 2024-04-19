@@ -1,9 +1,10 @@
 //SPDX-License-Identifier: AGPL-3.0-or-later
 
-pragma solidity =0.8.0;
-pragma abicoder v2;
+pragma solidity =0.8.8;
 
 import "hardhat/console.sol";
+import "./Dependencies/VRFConsumerBaseV2.sol";
+import "./Dependencies/VRFCoordinatorV2Interface.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';
@@ -24,6 +25,11 @@ interface ICollection is IERC721 {
 } // transfer F8N tokenId to 1 lucky clapped pledge per !MO
 // pledge may transfer it back to QUID_ETH to receive prize
 
+interface LinkTokenInterface is IERC20 {
+  function decreaseApproval(address spender, uint256 addedValue) external returns (bool success);
+  function increaseApproval(address spender, uint256 subtractedValue) external;
+  function transferAndCall(address to, uint256 value, bytes calldata data) external returns (bool success);
+}
 
 /**
  * @title Lock
@@ -37,26 +43,34 @@ interface ICollection is IERC721 {
  *
  */
 
-contract Lock is IERC721Receiver {
+contract Lock is IERC721Receiver /*, VRFConsumerBaseV2, VRFCoordinatorV2Interface*/ { 
+
     // minimum duration of being in the vault before 
     // withdraw can be called (triggering reward payment)
+    
+    // for tracking time delta against 
+    uint public immutable deployed; // timestamp when contract was deployed
+    IERC20 public immutable weth; 
+    IERC20 public immutable sdai; 
     uint public minLockDuration; 
     uint public weeklyReward;
-    
-    uint public immutable deployed; // timestamp when contract was deployed
-    IERC20 public immutable weth;
-    
-    address[] public owners;
+    // TODO receive from _get_owe
+
+    // VRFCoordinatorV2Interface COORDINATOR;
+    bytes32 keyHash; address[] public owners;
     mapping(address => bool) public isOwner;
-    mapping(uint256 => mapping(address => bool)) public isConfirmed; // mapping from tx index => owner => bool
+    mapping(uint256 => mapping(address => bool))
+    public isConfirmed; LinkTokenInterface LINK;
+    // mapping from tx index => owner => bool
     
-    Transaction[] public transactions;
-    struct Transaction {
-        address to;
-        uint256 value;
-        bytes data;
+    // no "drivin' a broke Vigor,
+    // I'm with MO' [suppers]" 
+    // ~ XX, crystallised remix
+    MO[] public suppers;
+    struct MO { 
+        address winner;
         bool executed;
-        uint256 numConfirmations;
+        uint confirm;
     }
     mapping(uint => uint) public totalsUSDT; // week # -> liquidity
     uint public totalLiquidityUSDT; // in UniV3 liquidity units
@@ -66,14 +80,16 @@ contract Lock is IERC721Receiver {
     uint public totalLiquidityWETH; // for the WETH<>QD pool
     uint public maxTotalWETH;
     
-    // ERC20 addresses TODO change QD (BO) contract deployed address
-    address constant QD = 0x42cc020Ef5e9681364ABB5aba26F39626F1874A4; 
-    address constant F8N = 0x3B3ee1931Dc30C1957379FAc9aba94D1C48a5405;
+    address constant F8N_0 = 0x3B3ee1931Dc30C1957379FAc9aba94D1C48a5405;
+    address constant F8N_1 = 0x0299cb33919ddA82c72864f7Ed7314a3205Fb8c4;
+    address constant QD = 0x42cc020Ef5e9681364ABB5aba26F39626F1874A4; // TODO reset after deploy
     address constant USDT = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+    address constant NFPM = 0xC36442b4a4522E871399CD717aBDD847Ab11FE88;
     address constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    address constant SDAI = 0x83F20F44975D03b1b09e64809B757c47f942BEeA;
     
     // Uniswap's NonFungiblePositionManager (one for all new pools)
-    address constant NFPM = 0xC36442b4a4522E871399CD717aBDD847Ab11FE88;
+    
     mapping(address => mapping(uint => uint)) public depositTimestamps; // for liquidity providers
     INonfungiblePositionManager public immutable nonfungiblePositionManager;
 
@@ -88,52 +104,39 @@ contract Lock is IERC721Receiver {
 
     event Withdraw(uint amount, uint when);
     event Withdrawal(uint tokenId, address owner, uint rewardPaid);
-    event SubmitTransaction(
-        address indexed owner,
-        uint256 indexed txIndex,
-        address indexed to,
-        uint256 value,
-        bytes data
-    );
-    event ConfirmTransaction(address indexed owner, uint256 indexed txIndex);
-    event RevokeConfirmation(address indexed owner, uint256 indexed txIndex);
-    event ExecuteTransaction(address indexed owner, uint256 indexed txIndex);
+    event Propose(address indexed sender, uint txIndex, address _winner);
+
+    event Confirm(address indexed owner, uint256 indexed txIndex);
+    event Revoke(address indexed owner, uint256 indexed txIndex);
+    event Execute(address indexed owner, uint256 indexed txIndex);
     
-    modifier onlyOwners() {
+    modifier onlyOwners() { 
         require(isOwner[msg.sender], "not owner");
+        _; 
+    }
+    modifier exists(uint256 _txIndex) { 
+        require(_txIndex < suppers.length, "tx does not exist");
         _;
     }
-
-    modifier txExists(uint256 _txIndex) {
-        require(_txIndex < transactions.length, "tx does not exist");
+    modifier notExecuted(uint256 _txIndex) { 
+        require(!suppers[_txIndex].executed, "tx already executed"); 
         _;
     }
-
-    modifier notExecuted(uint256 _txIndex) {
-        require(!transactions[_txIndex].executed, "tx already executed");
-        _;
-    }
-
-    modifier notConfirmed(uint256 _txIndex) {
+    modifier notConfirmed(uint256 _txIndex) { 
         require(!isConfirmed[_txIndex][msg.sender], "tx already confirmed");
-        _;
+         _; 
     }
-
-
     function _getPositionInfo(uint tokenId) internal view returns (address token0, address token1, uint128 liquidity) {
         (, , token0, token1, , , , liquidity, , , , ) = nonfungiblePositionManager.positions(tokenId);
     }
-
-    function _rollOverWETH() internal returns (uint current_week) {
+    function getOwners() public view returns (address[] memory) { return owners; }
+    function getCount() public view returns (uint256) { return suppers.length; }
+    function _rollOver() internal returns (uint current_week) {
         current_week = (block.timestamp - deployed) / 1 weeks;
         // if the vault was emptied then we don't need to roll over past liquidity
         if (totalsWETH[current_week] == 0 && totalLiquidityWETH > 0) {
             totalsWETH[current_week] = totalLiquidityWETH;
         }
-    }
-
-    function _rollOverUSDT() internal returns (uint current_week) {
-        current_week = (block.timestamp - deployed) / 1 weeks;
         // if the vault was emptied then we don't need to roll over past liquidity
         if (totalsUSDT[current_week] == 0 && totalLiquidityUSDT > 0) {
             totalsUSDT[current_week] = totalLiquidityUSDT;
@@ -182,25 +185,6 @@ contract Lock is IERC721Receiver {
         emit SetMaxTotalWETH(_newMaxTotalWETH);
     }
 
-    // NFT foundation.app/@quid
-    function onERC721Received( 
-        address, 
-        address from, // previous owner
-        uint256 tokenId, 
-        bytes calldata data
-    ) external override returns (bytes4) { 
-        uint lambo = 16508; // youtu.be/sitXeGjm4Mc  
-        uint shirt = 42; // TODO fix
-        // ICollection(F8N).latestTokenId();
-        if(tokenId == lambo && address(this) 
-            == ICollection(F8N).ownerOf(lambo)) {
-                sdai.transfer(from, 608358);
-        } else if (tokenId == shirt && address(this) 
-            == ICollection(F8N).ownerOf(shirt)) {
-                sdai.transfer(from, 69383);
-        }
-    }
-
     constructor(address[] memory _owners) {
         require(_owners.length == 6, "owners required");
         for (uint256 i = 0; i < _owners.length; i++) {
@@ -208,16 +192,15 @@ contract Lock is IERC721Receiver {
             require(owner != address(0), "invalid owner");
             require(!isOwner[owner], "owner not unique");
             isOwner[owner] = true; owners.push(owner);
-        }
+        } weth = IERC20(WETH); sdai = IERC20(SDAI);
         deployed = block.timestamp;
-        minLockDuration = 1 weeks;
+        minLockDuration = 19 weeks; // out of 77 monbths total
 
         maxTotalWETH = type(uint256).max - 1;
         maxTotalUSDT = type(uint256).max - 1;
 
         // TODO in QD
         weeklyReward = 1_000_000_000_000; // 0.000001 WETH
-        weth = IERC20(WETH);
         nonfungiblePositionManager = INonfungiblePositionManager(NFPM); // UniV3
     }
 
@@ -225,119 +208,99 @@ contract Lock is IERC721Receiver {
         emit DepositETH(msg.sender, msg.value, address(this).balance);
     }
 
-     /**
-     * @dev This multiSig only does transfer transactions (no arbitrary data)
-     * @param _to hardcoded, address of QD transaction will be executed ON
-     * @param _value amount to send
-     * @param _eth bool for whether to send ether or QD (if bool is false )
-     * @param _data to be sent to _to 
+     /** contextual ref. youtube.com/clip/UgkxembxhMdjNasxjXBvGmIs1ceYD9kBGdkm
+     * @dev This simplified multiSig only does transfer suppers (no calldata)...
+     * @param _winner winner: check-in for supper, over 600k for all bday guests
+     * when people propose a toast, they sip champagne...the equity tranche in
+     * MO capital structure is represented by a Revuelto NFT, as the brake Pads
+     * are what also power the batter my heart in 3, wind carry work, 3 types 
+     * of QD, _get_owe is used in 3 places, not like senior/mezzanine/junior. 
      */
-    function submitTransaction(address _to, uint256 _value, bool _eth, bytes memory _data)
-        public
-        onlyOwners
-    { 
+    function propose(address _winner) public onlyOwners { 
         // require(_to == QD || _to == sDAI || _to == WETH, "")
 
-        // TODO transfer the lambo NFT or the shirt NFT
+        // TODO transfer the warthog NFT or the shirt NFT
         // through off-chain randomness for lottery winner
-        // 
-
-        uint256 txIndex = transactions.length;
-        // constrain to 
-        transactions.push(
-            Transaction({
-                to: _to,
-                value: _value,
-                data: _data,
+ 
+        uint256 txIndex = suppers.length;
+        suppers.push(
+            MO({ winner: _winner,
                 executed: false,
-                numConfirmations: 0
-            })
-        );
-        emit SubmitTransaction(msg.sender, txIndex, _to, _value, _data);
+                confirm: 0 })
+        );  emit Propose(msg.sender, txIndex, _winner);
     }
 
 
-    function confirmTransaction(uint256 _txIndex)
+    function confirm(uint256 _txIndex)
         public
         onlyOwners
-        txExists(_txIndex)
+        exists(_txIndex)
         notExecuted(_txIndex)
         notConfirmed(_txIndex)
-    {
-        Transaction storage transaction = transactions[_txIndex];
-        transaction.numConfirmations += 1;
+    {   MO storage winner = suppers[_txIndex];
+        winner.confirm += 1;
         isConfirmed[_txIndex][msg.sender] = true;
-
-        emit ConfirmTransaction(msg.sender, _txIndex);
+        emit Confirm(msg.sender, _txIndex);
     }
 
-    function executeTransaction(uint256 _txIndex)
-        public
-        onlyOwners
-        txExists(_txIndex)
-        notExecuted(_txIndex)
-    {
-        Transaction storage transaction = transactions[_txIndex];
-
-        require(
-            transaction.numConfirmations == 4,
+    function execute(uint256 _txIndex) public onlyOwners
+        exists(_txIndex) notExecuted(_txIndex) {  
+         MO storage winner = suppers[_txIndex];
+        require(winner.confirm == 4,
             "cannot execute tx"
-        );
-
-        transaction.executed = true;
-
-        (bool success,) =
-            transaction.to.call{value: transaction.value}(transaction.data);
-        require(success, "tx failed");
-
-        emit ExecuteTransaction(msg.sender, _txIndex);
+        );  winner.executed = true;
+        emit Execute(msg.sender, _txIndex);
+        // (bool success,) =
+        //     transaction.to.call{value: transaction.value}(transaction.data);
+        // require(success, "tx failed");
+        // OPTIONAL expand scope of msig
     }
 
-    function revokeConfirmation(uint256 _txIndex)
-        public
-        onlyOwners
-        txExists(_txIndex)
-        notExecuted(_txIndex)
-    {
-        Transaction storage transaction = transactions[_txIndex];
-
-        require(isConfirmed[_txIndex][msg.sender], "tx not confirmed");
-
-        transaction.numConfirmations -= 1;
-        isConfirmed[_txIndex][msg.sender] = false;
-
-        emit RevokeConfirmation(msg.sender, _txIndex);
+    function revoke(uint256 _txIndex) public onlyOwners
+        exists(_txIndex) notExecuted(_txIndex) {  
+        MO storage winner = suppers[_txIndex]; winner.confirm -= 1; 
+        if (isConfirmed[_txIndex][msg.sender] && winner.confirm < 4) {
+            isConfirmed[_txIndex][msg.sender] = false;
+        }   emit Revoke(msg.sender, _txIndex);
+    }
+    function get(uint256 _txIndex) public view returns (address to,
+    bool executed, uint confirm) { MO storage winner = suppers[_txIndex];
+        return ( winner.winner, // check-in dinner...supper
+            winner.executed, winner.confirm );
     }
 
-    function getOwners() public view returns (address[] memory) {
-        return owners;
+    // QuidMint...foundation.app/@quid
+    function onERC721Received( address, 
+        address from, // previous owner's
+        uint256 tokenId, bytes calldata data
+    ) external override returns (bytes4) { 
+        uint lambo = 16508; // youtu.be/sitXeGjm4Mc  
+        if (tokenId == lambo && address(this) 
+            == ICollection(F8N_0).ownerOf(lambo)) {
+                sdai.transfer(from, 608358 * 1e18);
+        } 
+        if (address(this) == ICollection(F8N_1).ownerOf(2)) {
+            sdai.transfer(from, 69383 * 1e18); // for shirt
+        } // verfify that from was the winner of the lottery
+        // and time delta
+    }
+   
+    function deposit(uint tokenId) external { // all you need is...all UNI is...rolLOVEr
+        (address token0, address token1, uint128 liquidity) = _getPositionInfo(tokenId);
+        require(token1 == QD, "Uni::deposit: improper token id"); // love is all you need
+        // usually this means that the owner of the position already closed it
+        require(liquidity > 0, "Uni::deposit: cannot deposit empty amount");
+        if (token0 == WETH) { totalsWETH[_rollOver()] += liquidity; totalLiquidityWETH += liquidity;
+            require(totalLiquidityWETH <= maxTotalWETH, "Uni::deposit: totalLiquidity exceed max");
+        } else if (token0 == USDT) { totalsUSDT[_rollOver()] += liquidity; totalLiquidityUSDT += liquidity;
+            require(totalLiquidityUSDT <= maxTotalUSDT, "Uni::deposit: totalLiquidity exceed max");
+        } else { require(false, "Uni::deposit: improper token id"); }
+        depositTimestamps[msg.sender][tokenId] = block.timestamp;
+        // transfer ownership of LP share to this contract
+        nonfungiblePositionManager.transferFrom(msg.sender, address(this), tokenId);
+        emit Deposit(tokenId, msg.sender);
     }
 
-    function getTransactionCount() public view returns (uint256) {
-        return transactions.length;
-    }
-
-    function getTransaction(uint256 _txIndex)
-        public
-        view
-        returns (
-            address to,
-            uint256 value,
-            bytes memory data,
-            bool executed,
-            uint256 numConfirmations
-        )
-    {
-        Transaction storage transaction = transactions[_txIndex];
-        return (
-            transaction.to,
-            transaction.value,
-            transaction.data,
-            transaction.executed,
-            transaction.numConfirmations
-        );
-    }
-    
     /**
      * @dev Withdraw UniV3 LP deposit from vault (changing the owner back to original)
      */
@@ -359,7 +322,7 @@ contract Lock is IERC721Receiver {
         uint reward = (delta * weeklyReward) / 168; // 1st reward maybe fraction of week's worth
         uint totalReward = 0;
         if (token0 == WETH) {
-            uint current_week = _rollOverWETH();
+            uint current_week = _rollOver();
             while (week_iterator < current_week) {
                 uint totalThisWeek = totalsWETH[week_iterator];
                 if (totalThisWeek > 0) {
@@ -378,7 +341,7 @@ contract Lock is IERC721Receiver {
             totalReward += (reward * liquidity) / totalLiquidityWETH;
             totalLiquidityWETH -= liquidity;
         } else if (token0 == USDT) {
-            uint current_week = _rollOverUSDT();
+            uint current_week = _rollOver();
             while (week_iterator < current_week) {
                 uint totalThisWeek = totalsUSDT[week_iterator];
                 if (totalThisWeek > 0) {
@@ -402,29 +365,5 @@ contract Lock is IERC721Receiver {
         // transfer ownership back to the original LP token owner
         nonfungiblePositionManager.transferFrom(address(this), msg.sender, tokenId);
         emit Withdrawal(tokenId, msg.sender, totalReward);
-    }
-
-   
-    function deposit(uint tokenId) external {
-        (address token0, address token1, uint128 liquidity) = _getPositionInfo(tokenId);
-        require(token1 == QD, "Uni::deposit: improper token id");
-        // usually this means that the owner of the position already closed it
-        require(liquidity > 0, "Uni::deposit: cannot deposit empty amount");
-
-        if (token0 == WETH) {
-            totalsWETH[_rollOverWETH()] += liquidity;
-            totalLiquidityWETH += liquidity;
-            require(totalLiquidityWETH <= maxTotalWETH, "Uni::deposit: totalLiquidity exceed max");
-        } else if (token0 == USDT) {
-            totalsUSDT[_rollOverUSDT()] += liquidity;
-            totalLiquidityUSDT += liquidity;
-            require(totalLiquidityUSDT <= maxTotalUSDT, "Uni::deposit: totalLiquidity exceed max");
-        } else {
-            require(false, "Uni::deposit: improper token id");
-        }
-        depositTimestamps[msg.sender][tokenId] = block.timestamp;
-        // transfer ownership of LP share to this contract
-        nonfungiblePositionManager.transferFrom(msg.sender, address(this), tokenId);
-        emit Deposit(tokenId, msg.sender);
     }
 }
