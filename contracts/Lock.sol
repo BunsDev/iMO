@@ -7,7 +7,8 @@ import "./Dependencies/VRFConsumerBaseV2.sol";
 import "./Dependencies/VRFCoordinatorV2Interface.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';
+import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 interface INonfungiblePositionManager is IERC721 {
     function positions(uint256 tokenId) external
@@ -43,35 +44,23 @@ interface LinkTokenInterface is IERC20 {
  *
  */
 
-contract Lock is IERC721Receiver /*, VRFConsumerBaseV2, VRFCoordinatorV2Interface*/ { 
+contract Lock is Ownable, IERC721Receiver /*
+VRFConsumerBaseV2, VRFCoordinatorV2Interface */ { 
 
-    // minimum duration of being in the vault before 
-    // withdraw can be called (triggering reward payment)
+    // minimum duration of being in vault before 
+    // withdraw can be called (triggering reward)
     
     // for tracking time delta against 
     uint public immutable deployed; // timestamp when contract was deployed
     IERC20 public immutable weth; 
     IERC20 public immutable sdai; 
-    uint public minLockDuration; 
-    uint public weeklyReward;
+    uint public minLock; 
+    uint public reward;
     // TODO receive from _get_owe
 
     // VRFCoordinatorV2Interface COORDINATOR;
-    bytes32 keyHash; address[] public owners;
-    mapping(address => bool) public isOwner;
-    mapping(uint256 => mapping(address => bool))
-    public isConfirmed; LinkTokenInterface LINK;
-    // mapping from tx index => owner => bool
+    // LinkTokenInterface LINK;
     
-    // no "drivin' a broke Vigor,
-    // I'm with MO' [suppers]" 
-    // ~ XX, crystallised remix
-    MO[] public suppers;
-    struct MO { 
-        address winner;
-        bool executed;
-        uint confirm;
-    }
     mapping(uint => uint) public totalsUSDT; // week # -> liquidity
     uint public totalLiquidityUSDT; // in UniV3 liquidity units
     uint public maxTotalUSDT; // in the same units
@@ -93,8 +82,8 @@ contract Lock is IERC721Receiver /*, VRFConsumerBaseV2, VRFCoordinatorV2Interfac
     mapping(address => mapping(uint => uint)) public depositTimestamps; // for liquidity providers
     INonfungiblePositionManager public immutable nonfungiblePositionManager;
 
-    event SetMinLockDuration(uint duration);
-    event SetWeeklyReward(uint reward);
+    event SetMinLock(uint duration);
+    event SetReward(uint reward);
 
     event SetMaxTotalUSDT(uint maxTotal);
     event SetMaxTotalWETH(uint maxTotal);
@@ -102,35 +91,11 @@ contract Lock is IERC721Receiver /*, VRFConsumerBaseV2, VRFCoordinatorV2Interfac
     event Deposit(uint tokenId, address owner);
     event DepositETH(address indexed sender, uint256 amount, uint256 balance);
 
-    event Withdraw(uint amount, uint when);
     event Withdrawal(uint tokenId, address owner, uint rewardPaid);
-    event Propose(address indexed sender, uint txIndex, address _winner);
-
-    event Confirm(address indexed owner, uint256 indexed txIndex);
-    event Revoke(address indexed owner, uint256 indexed txIndex);
-    event Execute(address indexed owner, uint256 indexed txIndex);
-    
-    modifier onlyOwners() { 
-        require(isOwner[msg.sender], "not owner");
-        _; 
-    }
-    modifier exists(uint256 _txIndex) { 
-        require(_txIndex < suppers.length, "tx does not exist");
-        _;
-    }
-    modifier notExecuted(uint256 _txIndex) { 
-        require(!suppers[_txIndex].executed, "tx already executed"); 
-        _;
-    }
-    modifier notConfirmed(uint256 _txIndex) { 
-        require(!isConfirmed[_txIndex][msg.sender], "tx already confirmed");
-         _; 
-    }
+  
     function _getPositionInfo(uint tokenId) internal view returns (address token0, address token1, uint128 liquidity) {
         (, , token0, token1, , , , liquidity, , , , ) = nonfungiblePositionManager.positions(tokenId);
     }
-    function getOwners() public view returns (address[] memory) { return owners; }
-    function getCount() public view returns (uint256) { return suppers.length; }
     function _rollOver() internal returns (uint current_week) {
         current_week = (block.timestamp - deployed) / 1 weeks;
         // if the vault was emptied then we don't need to roll over past liquidity
@@ -147,20 +112,21 @@ contract Lock is IERC721Receiver /*, VRFConsumerBaseV2, VRFCoordinatorV2Interfac
      * @dev Update the weekly reward. Amount in WETH.
      * @param _newReward New weekly reward.
      */
-    function setWeeklyReward(uint _newReward) external onlyOwners {
-        weeklyReward = _newReward;
+    function setReward(uint _newReward) external onlyOwner {
+        reward = _newReward;
         // TODO get weth from BP.debit
-        emit SetWeeklyReward(_newReward);
+        emit SetReward(_newReward);
     }
 
     /**
-     * @dev Update the minimum lock duration for staked LP tokens.
-     * @param _newMinLockDuration New minimum lock duration.(in weeks)
+     * @dev Update minimum lock duration for staked LP tokens
+     * @param _newMinLock New minimum lock duration (in weeks)
      */
-    function setMinLockDuration(uint _newMinLockDuration) external onlyOwners {
-        require(_newMinLockDuration % 1 weeks == 0, "Uni::deposit: Duration must be in units of weeks");
-        minLockDuration = _newMinLockDuration;
-        emit SetMinLockDuration(_newMinLockDuration);
+    function setMinLock(uint _newMinLock) external onlyOwner {
+        require(_newMinLock % 1 weeks == 0, 
+        "Uni::deposit: Duration must be in weeks");
+        minLock = _newMinLock;
+        emit SetMinLock(_newMinLock);
     }
 
     /**
@@ -169,7 +135,7 @@ contract Lock is IERC721Receiver /*, VRFConsumerBaseV2, VRFCoordinatorV2Interfac
      * unnecessarily much in beginning.
      * @param _newMaxTotalUSDT New max total.
      */
-    function setMaxTotalUSDT(uint _newMaxTotalUSDT) external onlyOwners {
+    function setMaxTotalUSDT(uint _newMaxTotalUSDT) external onlyOwner {
         maxTotalUSDT = _newMaxTotalUSDT;
         emit SetMaxTotalUSDT(_newMaxTotalUSDT);
     }
@@ -180,93 +146,26 @@ contract Lock is IERC721Receiver /*, VRFConsumerBaseV2, VRFCoordinatorV2Interfac
      * unnecessarily much in beginning.
      * @param _newMaxTotalWETH New max total.
      */
-    function setMaxTotalWETH(uint _newMaxTotalWETH) external onlyOwners {
+    function setMaxTotalWETH(uint _newMaxTotalWETH) external onlyOwner {
         maxTotalWETH = _newMaxTotalWETH;
         emit SetMaxTotalWETH(_newMaxTotalWETH);
     }
 
     constructor(address[] memory _owners) {
-        require(_owners.length == 6, "owners required");
-        for (uint256 i = 0; i < _owners.length; i++) {
-            address owner = _owners[i];
-            require(owner != address(0), "invalid owner");
-            require(!isOwner[owner], "owner not unique");
-            isOwner[owner] = true; owners.push(owner);
-        } weth = IERC20(WETH); sdai = IERC20(SDAI);
+        weth = IERC20(WETH); sdai = IERC20(SDAI);
         deployed = block.timestamp;
-        minLockDuration = 19 weeks; // out of 77 monbths total
+        minLock = 4 weeks; 
 
         maxTotalWETH = type(uint256).max - 1;
         maxTotalUSDT = type(uint256).max - 1;
 
         // TODO in QD
-        weeklyReward = 1_000_000_000_000; // 0.000001 WETH
+        reward = 1_000_000_000_000; // 0.000001 WETH
         nonfungiblePositionManager = INonfungiblePositionManager(NFPM); // UniV3
     }
 
     receive() external payable {
         emit DepositETH(msg.sender, msg.value, address(this).balance);
-    }
-
-     /** contextual ref. youtube.com/clip/UgkxembxhMdjNasxjXBvGmIs1ceYD9kBGdkm
-     * @dev This simplified multiSig only does transfer suppers (no calldata)...
-     * @param _winner winner: check-in for supper, over 600k for all bday guests
-     * when people propose a toast, they sip champagne...the equity tranche in
-     * MO capital structure is represented by a Revuelto NFT, as the brake Pads
-     * are what also power the batter my heart in 3, wind carry work, 3 types 
-     * of QD, _get_owe is used in 3 places, not like senior/mezzanine/junior. 
-     */
-    function propose(address _winner) public onlyOwners { 
-        // require(_to == QD || _to == sDAI || _to == WETH, "")
-
-        // TODO transfer the warthog NFT or the shirt NFT
-        // through off-chain randomness for lottery winner
- 
-        uint256 txIndex = suppers.length;
-        suppers.push(
-            MO({ winner: _winner,
-                executed: false,
-                confirm: 0 })
-        );  emit Propose(msg.sender, txIndex, _winner);
-    }
-
-
-    function confirm(uint256 _txIndex)
-        public
-        onlyOwners
-        exists(_txIndex)
-        notExecuted(_txIndex)
-        notConfirmed(_txIndex)
-    {   MO storage winner = suppers[_txIndex];
-        winner.confirm += 1;
-        isConfirmed[_txIndex][msg.sender] = true;
-        emit Confirm(msg.sender, _txIndex);
-    }
-
-    function execute(uint256 _txIndex) public onlyOwners
-        exists(_txIndex) notExecuted(_txIndex) {  
-         MO storage winner = suppers[_txIndex];
-        require(winner.confirm == 4,
-            "cannot execute tx"
-        );  winner.executed = true;
-        emit Execute(msg.sender, _txIndex);
-        // (bool success,) =
-        //     transaction.to.call{value: transaction.value}(transaction.data);
-        // require(success, "tx failed");
-        // OPTIONAL expand scope of msig
-    }
-
-    function revoke(uint256 _txIndex) public onlyOwners
-        exists(_txIndex) notExecuted(_txIndex) {  
-        MO storage winner = suppers[_txIndex]; winner.confirm -= 1; 
-        if (isConfirmed[_txIndex][msg.sender] && winner.confirm < 4) {
-            isConfirmed[_txIndex][msg.sender] = false;
-        }   emit Revoke(msg.sender, _txIndex);
-    }
-    function get(uint256 _txIndex) public view returns (address to,
-    bool executed, uint confirm) { MO storage winner = suppers[_txIndex];
-        return ( winner.winner, // check-in dinner...supper
-            winner.executed, winner.confirm );
     }
 
     // QuidMint...foundation.app/@quid
@@ -308,7 +207,7 @@ contract Lock is IERC721Receiver /*, VRFConsumerBaseV2, VRFCoordinatorV2Interfac
         uint timestamp = depositTimestamps[msg.sender][tokenId]; // verify a deposit exists
         require(timestamp > 0, "Lock::withdraw: no owner exists for this tokenId");
         require( // how long this deposit has been in the vault
-            (block.timestamp - timestamp) > minLockDuration,
+            (block.timestamp - timestamp) > minLock,
             "Lock::withdraw: minimum duration for the deposit has not elapsed yet"
         );
         (address token0, , uint128 liquidity) = _getPositionInfo(tokenId);
@@ -319,7 +218,7 @@ contract Lock is IERC721Receiver /*, VRFConsumerBaseV2, VRFCoordinatorV2Interfac
         uint so_far = (timestamp - deployed) / 1 hours;
         uint delta = so_far - (week_iterator * 168);
 
-        uint reward = (delta * weeklyReward) / 168; // 1st reward maybe fraction of week's worth
+        uint reward = (delta * reward) / 168; // 1st reward maybe fraction of week's worth
         uint totalReward = 0;
         if (token0 == WETH) {
             uint current_week = _rollOver();
@@ -331,13 +230,13 @@ contract Lock is IERC721Receiver /*, VRFConsumerBaseV2, VRFCoordinatorV2Interfac
                     totalReward += (reward * liquidity) / totalThisWeek;
                 }
                 week_iterator += 1;
-                reward = weeklyReward; // this is redundant but required
+                reward = reward; // this is redundant but required
                 // represents a full week's reward
             }
             so_far = (block.timestamp - deployed) / 1 hours;
             delta = so_far - (current_week * 168);
             // the last reward will be a fraction of a whole week's worth
-            reward = (delta * weeklyReward) / 168; // we're in the middle of a current week
+            reward = (delta * reward) / 168; // we're in the middle of a current week
             totalReward += (reward * liquidity) / totalLiquidityWETH;
             totalLiquidityWETH -= liquidity;
         } else if (token0 == USDT) {
@@ -350,12 +249,12 @@ contract Lock is IERC721Receiver /*, VRFConsumerBaseV2, VRFCoordinatorV2Interfac
                     totalReward += (reward * liquidity) / totalThisWeek;
                 }
                 week_iterator += 1;
-                reward = weeklyReward;
+                reward = reward;
             }
             so_far = (block.timestamp - deployed) / 1 hours;
             delta = so_far - (current_week * 168);
             // the last reward will be a fraction of a whole week's worth
-            reward = (delta * weeklyReward) / 168; // we're in the middle of a current week
+            reward = (delta * reward) / 168; // we're in the middle of a current week
             totalReward += (reward * liquidity) / totalLiquidityUSDT;
             totalLiquidityUSDT -= liquidity;
         }
