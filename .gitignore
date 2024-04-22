@@ -1,8 +1,8 @@
 .DS_Store
-node_modules
-typechain
-cache
-artifacts
+/node_modules
+/typechain
+/cache
+/artifacts
 .env
 
 # solidity-coverage files
