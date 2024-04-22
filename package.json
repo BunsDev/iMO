@@ -23,9 +23,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^4.9.6",
-    "dotenv": "^16.4.5",
-    "solmate": "^6.2.0"
+    "@openzeppelin/contracts": "^4.9.6"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",

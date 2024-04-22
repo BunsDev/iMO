@@ -1,6 +1,6 @@
 ## UNISWAP-ARBITRUM GRANT PROGRAM (UAGP)
 
-  
+
 Proposer: QuidMint Foundation
 Project Title: QU!D  
 Contractor: Quid Labs
@@ -22,10 +22,10 @@ pay for audits (contract testing costs),
 and minor development costs (frontend),  
 as well as integrations (partnerships).    
 
-- **Costs:** 66000 ARB, 2 months 
+- **Costs:** 66000 ARB, 2 months
     - **Maintenance:** 42000 USD
       - Audit: 30000 USD
-      - Counsel retainer & annual fees 
+      - Counsel retainer & annual fees
         - (Cayman & BVI): 12000 USD
   - **R&D Costs:** 24000 USD
     - **Full-Time Equivalent (FTE)**: 2-3
@@ -36,7 +36,7 @@ as well as integrations (partnerships).
 
 Before Euromaidan, Ukraine had one of the world's first central bank-tethered digital currencies, issued by a licensed company whose EIN was 36**42**51**42** (without the use of DLT). I interned there as a paralegal before learning C through http://42.fr
 
-After that, I helped build the precursor to Liquity on EOS, then worked for Bancor. Later, I joined Dom in auditing THOR and bZx at CertiK (we also took turns consulting on side-projects at Liquity, fuzzing and DSproxy, respectively). Meek is our junior developer (lieutenant); he was Dom's student at RareSkills.
+After that, I helped build the precursor to Liquity on EOS, then worked for Bancor. Later, I audited THOR and bZx at CertiK (took turns with Dom consulting on side-projects at Liquity, fuzzing and [DSproxy](https://patentscope.wipo.int/search/en/detail.jsf?docId=WO2020102401), respectively). 
 
 ### Project Overview:
 
@@ -45,19 +45,19 @@ The capital deepening token we’ve developed derives it value from sDAI, and of
 
 ### Use of funds, milestones, and goals (KPIs):
 
-- Launch: May 31st (or June 27th)
+- Launch: June 27th
 - User Adoption: 357M QD in    
  Q2
 same minted within Q4.  
-- Liquidity: 544M sDAI locked for 2024
-- Contract Interaction: Facilitate at least 10,000 plegedes post-launch.
-- Community Growth: Garner a community of 10,000 followers on Twitter.
-- Partnerships: Milestone 2
+- Liquidity: 544M sDAI locked for 2024 (aggregate, CCIP in Milestone 2)
+- Contract Interaction: Facilitate at least 1000 Plunges post-launch.
+- Community Growth: Garner a community of 1000 followers on Twitter.
+- Partnerships: Milestone 2 and onwards
 
 
 ### Milestones:
 
-  ETH public keys are 42 characters, Arbitrum's chainId starts with 42, sDAI's public key ends with 42🐝, `quid.eth`'s starts with 42. 
+  ETH public keys are 42 characters, Arbitrum's chainId starts with 42, sDAI's public key ends with 42🐝, `quid.eth`'s starts with 42.
 
   This project seeks to extend the capabilities of decentralised finance by introducing simple financial instruments that solve a complex problem, while adhering to the principles of UAGP Code of Conduct (and the 42 Laws of Ma'at), prioritizing transparency, and user empowerment, bringing liquidity, benefitting the entire Arbitrum ecosystem as a result.
 
@@ -65,7 +65,7 @@ same minted within Q4.
 ### Milestone 1 - audit and frontend:
 
 To arrive at its current level simplicity, Quid Labs had to rebuild its protocol 3 times over the last 3 years.
-The latest implementation is just over 800 lines.
+The latest implementation is just over 1000 lines.
 The majority of the work for this milestone is devoted to testing this implementatiom, while extending
 frontend functionality.
 
@@ -73,11 +73,11 @@ We already have a contract dedicated to Uniswap, incentivising V3 liquidity depo
 
 Also as part of the 1st milestone, we will extend the existing QU!D frontend to serve as a fully featured, standalone web application for the protocol (currently just allows minting,
 and seeing some basic stats: e.g. P&L...who minted...time left to mint).
- 
+
 | Number | Deliverable | Specification |
 | -----: | ----------- | ------------- |
 | **0a.** | License | GPLv3 Copyleft is the legal technique of granting certain freedoms over copies of copyrighted works with the requirement that the same rights be preserved in derivative works. |
-| **0b.** | Documentation | We will provide both code comments and safety instructions (e.g. wash 🧼 hands like John 4:8, check for allergies, or OFAC countries) for running the frontend instance as well as sanity checking the operability with some test transactions. |
+| **0b.** | Compliance | We will provide both code comments and safety instructions (e.g. wash hands to  Hans Zimmer like John 4:8, check for allergies, or OFAC countries) for running the frontend instance as well as sanity checking the operability with some test transactions on mainnet (at the end of the milestone). |
 | **0c.** | Docker | A [Dockerfile](https://github.com/QuidMint/ibo-app/blob/main/Dockerfile) is provided for deploying the functionality delivered in this milestone. |
 | 0d. | Smart Contract Development and Audit | Socratic seminar format (involving dialogue, or even debate) with one (or many) experienced interlocutor(s), exploring overarching themes inherited by the design space with granular Q&A, and audit the smart contracts for the derivative protocol ensuring security and functionality. |
 | 1. | Withdrawal buttons | ETH may be freely deposited and withdrawn, meanwhile used to boost pledges. QD redemption (for sDAI) has rules based on when the QD was minted.  |

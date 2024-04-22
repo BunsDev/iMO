@@ -4,8 +4,7 @@ pragma solidity =0.8.8;
 /** ****************************************************************************
  * @notice Interface for contracts using VRF randomness
  * *****************************************************************************
- * @dev PURPOSE
- *
+ * @dev PURPOSE (Reg E. and Reg. D had babies, not Reg. A but Reggie in wu-wei)
  * @dev Reggie the Random Oracle (not his real job) wants to provide randomness
  * @dev to Vera the verifier in such a way that Vera can be sure he's not
  * @dev making his output up to suit himself. Reggie provides Vera a public key
