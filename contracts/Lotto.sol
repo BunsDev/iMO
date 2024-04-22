@@ -180,14 +180,20 @@ contract Lotto is VRFConsumerBaseV2,
         uint256 tokenId, bytes calldata data
     ) external override returns (bytes4) { 
         require(from == recentWinner, "unauthorised");
-        require(last_lotto_trigger > Gen.YEAR(), "early");
-        last_lotto_trigger = Gen.YEAR();
+        require(Gen.YEAR() > last_lotto_trigger, "early"); // if 
+        // TODO otherwise send the token back to sender?
         uint lambo = 16508; // youtu.be/sitXeGjm4Mc 
         uint last = ICollection(F8N_1).latestTokenId(); 
-        if (tokenId == lambo && address(this) 
+        if (tokenId == lambo && address(this) // 
             == ICollection(F8N_0).ownerOf(lambo)) {
             sdai.transfer(from, 608358 * 1e18);
-        }   else if (tokenId == last) { // TODO reentrancy
+            // require amount 
+        }   else if (tokenId == last) { 
+                last_lotto_trigger = Gen.YEAR();
+                ICollection(F8N_0).transferFrom(
+                    address(this), QUID, lambo
+                );
+                sdai.transfer(from, 69383 * 1e18); 
                 requestId = COORDINATOR.requestRandomWords(
                     keyHash,subscriptionId,
                     requestConfirmations,

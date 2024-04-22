@@ -253,31 +253,17 @@ contract MO is ERC20 {
      // ------------ OPTIONAL -----------------
     // voting can allow LTV to act as moneyness,
     // but while DSR is high this is unnecessary  
-    
-    // r
-    // called 36 times every MO, taking in
-    // medianiser's APR targets, cached for
-    // use continuously in _fetch_plunge
-    // call Reggie's randomiser sorting
-    // by biggest liquidated (size)
 
-    // not Pac's Ghetto Gospel, nor St. John's
+    // 
+    
     function _get_owe(uint param) internal { // used in 3 places
         
-        // peggulah tighter or looser 
-
-
         // using APR / into MIN = scale
         // if you over-collat by 8% x scale
         // then you get a discount from APR
         // that is exactly proportional...
-
         // means we do have to add it in _yoga
 
-        // every time we can update _get_owe
-        // is when Lockers reset the clock...
-        // transferring two NFTs onReceived
-        // use medians to guage implied vol
         uint excess = YEAR * TARGET; // excess wind.cat
         if (wind.cat > excess) {
 
@@ -689,7 +675,7 @@ contract MO is ERC20 {
     // keep track of what came from carry (own funds)
     // so when grace invoked, return what was put()
 
-
+    // "collect calls to the tip sayin' how ya changed" 
     function call(uint amt, bool qd, bool eth) external { 
         uint most; uint cr; uint price = _get_price();
         Plunge memory plunge = _get_update(
@@ -703,10 +689,7 @@ contract MO is ERC20 {
             // require(address(this).balance > most, "MO::call: deficit ETH");
             payable(_msgSender()).transfer(most); // TODO use WETH to put % in Lock?
         } 
-        else if (qd) { // "calls to the tip sayin' how ya changed"
-            
-            
-            // can only call from what is inside carry
+        else if (qd) {         
             // but we must also be able to evict (involuntary fold from profitables)
             // consider that extra minting happens here 
             // in order to satisfy call (in that sense perfection rights are priotised)
@@ -725,7 +708,6 @@ contract MO is ERC20 {
             // as recently joined plegdes, which may other-
             // wise have the same stake-based equity in wind
             // so it's a product of the age and stake instead
-            // 
 
             // carry.CREDIT OVER TIME (TOTAL POINTS)
             // WILL GET ITS SHARE OF THE WP AT THE END  ??
@@ -736,26 +718,19 @@ contract MO is ERC20 {
             _ratio(price, wind.dog, ONE) + _ratio(price, carry.dog, ONE); 
 
             // TODO collapse work positions back into carry 
+            // can only call from what is inside carry
 
             // 1/16th or 1/8th 
             uint liabilities = wind.cat + // QDebt from !MO 
             _ratio(price, work.long.cat, ONE) + // synthetic ETH collat
             _ratio(price, work.short.cat, ONE);  // synthetic ETH debt
-            
-
          
-            if (liabilities > assets) { 
-
+            if (liabilities > assets) {
 
             } else { 
-            }  
-            
-            // we can only start accounting for extra printed in fold 
-            // when one year's balances are 100% backed, but there's also 77%
-            // from the last MO
-            
-            // carry.cat -= least; _burn(_msgSender(), amt); 
-            // sdai.transferFrom(address(this), _msgSender(), amt);
+                // carry.cat -= least; _burn(_msgSender(), amt); 
+                // sdai.transferFrom(address(this), _msgSender(), amt);
+            }      
         }
     }
 

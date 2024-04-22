@@ -1,18 +1,17 @@
 ## !nter*M*ittent...*O*ffering (in...my...opinion)...
-  
-Inspired by [Clams]() ~~Casino~~  AV and i`MOGen` colla~~boration~~ (Diet)...  
+
+You have to use 🗝 to `wind` 🕰 right to left ([click](https://mirror.xyz/quid.eth/LZ4pS8tVAAkZVSYqJWoihs19cdMhgWESsLr9dIhvL40) cup and time)  
+turning `cat`s into `dog`s by `work` borrowing 1:1 from `carry`;  
+
+
+**Diet Colla**~~boration~~ with [Clams](https://twitter.com/clammyclams/status/1781831323356733946) ~~Casino~~ AV and i`MOGen`  (heaps).  
 this [transmission](https://en.wikipedia.org/wiki/Intercarrier_method) is coming to mix under-collat with over-collat.  
  The original Phat Farm slogan was, "the new American Dream,"  
 DeFi farming tried to deliver...making something from nothing.  
 
-Can't really mog that (turns out), but you *can* make nothing from  
-something (liquidation),
-so when you *truly* have [something](https://www.instagram.com/p/ChkumrXLNIp/), you    
-you have to use 🗝 to `wind` 🕰 right to left ([click]() cup and time)  
-turning `cat`s into `dog`s by `work` borrowing 1:1 from `carry`;  
-
-bi-annual cremation of `carry` in `call` as ritual production.  
-Even a broken clock is right twice a day, at least honest of it,  
+Can't really mog that (turns out), but you *can* make nothin' from  
+somethin' (liquidation):
+so when you Pusha T-bill or [nothin'](https://www.instagram.com/p/ChkumrXLNIp/), then    
 since it's about 50% USDC, minted against 
 150% over-collat,   
 we  assume 1 sDAI 
@@ -32,28 +31,31 @@ involuntarily, `_yoga`
 is handled by `clocked`...3 types of QD...   
 `_balances` (redeemable), `_maturing`, and `Plunge`.`carry`
   
+Special-purpose depository instritutions allow  
+taking an insured ETH deposit that already has  
+volatility propection from MakerDAO, increasing  
+its capital efficiency (a.k.a. [capital deepening](https://www.wallstreetmojo.com/capital-deepening/))...  
 
-
-##  [MOlotto](https://www.youtube.com/watch?v=_1lmF5qtY3k) differentiators (7 sevens)
-
-There is no good debt or bad debt, no redemption,   
-only what we delight in (and how to obtain *Oneg*)...  
-the main assumption for making the protocol work  
+It's not good debt versus bad debt [compensation](https://www.tabers.com/tabersonline/view/Tabers-Dictionary/730522/all/compensation),  
+only what we delight in (and how to obtain *Oneg*).  
+The main assumption for making the protocol work  
 is that a majority of the QD will be utilised in `work`  
 
 most of the time, so it requires customers with an  
-appetite (and also a tolerance) for risk, provided  
+appetite (and also a tolerance) for work, provided  
 as a service that they're continously paying for.  
 The yield embedded in discounts for QD solves   
 
-the "cold-start problem" of incentivising a risk  
+the "cold-start problem" of incentivising work  
 matching service as such to *Come Together*...   
 the cost of using fiat...is...having to pay taxes,   
 the cost of using Ethereum: having to pay gas;  
 
 subsidising protection bootstraps tokens' value.  
 Following this line of circular reasoning, QU!Dao  
-rewards/penalises for protected [crypto](https://twitter.com/VitalikButerin/status/1781712882645795202) volatility.  
+rewards/penalises for protected [crypto](https://twitter.com/VitalikButerin/status/1781712882645795202) volatility  
+exposure re-staking (or re-hypethcation) with a  
+new unit of account, accounted as $1 `dog`/`cat`
 
 
 Every QD `_balance` is auto-staked (for solvency)...  
@@ -69,27 +71,6 @@ To let liquidated debt (or anything wet) dry
 quickly: spread it thinly over a large area…  
 it's useful to consider the other dimension   
 of investing (biggest risk source is time)...   
-
-
-If borrowers pay 8% APR, they can get liquidated  
-by the protocol, but in exchange for giving QU!D  
-the privilege of liqui**dating** them: may become a  
-lottery `winner`...one per MO...merch tag has QR  
-
-code...links to a YT clip. #1 liquidation (5/11/22)      
-represented by 👕 is passed between contracts   
-for new `winner`s. `deuce` (2xAPR) payment is  
-an extra option to treat the `work` as [vice versa](https://www.instagram.com/p/CnPsieFKzRQ/),
-
-
-or to slowly liquidate the `Plunge` over time (pro  
-rated price) provided continuous 2x payment for  
-the privilege of retaining the **perfection rights**   
-(based on a [concept](https://en.wikipedia.org/wiki/Celebrity_bond) from liens and mortgages).  
-
-These perfection rights may be sold on ZigZag.  
-"Secret to survivin' is knowin' what to throw 🏀  
-and knowin' what to keep..." ~ Kenny Rogers...
 
 
 ### it's the de*ferral* reserve (not federal)
@@ -111,4 +92,25 @@ Governance is one of the coolest features in DeFi.
 Though we save on gas from not compounding for   
 depositors constantly, we spend some gas keeping  
 the voted median (for APR) perpetually up to date.   
+
+
+If borrowers pay 8% APR, they can get liquidated  
+by the protocol, but in exchange for giving QU!D  
+the privilege of liqui**dating** them: may become a  
+lottery `winner`...one per MO...merch tag has QR  
+
+code...links to a YT clip. #1 liquidation (5/11/22)      
+represented by 👕 is passed between contracts   
+for new `winner`s. `deuce` (2xAPR) payment is  
+an extra option to treat the `work` as [vice versa](https://www.instagram.com/p/CnPsieFKzRQ/),
+
+
+or to slowly liquidate the `Plunge` over time (pro  
+rated price) provided continuous 2x payment for  
+the privilege of retaining the **perfection rights**   
+(based on a [concept](https://en.wikipedia.org/wiki/Celebrity_bond) from liens and mortgages).  
+
+These perfection rights may be sold on ZigZag.  
+"Secret to survivin' is knowin' what to throw 🏀  
+and knowin' what to keep..." ~ Kenny Rogers...
 
