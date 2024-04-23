@@ -30,19 +30,12 @@ interface INonfungiblePositionManager is IERC721 {
         );
 }
 
-/**
- * @title Lock users' Uniswap LP stakes (V3 only)
- *
- * rationale: https://docs.uniswap.org/contracts/v3/guides/liquidity-mining/overview
- * Contract keeps track of the durations of each deposit. Rewards are paid individually
- * to each NFT (multiple deposits may be made of several V3 positions). The duration of
- * the deposit as well as the share of total liquidity deposited in the vault determines
- * how much the reward will be. It's paid from the WETH balance of this contract itself.
- *
+/** 
+ * @title лоток яиц
  */
-
-contract Lotto is VRFConsumerBaseV2, 
-    Ownable, IERC721Receiver { 
+contract Lotok is Ownable, 
+    VRFConsumerBaseV2, 
+    IERC721Receiver { 
     // for tracking time deltas...
     uint public last_lotto_trigger;
     uint public immutable deployed;
@@ -95,7 +88,7 @@ contract Lotto is VRFConsumerBaseV2,
     receive() external payable {
         emit DepositETH(msg.sender, msg.value, address(this).balance);
     }  
-    function _getPositionInfo(uint tokenId) internal view 
+    function _getInfo(uint tokenId) internal view 
         returns (address token0, address token1, uint128 liquidity) {
         (, , token0, token1, , , , liquidity, , , , ) = nonfungiblePositionManager.positions(tokenId);
     } 
@@ -187,13 +180,13 @@ contract Lotto is VRFConsumerBaseV2,
         if (tokenId == lambo && address(this) // 
             == ICollection(F8N_0).ownerOf(lambo)) {
             sdai.transfer(from, 608358 * 1e18);
-            // require amount 
+            // since this only gets called twice a year
+            // 1477741 - (608358 x 2) stays in contract
         }   else if (tokenId == last) { 
                 last_lotto_trigger = Gen.YEAR();
                 ICollection(F8N_0).transferFrom(
                     address(this), QUID, lambo
-                );
-                sdai.transfer(from, 69383 * 1e18); 
+                );  sdai.transfer(from, 69383 * 1e18); 
                 requestId = COORDINATOR.requestRandomWords(
                     keyHash,subscriptionId,
                     requestConfirmations,
@@ -217,7 +210,7 @@ contract Lotto is VRFConsumerBaseV2,
     }
    
     function deposit(uint tokenId) external { 
-        (address token0, address token1, uint128 liquidity) = _getPositionInfo(tokenId);
+        (address token0, address token1, uint128 liquidity) = _getInfo(tokenId);
         require(token1 == QD, "Uni::deposit: improper token id"); 
         // usually this means that the owner of the position already closed it
         require(liquidity > 0, "Uni::deposit: cannot deposit empty amount");
@@ -242,7 +235,7 @@ contract Lotto is VRFConsumerBaseV2,
             (block.timestamp - timestamp) > minLock,
             "Lock::withdraw: min duration hasn't elapsed yet"
         );
-        (address token0, , uint128 liquidity) = _getPositionInfo(tokenId);
+        (address token0, , uint128 liquidity) = _getInfo(tokenId);
         uint week_iterator = (timestamp - deployed) / 1 weeks;
         // could've deposited right before end of the week, so need some granularity
         // otherwise an unfairly large portion of rewards may be obtained by staker

@@ -6,7 +6,7 @@ import "hardhat/console.sol"; // TODO comment out
 import "./Dependencies/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 contract MO is ERC20 { 
-    IERC20 public sdai; address public lotto; // multi-purpose contract (OpEx)
+    IERC20 public sdai; address public lotok; // multi-purpose contract (OpEx)
     address constant public WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address constant public SDAI = 0x83F20F44975D03b1b09e64809B757c47f942BEeA;
     address constant public QUID = 0x42cc020Ef5e9681364ABB5aba26F39626F1874A4;
@@ -23,8 +23,8 @@ contract MO is ERC20 {
     
     event Minted (address indexed reciever, uint cost_in_usd, uint amt); // by !MO
     // Events are emitted, so only when we emit profits for someone do we call...
-    event Long (address indexed owner, address indexed clipper, uint fee); 
-    event Short (address indexed owner, address indexed clipper, uint fee);
+    event Long (address indexed owner, address indexed caller, uint fee); 
+    event Short (address indexed owner, address indexed caller, uint fee);
     event Voted (address indexed voter, uint vote); // only emit when increasing
     
     AggregatorV3Interface public chainlink;
@@ -48,42 +48,40 @@ contract MO is ERC20 {
         uint burned; // ^
         address[] d; // liquidated
     }
-    uint public YEAR; // actually half a year, every 6 months
+    uint public YEAR; // actually half a year, every 6 months...
     uint internal _PRICE; // TODO comment out when finish testing
     uint internal _POINTS; // used in call() weights (medianiser)
     struct Pod { // used in Pools (incl. individual Plunges')
-        uint cat; // carry CREDIT (work) with debt (ETH units)
-        uint dog; // work DEBIT sDAI from carry as collateral 
-        // cat used for fee voting; dog for fee charging
-    } // DOGma debit (antimony) credit CATalyst (ATP)... 
+        uint credit; 
+        uint debit; 
+        // credit used for fee voting; debit for fee charging
+    } 
     struct Owe { uint points; // time-weighted _balances  
-        Pod long; // dog = last timestamp of long APR payment...
-        Pod short; // dog = last timestamp of short APR payment...
+        Pod long; // debit = last timestamp of long APR payment...
+        Pod short; // debit = last timestamp of short APR payment...
         // IDK how Nik wrote mom.sol, but Pac wrote Dear Mama while 
         bool deuce; // pay...✌🏻xAPR for peace of mine, and flip debt
-        bool grace; // ditto ^^^^^ pro-rated _yoga but no ^^^^ ^^^^ 
+        bool grace; // ditto ^^^^^ pro-rated _call but no ^^^^ ^^^^ 
     } // deuce almighty and grace are characters 
     struct Pool { Pod long; Pod short; } // work
     /* Quote from a movie called...The Prestige
         The first part is called "The Plunge"... 
         The imagineer shows you something ordinary: 
-        a certificate of put, or a CD. Inspect it  
         to see if it's...indeed un-altered, normal 
     */ 
-    struct Plunge { // pledging to plunge into pool
+    struct Plunge { // pledging to plunge into work
         uint last; // timestamp of last state update
         Pool work; // debt and collat (long OR short)
-        Pod carry; // DEBITable ETH, QD bonus CREDIT 
+        Pod carry; // QD bonus CREDIT, DEBITable ETH
         Owe dues; // all kinds of utility variables
     }   mapping (address => Plunge) Plunges; 
     Pod internal wind; Pool internal work; 
     Pod internal carry; // cost of carry
     
-    // youtu.be/gQyV1wbPJXA?si=MvuPEnmFXnaRcvIB read offering (Jenga)
-    constructor(address _lotto, address _price) ERC20("QU!Dao", "QD") { 
-        _MO[0].start = 1719444444; lotto = _lotto;
+    // youtu.be/gQyV1wbPJXA?si=MvuPEnmFXnaRcvIB read offering
+    constructor(address _lotok, address _price) ERC20("QU!Dao", "QD") { 
+        _MO[0].start = 1719444444; lotok = _lotok; // MOlotock
         require(_msgSender() == QUID, "MO: wrong deployer");
-        require(sdai.approve(lotto, 1477741 * ONE * 16), "BACHATA");
         feeTargets = [MIN_APR, 85000000000000000,  90000000000000000,
            95000000000000000, 100000000000000000, 105000000000000000,
           110000000000000000, 115000000000000000, 120000000000000000,
@@ -131,9 +129,9 @@ contract MO is ERC20 {
         );  _send(from, to, value); return true;
     }
 
-    // in _yoga, the ground you stand on balances you...what balances the ground?
+    // in _call, the ground you stand on balances you...what balances the ground?
     function balanceOf(address account) public view override returns (uint256) {
-        return super.balanceOf(account) + _maturing[account].dog +  _maturing[account].cat;
+        return super.balanceOf(account) + _maturing[account].debit +  _maturing[account].credit;
         // matured QD ^^^^^^^ in the process of maturing as ^^^^ and just starting to mature
     }
 
@@ -149,7 +147,7 @@ contract MO is ERC20 {
         }
     }
 
-    // calculates CR (value of collat / value of debt)...if you look a little pale, might catch a cold
+    // calculates CR (value of collat / value of debt)...if you look a little pale, might creditch a cold
     function _blush(uint _price, uint _collat, uint _debt, bool _short) internal pure returns (uint) {   
         if (_short) {
             uint debt_in_QD = _ratio(_price, _debt, ONE); 
@@ -167,9 +165,9 @@ contract MO is ERC20 {
         if (value > balanceOf(from)) { 
             delta = value - balanceOf(from);
             value -= delta; 
-            _maturing[from].cat -= delta; 
+            _maturing[from].credit -= delta; 
             if (to != address(this)) { 
-                _maturing[to].cat += delta; 
+                _maturing[to].credit += delta; 
             } else { _burn(from, delta); 
                      _mint(address(this), delta);
             } // we never transfer QD back from
@@ -250,7 +248,7 @@ contract MO is ERC20 {
         else { shortMedian = data; } // fin
     }
 
-     // ------------ OPTIONAL -----------------
+    // ------------ OPTIONAL -----------------
     // voting can allow LTV to act as moneyness,
     // but while DSR is high this is unnecessary  
 
@@ -262,10 +260,10 @@ contract MO is ERC20 {
         // if you over-collat by 8% x scale
         // then you get a discount from APR
         // that is exactly proportional...
-        // means we do have to add it in _yoga
+        // means we do have to add it in _call
 
-        uint excess = YEAR * TARGET; // excess wind.cat
-        if (wind.cat > excess) {
+        uint excess = YEAR * TARGET; // excess wind.credit
+        if (wind.credit > excess) {
 
         } else {
 
@@ -277,127 +275,127 @@ contract MO is ERC20 {
         internal returns (Plunge memory plunge) { plunge = Plunges[addr]; require(
             !must_exist || plunge.last != 0, "MO: plunge must exist"); 
         bool clocked = false; uint old_points; uint grace; uint time;
-        if ((YEAR % 2 == 1) && (_maturing[addr].cat > 0)) {
+        if ((YEAR % 2 == 1) && (_maturing[addr].credit > 0)) {
             
             // TODO can't be a require must be an if 
              // FIXME call from temporary balances if current MO failed ??
             require(block.timestamp >= _MO[0].start + LENT &&
                 _MO[0].minted >= TARGET, "MO::get: early"); 
-            if (_maturing[addr].dog == 0) {
-                _maturing[addr].dog = _maturing[addr].cat;
-                _maturing[addr].cat = 0;
+            if (_maturing[addr].debit == 0) {
+                _maturing[addr].debit = _maturing[addr].credit;
+                _maturing[addr].credit = 0;
             }
             // TODO track total so that in mint or withdraw we know
-        } else if (_maturing[addr].dog > 0) { // !MO # 2 4 6 8...
-            // dog for 2 is cat from 0...then for 2 from 4...
-            _mint(addr, _maturing[addr].dog); 
-            _maturing[addr].dog = 0;
+        } else if (_maturing[addr].debit > 0) { // !MO # 2 4 6 8...
+            // debit for 2 is credit from 0...then for 2 from 4...
+            _mint(addr, _maturing[addr].debit); 
+            _maturing[addr].debit = 0;
         } // else if ()
         if (plunge.last != 0) { Pod memory _carry = plunge.carry; 
             old_points = plunge.dues.points; _POINTS -= old_points;
-            time = plunge.dues.long.dog > block.timestamp ? 0 : 
-                        block.timestamp - plunge.dues.long.dog; 
+            time = plunge.dues.long.debit > block.timestamp ? 0 : 
+                        block.timestamp - plunge.dues.long.debit; 
             // wait oh wait oh wait oh wait oh wait oh wait oh wait...oh
             uint fee = caller == addr ? 0 : MIN_APR / 100; // liquidator
-            uint in_carry = balanceOf(_msgSender()) + _carry.cat +
-                                      _ratio(price, _carry.dog, ONE); 
-            if (plunge.work.long.dog > 0) { // owes carried interest
+            uint in_carry = balanceOf(_msgSender()) + _carry.credit +
+                                      _ratio(price, _carry.debit, ONE); 
+            if (plunge.work.long.debit > 0) { // owes carried interest
                 Pod memory _work = plunge.work.long;
-                if (plunge.dues.long.dog == 0) { in_carry = 0; // TODO?
-                    plunge.dues.long.dog = block.timestamp;
+                if (plunge.dues.long.debit == 0) { in_carry = 0; // TODO?
+                    plunge.dues.long.debit = block.timestamp;
                 }   if (plunge.dues.deuce) { grace = 1; 
                     if (plunge.dues.grace) { // 15% per 6 months
-                        grace = fee * plunge.dues.long.dog;
+                        grace = fee * plunge.dues.long.debit;
                     } 
                 }   (_work, _carry, clocked) = _fetch_plunge(addr, 
                             _carry, _work, price, time, grace, false
                 ); 
-                if (clocked) { fee *= _work.dog / ONE;
+                if (clocked) { fee *= _work.debit / ONE;
                     if (grace == 0) { // TODO check size at least 50k
                         _MO[YEAR].d.push(addr);  
                     }
                     else if (grace == 1) {
-                        // carry.cat += fee; TODO??
-                        if (fee > 0) { _work.dog -= fee; } 
-                        work.short.dog += _work.dog;
-                        work.short.cat += _work.cat;
-                        plunge.work.short.dog = _work.dog;
-                        plunge.work.short.cat = _work.cat;
-                        plunge.dues.short.dog = block.timestamp + 96 hours; // TODO too much?
-                    }   else if (fee > 0) { carry.cat -= fee; 
+                        // carry.credit += fee; TODO??
+                        if (fee > 0) { _work.debit -= fee; } 
+                        work.short.debit += _work.debit;
+                        work.short.credit += _work.credit;
+                        plunge.work.short.debit = _work.debit;
+                        plunge.work.short.credit = _work.credit;
+                        plunge.dues.short.debit = block.timestamp + 96 hours; // TODO too much?
+                    }   else if (fee > 0) { carry.credit -= fee; 
                         emit Long(addr, caller, fee);
-                    }   plunge.work.long.cat = 0;
-                        plunge.work.long.dog = 0;
-                        plunge.dues.long.dog = 0; 
-                } else { plunge.work.long.dog = _work.dog; 
-                        plunge.work.long.cat = _work.cat;
+                    }   plunge.work.long.credit = 0;
+                        plunge.work.long.debit = 0;
+                        plunge.dues.long.debit = 0; 
+                } else { plunge.work.long.debit = _work.debit; 
+                        plunge.work.long.credit = _work.credit;
                         // only update timestamp if charged otherwise can
                         // keep resetting timestamp before 10 minutes pass
                         // and never get charged APR at all (costs gas tho)
-                        if (in_carry > balanceOf(_msgSender()) + _carry.cat +
-                                                 _ratio(price, _carry.dog, ONE)) {
-                                                 plunge.dues.long.dog = block.timestamp; } 
-                }   plunge.carry = _carry; if (fee > 0) { Plunges[caller].carry.cat += fee; }
+                        if (in_carry > balanceOf(_msgSender()) + _carry.credit +
+                                                 _ratio(price, _carry.debit, ONE)) {
+                                                 plunge.dues.long.debit = block.timestamp; } 
+                }   plunge.carry = _carry; if (fee > 0) { Plunges[caller].carry.credit += fee; }
             } // plunges should never be short AND a long at the same time
-            else if (plunge.work.short.dog > 0) { // that's why ELSE if
+            else if (plunge.work.short.debit > 0) { // that's why ELSE if
                 Pod memory _work = plunge.work.short;
-                time = plunge.dues.short.dog > block.timestamp ? 
-                    0 : block.timestamp - plunge.dues.short.dog; 
-                if (plunge.dues.short.dog == 0) { // edge case
-                    plunge.dues.short.dog = block.timestamp;
+                time = plunge.dues.short.debit > block.timestamp ? 
+                    0 : block.timestamp - plunge.dues.short.debit; 
+                if (plunge.dues.short.debit == 0) { // edge case
+                    plunge.dues.short.debit = block.timestamp;
                 }   if (plunge.dues.deuce) { grace = 1;
                     if (plunge.dues.grace) {  // 15% per 6 months
-                        grace = fee * plunge.dues.short.dog;
+                        grace = fee * plunge.dues.short.debit;
                     }
                 }   (_work, _carry, clocked) = _fetch_plunge(addr, 
                             _carry, _work, price, time, grace, true
                 );
-                if (clocked) { fee *= _work.dog / ONE;
+                if (clocked) { fee *= _work.debit / ONE;
                     if (grace == 0) { // TODO check size at least 50k
                         _MO[YEAR].d.push(addr);
                     }
                     else if (grace == 1) { 
-                        if (fee > 0) { _work.dog += fee; }
-                        work.long.cat += _work.cat;
-                        work.long.dog += _work.dog;
-                        plunge.work.long.cat = _work.cat;
-                        plunge.work.long.dog = _work.dog;
-                        plunge.dues.long.dog = block.timestamp + 96 hours; // TODO too much?
-                    }   if (fee > 0) { carry.cat -= fee; 
+                        if (fee > 0) { _work.debit += fee; }
+                        work.long.credit += _work.credit;
+                        work.long.debit += _work.debit;
+                        plunge.work.long.credit = _work.credit;
+                        plunge.work.long.debit = _work.debit;
+                        plunge.dues.long.debit = block.timestamp + 96 hours; // TODO too much?
+                    }   if (fee > 0) { carry.credit -= fee; 
                         emit Short(addr, caller, fee);
-                    }   plunge.work.short.cat = 0;
-                        plunge.work.short.dog = 0;
-                        plunge.dues.short.dog = 0; 
+                    }   plunge.work.short.credit = 0;
+                        plunge.work.short.debit = 0;
+                        plunge.dues.short.debit = 0; 
                 } else { 
-                    plunge.work.short.cat = _work.cat;
-                    plunge.work.short.dog = _work.dog;
-                    if (in_carry > balanceOf(_msgSender()) + _carry.cat +
-                                             _ratio(price, _carry.dog, ONE)) {
-                        plunge.dues.short.dog = block.timestamp; 
-                    }   plunge.dues.short.dog = block.timestamp;
+                    plunge.work.short.credit = _work.credit;
+                    plunge.work.short.debit = _work.debit;
+                    if (in_carry > balanceOf(_msgSender()) + _carry.credit +
+                                             _ratio(price, _carry.debit, ONE)) {
+                        plunge.dues.short.debit = block.timestamp; 
+                    }   plunge.dues.short.debit = block.timestamp;
                 }   plunge.carry = _carry;
                 if (fee > 0) {
-                    Plunges[caller].carry.cat += fee;
+                    Plunges[caller].carry.credit += fee;
                 }
             }
             if (balanceOf(addr) > 0) { // TODO default vote not counted
                 // TODO simplify based on !MO
                 plunge.dues.points += ( // 
                     ((block.timestamp - plunge.last) / 1 hours) 
-                    * (balanceOf(addr) + plunge.carry.cat) / ONE
+                    * (balanceOf(addr) + plunge.carry.credit) / ONE
                 ); 
 
-                // carry.cat; // is subtracted from 
+                // carry.credit; // is subtracted from 
                 // rebalance fee targets (governance)
-                if (plunge.dues.long.cat != 0) { 
+                if (plunge.dues.long.credit != 0) { 
                     _medianise(plunge.dues.points, 
-                        plunge.dues.long.cat, old_points, 
-                        plunge.dues.long.cat, false
+                        plunge.dues.long.credit, old_points, 
+                        plunge.dues.long.credit, false
                     );
-                } if (plunge.dues.short.cat != 0) {
+                } if (plunge.dues.short.credit != 0) {
                     _medianise(plunge.dues.points, 
-                        plunge.dues.short.cat, old_points, 
-                        plunge.dues.short.cat, true
+                        plunge.dues.short.credit, old_points, 
+                        plunge.dues.short.credit, true
                     );
                 }   _POINTS += plunge.dues.points;
             }
@@ -414,40 +412,40 @@ contract MO is ERC20 {
         if (delta >= 10 minutes) { // 52704 x 10 mins per year
             uint apr = short ? shortMedian.apr : longMedian.apr; 
             delta /= 10 minutes; uint owe = (deuce > 0) ? 2 : 1; 
-            owe *= (apr * _work.dog * delta) / (52704 * ONE);
-            delta = _blush(price, _work.cat, _work.dog, short);
+            owe *= (apr * _work.debit * delta) / (52704 * ONE);
+            delta = _blush(price, _work.credit, _work.debit, short);
             if (delta < ONE) {
-                (_work, _carry, clocked) = _yoga(addr, _work, _carry, 
+                (_work, _carry, clocked) = _call(addr, _work, _carry, 
                                                  deuce, short, price);
             }  else { 
             // if (delta > MIN_CR) { // TODO APR discount based on CR/MIN_CR
                 // }
                 
-                uint most = short ? _min(_carry.dog, owe) : _min(_carry.cat, owe);
+                uint most = short ? _min(_carry.debit, owe) : _min(_carry.credit, owe);
                 if (owe > 0 && most > 0) { 
                     if (short) { 
-                        wind.dog += most;
-                        carry.dog -= most;
-                        _carry.dog -= most; 
+                        wind.debit += most;
+                        carry.debit -= most;
+                        _carry.debit -= most; 
                         owe -= _ratio(price, most, ONE);
-                    } else { _carry.cat -= most;
-                        carry.cat += most; // TODO double check if double spend
+                    } else { _carry.credit -= most;
+                        carry.credit += most; // TODO double check if double spend
                         owe -= most;
                     }
                     // TODO the user's own _maturing balance?
                 } if (owe > 0) { 
                     most = _min(balanceOf(addr), owe);
                     _send(addr, address(this), most);
-                    owe -= most; carry.cat += most;
+                    owe -= most; carry.credit += most;
                     if (short && owe > 0) { owe = _ratio(owe, price, ONE);
-                        most = _min(_carry.cat, owe); _carry.cat -= most;
+                        most = _min(_carry.credit, owe); _carry.credit -= most;
                         // TODO double check if double spend
-                        carry.cat += most; owe -= most;
+                        carry.credit += most; owe -= most;
                     } else if (owe > 0) { owe = _ratio(ONE, owe, price); 
-                        most = _min(_carry.dog, owe); wind.dog += most;
-                        _carry.dog -= most; carry.dog -= most; owe -= most;
+                        most = _min(_carry.debit, owe); wind.debit += most;
+                        _carry.debit -= most; carry.debit -= most; owe -= most;
                     }   if (owe > 0) { // plunge cannot pay APR (delinquent)
-                        (_work, _carry, clocked) = _yoga(addr, 
+                        (_work, _carry, clocked) = _call(addr, 
                          _work, _carry, 0, short, price);
                     } 
                 }   
@@ -455,126 +453,126 @@ contract MO is ERC20 {
         }   return (_work, _carry, clocked);
     }
     
-    // "Don't get no better than this, you catch my drift?
+    // "Don't get no better than this, you creditch my drift?
     // So close no matter how far, rage be in it like you 
     // couldn’t believe...or work like one could scarcely 
     // imagine...if one isn’t satisfied, indulge the latter
     // ‘neath the halo of a street-lamp...I fold my collar
     // to the cold and damp...know when to hold 'em...know 
     // when to..." 
-    function _yoga(address owner, Pod memory _work, Pod memory _carry, 
+    function _call(address owner, Pod memory _work, Pod memory _carry, 
                    uint deuce, bool short, uint price) internal 
                    returns (Pod memory, Pod memory, bool folded) {
-        uint in_QD = _ratio(price, _work.cat, ONE); // folded = true;
+        uint in_QD = _ratio(price, _work.credit, ONE); // folded = true;
         if (short && in_QD > 0) { // only if plunge owe any debt at all...
-            if (_work.dog > in_QD) { // profitable (probably voluntary)
+            if (_work.debit > in_QD) { // profitable (probably voluntary)
                 folded = true;
-                _work.dog -= in_QD; // return debited
-                carry.cat += in_QD; // amount to carry
+                _work.debit -= in_QD; // return debited
+                carry.credit += in_QD; // amount to carry
                 
-                // since we canceled all the cat then
-                // surplus dog is the plunge's profit
+                // since we canceled all the credit then
+                // surplus debit is the plunge's profit
              
                 
-                // FIXME increase wind.cat...???...as it were,
+                // FIXME increase wind.credit...???...as it were,
                 // PROFIT CAME AT THE EXPENSE OF carry (everyone):
                 
                 // throw caution to the wind 
-                // wind.cat += plunge.work.short.dog;
+                // wind.credit += plunge.work.short.debit;
 
                 // for creating QD we add QDebt, but this shouldn't
                 // make the system more insolvent, no net change to 
                 // LTV overall (TVL CR)
 
             } 
-            // in_QD is worth more than _work.dog, price went up...
+            // in_QD is worth more than _work.debit, price went up...
             else { // "Lightnin' strikes and the court lights get dim"
                 if (deuce == 0) { // no grace, and no way to flip debt
-                    uint delta = (in_QD * MIN_CR) / ONE - _work.dog;
-                    uint sp_value = balanceOf(owner) + _carry.cat +
-                    _ratio(price, _carry.dog, ONE); uint in_eth;
-                    if (delta > sp_value) { delta = in_QD - _work.dog; } 
+                    uint delta = (in_QD * MIN_CR) / ONE - _work.debit;
+                    uint sp_value = balanceOf(owner) + _carry.credit +
+                    _ratio(price, _carry.debit, ONE); uint in_eth;
+                    if (delta > sp_value) { delta = in_QD - _work.debit; } 
                     // "It's like inch by inch and step by step...i'm closin'
                     // in on your position and reconstruction is my mission"
                     if (sp_value >= delta) { folded = false;
                         // decrement QD first because ETH is rising
-                        uint most = _min(_carry.cat, delta);
+                        uint most = _min(_carry.credit, delta);
                         if (most > 0) { in_eth = _ratio(ONE, most, price);
-                            _work.cat -= in_eth; _carry.cat -= most;
-                            work.short.cat -= in_eth; delta -= most; 
+                            _work.credit -= in_eth; _carry.credit -= most;
+                            work.short.credit -= in_eth; delta -= most; 
                         } if (delta > 0) { // use _balances
                             most = _min(balanceOf(owner), delta);
                             if (most > 0) { delta -= most;
                                 _send(owner, address(this), most);
-                                carry.cat += most; 
+                                carry.credit += most; 
                                 in_eth = _ratio(ONE, most, price);
-                                _work.cat -= in_eth; 
+                                _work.credit -= in_eth; 
                                 
-                                work.short.cat -= in_eth;
+                                work.short.credit -= in_eth;
                             }
                         } if (delta > 0) { in_eth = _ratio(ONE, delta, price);
-                            carry.dog -= in_eth; _carry.dog -= in_eth;
-                            wind.dog += in_eth; _work.cat -= in_eth;
-                            work.short.cat -= in_eth;                            
+                            carry.debit -= in_eth; _carry.debit -= in_eth;
+                            wind.debit += in_eth; _work.credit -= in_eth;
+                            work.short.credit -= in_eth;                            
                         } 
                     } 
                 } if (folded && deuce == 0) { 
-                    carry.cat += _work.dog; 
+                    carry.credit += _work.debit; 
                 } // TODO cover grace
             } if (folded) { 
-                if (deuce > 1) { in_QD = _min(deuce, _work.dog);
-                    work.short.dog -= in_QD; carry.cat += in_QD;
-                    work.short.cat -= _min(_work.cat,
+                if (deuce > 1) { in_QD = _min(deuce, _work.debit);
+                    work.short.debit -= in_QD; carry.credit += in_QD;
+                    work.short.credit -= _min(_work.credit,
                         _ratio(ONE, in_QD, price)
                     ); folded = false;
-                } else { work.short.cat -= _work.cat;
-                         work.short.dog -= _work.dog;  
+                } else { work.short.credit -= _work.credit;
+                         work.short.debit -= _work.debit;  
                 }  // either deuce state was 0 or zero...
                 // TODO account if voluntary fold
-                // _carry.cat += _work.dog
+                // _carry.credit += _work.debit
             }
         } else if (in_QD > 0) { // leveraged long 
-            if (in_QD > _work.dog) { // profitable  
-                in_QD -= _work.dog; // remainder = profit
-                _carry.cat += in_QD;
+            if (in_QD > _work.debit) { // profitable  
+                in_QD -= _work.debit; // remainder = profit
+                _carry.credit += in_QD;
                 // return the debited amount to carry
-                carry.cat += _work.dog; // FIXME 
-                // wind.cat += in_QD; 
+                carry.credit += _work.debit; // FIXME 
+                // wind.credit += in_QD; 
                 // SOMETIMES WE NEED TO ADD DEBT
-                // if this was not cat from actual ETH puted
-                // but virtual cat based on sDAI
+                // if this was not credit from actual ETH puted
+                // but virtual credit based on sDAI
             } else { 
                 if (deuce == 0) { // liquidatable
-                    uint delta = (_work.dog * MIN_CR) / ONE - in_QD;
-                    uint sp_value = balanceOf(owner) + _carry.cat +
-                    _ratio(price, _carry.dog, ONE); uint in_eth;
-                    if (delta > sp_value) { delta = _work.dog - in_QD; } 
+                    uint delta = (_work.debit * MIN_CR) / ONE - in_QD;
+                    uint sp_value = balanceOf(owner) + _carry.credit +
+                    _ratio(price, _carry.debit, ONE); uint in_eth;
+                    if (delta > sp_value) { delta = _work.debit - in_QD; } 
                     if (sp_value >= delta) { folded = false;
                         // decrement ETH first because it's falling
                         in_eth = _ratio(ONE, delta, price);
-                        uint most = _min(_carry.dog, in_eth);
-                        if (most > 0) { carry.dog -= most; // remove ETH from carry
-                            _carry.dog -= most; wind.dog += most; // sell the ETH 
-                            _work.cat += most; work.short.cat += most;
+                        uint most = _min(_carry.debit, in_eth);
+                        if (most > 0) { carry.debit -= most; // remove ETH from carry
+                            _carry.debit -= most; wind.debit += most; // sell the ETH 
+                            _work.credit += most; work.short.credit += most;
                             delta -= _ratio(price, most, ONE);
-                        } if (delta > 0) { carry.cat += most;
-                            most = _min(_carry.cat, delta); 
-                            _carry.cat -= most; _work.dog -= most;
-                            work.long.dog -= most; delta -= most;   
-                        } if (delta > 0) { carry.cat += delta;
+                        } if (delta > 0) { carry.credit += most;
+                            most = _min(_carry.credit, delta); 
+                            _carry.credit -= most; _work.debit -= most;
+                            work.long.debit -= most; delta -= most;   
+                        } if (delta > 0) { carry.credit += delta;
                             _send(owner, address(this), delta);
-                            _work.dog -= delta; work.long.dog -= delta;   
+                            _work.debit -= delta; work.long.debit -= delta;   
                         }
                     } 
-                } if (folded && deuce == 0) { carry.cat += _work.dog; }
+                } if (folded && deuce == 0) { carry.credit += _work.debit; }
             } if (folded) {
-                if (deuce > 1) { in_QD = _min(deuce, _work.dog);
-                    work.long.dog -= in_QD; carry.cat += in_QD;
-                    work.long.cat -= _min(_work.cat,
+                if (deuce > 1) { in_QD = _min(deuce, _work.debit);
+                    work.long.debit -= in_QD; carry.credit += in_QD;
+                    work.long.credit -= _min(_work.credit,
                                         _ratio(ONE, in_QD, price));
                                         folded = false;
-                } else { work.long.cat -= _work.cat;
-                         work.long.dog -= _work.dog;
+                } else { work.long.credit -= _work.credit;
+                         work.long.debit -= _work.debit;
                 } 
             }
         } return (_work, _carry, folded);
@@ -595,7 +593,6 @@ contract MO is ERC20 {
         } 
     }
 
-    // like in a car, disconnects liquidation engine from transmission
     function clutch(bool grace) external { uint price = _get_price(); 
         Plunge memory plunge = _get_update(_msgSender(), price, true, _msgSender());
         if (grace) { plunge.dues.deuce = true; plunge.dues.grace = true; } else {
@@ -607,35 +604,36 @@ contract MO is ERC20 {
     function fold(bool short) external { uint price = _get_price(); // Neo Jiu Jitsu
         Plunge memory plunge = _get_update(_msgSender(), price, true, _msgSender());
         Pod memory _carry = plunge.carry; uint deuce = plunge.dues.deuce ? 1 : 0;
-        if (short) { (,_carry,) = _yoga(_msgSender(), plunge.work.short, 
+        if (short) { (,_carry,) = _call(_msgSender(), plunge.work.short, 
                                         _carry, deuce, true, price);
-            plunge.work.short.cat = 0;
-            plunge.work.short.dog = 0;
-            plunge.dues.short.dog = 0;
-        } else { (,_carry,) = _yoga(_msgSender(), plunge.work.long,
+            plunge.work.short.credit = 0;
+            plunge.work.short.debit = 0;
+            plunge.dues.short.debit = 0;
+        } else { (,_carry,) = _call(_msgSender(), plunge.work.long,
                                     _carry, deuce, false, price); 
-            plunge.work.long.cat = 0;
-            plunge.work.long.dog = 0;
-            plunge.dues.long.dog = 0;
+            plunge.work.long.credit = 0;
+            plunge.work.long.debit = 0;
+            plunge.dues.long.debit = 0;
         }   plunge.carry = _carry; // 🔫
         Plunges[_msgSender()] = plunge; 
     } // function even looks like an F
 
+    // truth is the highest vibration (not love).  
     function vote(uint apr, bool short) external {
         uint delta = MIN_APR / 16; // half a percent
         require(apr >= MIN_APR && apr <= (MIN_APR * 3 - delta * 6)
                 && apr % delta == 0, "MO::vote: unacceptable APR");
-        uint old_vote; // a vote of confidence gives...credit (cat)
+        uint old_vote; // a vote of confidence gives...credit (credit)
         uint price = _get_price();
         Plunge memory plunge = _get_update(
             _msgSender(), price, true, _msgSender()
         );
         if (short) {
-            old_vote = plunge.dues.short.cat;
-            plunge.dues.short.cat = apr;
+            old_vote = plunge.dues.short.credit;
+            plunge.dues.short.credit = apr;
         } else {
-            old_vote = plunge.dues.long.cat;
-            plunge.dues.long.cat = apr;
+            old_vote = plunge.dues.long.credit;
+            plunge.dues.long.credit = apr;
         }
         _medianise(plunge.dues.points, apr, plunge.dues.points, old_vote, short);
         Plunges[_msgSender()] = plunge;
@@ -650,22 +648,22 @@ contract MO is ERC20 {
         if (!_carry) { uint most;
             _send(_msgSender(), address(this), amount);
             if (long) {
-                most = _min(amount, plunge.work.long.dog);
-                plunge.work.long.dog -= most;
-                work.long.dog -= most;
+                most = _min(amount, plunge.work.long.debit);
+                plunge.work.long.debit -= most;
+                work.long.debit -= most;
                 amount -= most;
-            } else { // we can't decrease the short dog because
+            } else { // we can't decrease the short debit because
                 // that would simply decrease profits in fold()
                 uint eth = _ratio(ONE, amount, price);
-                most = _min(eth, plunge.work.short.cat);
-                plunge.work.short.cat -= eth;
-                work.short.cat -= eth;
+                most = _min(eth, plunge.work.short.credit);
+                plunge.work.short.credit -= eth;
+                work.short.credit -= eth;
                 most = _ratio(price, most, ONE);
                 amount -= most;
             }
             // TODO helper function gets rate
-            carry.cat += most; // interchanging QD/sDAI consider ratio
-            if (amount > 0) { plunge.carry.cat += amount; }
+            carry.credit += most; // interchanging QD/sDAI consider ratio
+            if (amount > 0) { plunge.carry.credit += amount; }
         }
         else if (two_plunges) { _send(_msgSender(), beneficiary, amount); } // TODO sender.carry -= ; receiver.carry
         else { // not two_plunges && not _carry
@@ -683,9 +681,9 @@ contract MO is ERC20 {
         if (!qd) { // call only from carry...use escrow() or fold() for work 
             // the work balance is a synthetic (virtual) representation of ETH
             // plunges only care about P&L, which can only be called in QD 
-            most = _min(plunge.carry.dog, amt);
-            plunge.carry.dog -= most;
-            carry.dog -= most;
+            most = _min(plunge.carry.debit, amt);
+            plunge.carry.debit -= most;
+            carry.debit -= most;
             // require(address(this).balance > most, "MO::call: deficit ETH");
             payable(_msgSender()).transfer(most); // TODO use WETH to put % in Lock?
         } 
@@ -695,7 +693,7 @@ contract MO is ERC20 {
             // in order to satisfy call (in that sense perfection rights are priotised)
             // this automatically ensures that YEAR > 1
             
-            // try to burn carry.cat against existing
+            // try to burn carry.credit against existing
 
             require(super.balanceOf(_msgSender()) >= amt, 
                     "MO::call: insufficient QD balance");
@@ -712,23 +710,23 @@ contract MO is ERC20 {
             // carry.CREDIT OVER TIME (TOTAL POINTS)
             // WILL GET ITS SHARE OF THE WP AT THE END  ??
             // 1/16 * _get_owe_scale 
-            // (carry - wind).cat
+            // (carry - wind).credit
               
-            uint assets = carry.cat + work.short.dog + work.long.dog + 
-            _ratio(price, wind.dog, ONE) + _ratio(price, carry.dog, ONE); 
+            uint assets = carry.credit + work.short.debit + work.long.debit + 
+            _ratio(price, wind.debit, ONE) + _ratio(price, carry.debit, ONE); 
 
             // TODO collapse work positions back into carry 
             // can only call from what is inside carry
 
             // 1/16th or 1/8th 
-            uint liabilities = wind.cat + // QDebt from !MO 
-            _ratio(price, work.long.cat, ONE) + // synthetic ETH collat
-            _ratio(price, work.short.cat, ONE);  // synthetic ETH debt
+            uint liabilities = wind.credit + // QDebt from !MO 
+            _ratio(price, work.long.credit, ONE) + // synthetic ETH collat
+            _ratio(price, work.short.credit, ONE);  // synthetic ETH debt
          
             if (liabilities > assets) {
 
             } else { 
-                // carry.cat -= least; _burn(_msgSender(), amt); 
+                // carry.credit -= least; _burn(_msgSender(), amt); 
                 // sdai.transferFrom(address(this), _msgSender(), amt);
             }      
         }
@@ -746,7 +744,7 @@ contract MO is ERC20 {
 
         if (block.timestamp >= _MO[YEAR].start + LENT + 144 days) { // 6 months
             if (_MO[YEAR].minted >= TARGET) { // _MO[YEAR].locked * MO_FEE / ONE
-                sdai.transferFrom(address(this), lotto, 1477741 * ONE); // ^  
+                sdai.transferFrom(address(this), lotok, 1477741 * ONE); // ^  
                 _MO[YEAR].locked = 272222222 * ONE; // minus 0.54% of sDAI
             }   YEAR += 1; // "same level, the same
             //  rebel that never settled" in _get_owe()
@@ -764,23 +762,23 @@ contract MO is ERC20 {
                           type(uint256).max - 1);
             }
             _MO[YEAR].locked += cost; _MO[YEAR].minted += amount;
-            wind.cat += amount; // the debts associated with QD
+            wind.credit += amount; // the debts associated with QD
             // balances belong to everyone, not to any individual;
             // amount decremented by APR payments in QD (or call)
             uint cut = MO_CUT * amount / ONE; // 0.22% 777,742 QD
-            _maturing[beneficiary].cat += amount - cut; // QD
-            _mint(lotto, cut); carry.cat += cost; 
+            _maturing[beneficiary].credit += amount - cut; // QD
+            _mint(lotok, cut); carry.credit += cost; 
             emit Minted(beneficiary, cost, amount); 
-            require(supply_cap >= wind.cat,
+            require(supply_cap >= wind.credit,
             "MO::mint: supply cap exceeded"); 
 
             // TODO helper function
-            // for how much cat to mint
+            // for how much credit to mint
             // based on target (what was minted before) and what is surplus from fold
             // different input to _get_owe(). fold only credits a carry to the plunge winsin
             
-            // wind.cat 
-            // TODO add amt to plunge.carry.cat ??
+            // wind.credit 
+            // TODO add amt to plunge.carry.credit ??
             
             sdai.transferFrom(_msgSender(), address(this), cost); // TODO approve in frontend
             
@@ -791,50 +789,50 @@ contract MO is ERC20 {
         require(block.timestamp >= _MO[0].start + LENT &&
                 _MO[0].minted >= TARGET, "MO::escrow: early");    
         // if above fails must call call for sDAI refund ? 
-        uint price = _get_price(); uint dog; uint cat; 
+        uint price = _get_price(); uint debit; uint credit; 
         Plunge memory plunge = _get_update(_msgSender(), 
                              price, false, _msgSender());  
         if (short) { 
-            require(plunge.work.long.dog == 0 
-            && plunge.dues.long.dog == 0, // timestmap
+            require(plunge.work.long.debit == 0 
+            && plunge.dues.long.debit == 0, // timestmap
             "MO::escrow: plunge is already long");
-        } else { require(plunge.work.short.dog == 0 
-            && plunge.dues.short.dog == 0, // timestamp
+        } else { require(plunge.work.short.debit == 0 
+            && plunge.dues.short.debit == 0, // timestamp
             "MO::escrow: plunge is already short");
         }
-        uint _carry = balanceOf(_msgSender()) + plunge.carry.cat + _ratio(
-        price, plunge.carry.dog, ONE); uint old = carry.cat * 85 / 100;
+        uint _carry = balanceOf(_msgSender()) + plunge.carry.credit + _ratio(
+        price, plunge.carry.debit, ONE); uint old = carry.credit * 85 / 100;
         uint eth = _ratio(ONE, amount, price); // amount of ETH being credited:
         uint max = plunge.dues.deuce ? 2 : 1; // used in require(max escrowable)
         if (!short) { max *= longMedian.apr; eth += msg.value; // wind
-            // we are crediting the plunge's long with virtual cat 
+            // we are crediting the plunge's long with virtual credit 
             // in units of ETH (its sDAI value is owed back to carry) 
-            plunge.work.long.cat += eth; work.long.cat += eth;
-            // put() of QD to short work will reduce cat value
+            plunge.work.long.credit += eth; work.long.credit += eth;
+            // put() of QD to short work will reduce credit value
             // we debited (in sDAI) by drawing from carry, recording 
-            // the total value debited (and value of the ETH cat)
+            // the total value debited (and value of the ETH credit)
             // will determine the P&L of the position in the future
-            plunge.work.long.dog += amount; carry.cat -= amount;
+            plunge.work.long.debit += amount; carry.credit -= amount;
             // increments a liability (work); decrements an asset^
-            work.long.dog += amount; wind.dog += msg.value; 
-            // essentially dog is the collat backing the cat
-            dog = plunge.work.long.dog; cat = plunge.work.long.cat;
+            work.long.debit += amount; wind.debit += msg.value; 
+            // essentially debit is the collat backing the credit
+            debit = plunge.work.long.debit; credit = plunge.work.long.credit;
         } else { max *= shortMedian.apr; // see above for explanation
-            plunge.work.short.cat += eth; work.short.cat += eth;
-            // put() of QD to work.sort will reduce dog owed that
+            plunge.work.short.credit += eth; work.short.credit += eth;
+            // put() of QD to work.sort will reduce debit owed that
             // we debited (in sDAI) by drawing from carry (and recording)
-            plunge.work.short.dog += amount; carry.cat -= amount;
-            eth = _min(msg.value, plunge.work.short.cat);
-            plunge.work.short.cat -= eth; // there's no way
-            work.short.cat -= eth; // to burn actual ETH so
-            wind.dog += eth; // ETH belongs to all plunges
-            eth = msg.value - eth; plunge.carry.dog += eth;
-            carry.dog += eth; work.short.dog += amount; 
+            plunge.work.short.debit += amount; carry.credit -= amount;
+            eth = _min(msg.value, plunge.work.short.credit);
+            plunge.work.short.credit -= eth; // there's no way
+            work.short.credit -= eth; // to burn actual ETH so
+            wind.debit += eth; // ETH belongs to all plunges
+            eth = msg.value - eth; plunge.carry.debit += eth;
+            carry.debit += eth; work.short.debit += amount; 
             
-            dog = plunge.work.short.dog; cat = plunge.work.short.cat;
-        }   require(old > work.short.cat + work.long.cat, "MO::escrow");
-        require(_blush(price, cat, dog, short) >= MIN_CR && // too much...
-        (carry.cat / 5 > dog) && _carry > (dog * max * MIN_APR / ONE), 
+            debit = plunge.work.short.debit; credit = plunge.work.short.credit;
+        }   require(old > work.short.credit + work.long.credit, "MO::escrow");
+        require(_blush(price, credit, debit, short) >= MIN_CR && // too much...
+        (carry.credit / 5 > debit) && _carry > (debit * max * MIN_APR / ONE), 
             "MO::escrow: taking on more leverage than considered healthy"
         ); Plunges[_msgSender()] = plunge; // write to storage last 
     }
