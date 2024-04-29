@@ -5,8 +5,11 @@ pragma solidity =0.8.8;
 import "hardhat/console.sol"; // TODO comment out
 import "./Dependencies/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
 contract MO is ERC20 { 
-    IERC20 public sdai; address public lotok; // multi-purpose contract (OpEx)
+    AggregatorV3Interface public chainlink;
+    IERC20 public sdai; address public lot; // multi-purpose (lock/lotto/OpEx)
+    address constant public mevETH = 0x24Ae2dA0f361AA4BE46b48EB19C91e02c5e4f27E; 
     address constant public WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address constant public SDAI = 0x83F20F44975D03b1b09e64809B757c47f942BEeA;
     address constant public QUID = 0x42cc020Ef5e9681364ABB5aba26F39626F1874A4;
@@ -19,15 +22,9 @@ contract MO is ERC20 {
     uint constant public STACK = C_NOTE * 100; // 10_000 in QD.
     uint constant public C_NOTE = 100 * ONE; 
     uint constant public RACK = STACK / 10;
-    uint constant public CENT = ONE / 100; 
-    
-    event Minted (address indexed reciever, uint cost_in_usd, uint amt); // by !MO
-    // Events are emitted, so only when we emit profits for someone do we call...
-    event Long (address indexed owner, address indexed caller, uint fee); 
-    event Short (address indexed owner, address indexed caller, uint fee);
-    event Voted (address indexed voter, uint vote); // only emit when increasing
-    
-    AggregatorV3Interface public chainlink;
+    uint constant public CENT = ONE / 100;
+    // investment banks underwriting IPO 
+    // take 2-7%...compare this to 0.76%
     uint constant public MO_FEE = 54 * CENT; 
     uint constant public MO_CUT = 22 * CENT; 
     uint constant public MIN_CR = 108080808080808080; 
@@ -46,42 +43,34 @@ contract MO is ERC20 {
         uint locked; // sDAI
         uint minted; // QD
         uint burned; // ^
-        address[] d; // liquidated
-    }
-    uint public YEAR; // actually half a year, every 6 months...
+        address[] own;
+    }  uint public YEAR; // actually half a year, every 6 months
     uint internal _PRICE; // TODO comment out when finish testing
     uint internal _POINTS; // used in call() weights (medianiser)
     struct Pod { // used in Pools (incl. individual Plunges')
-        uint credit; 
-        uint debit; 
-        // credit used for fee voting; debit for fee charging
-    } 
-    struct Owe { uint points; // time-weighted _balances  
-        Pod long; // debit = last timestamp of long APR payment...
-        Pod short; // debit = last timestamp of short APR payment...
-        // IDK how Nik wrote mom.sol, but Pac wrote Dear Mama while 
-        bool deuce; // pay...✌🏻xAPR for peace of mine, and flip debt
+        uint credit; // in wind...this is hamsin (heat wave)
+        uint debit; // in wind this is mevETH shares (chilly)
+    }  // credit used for fee voting; debit for fee charging
+    struct Owe { uint points; // time-weighted _balances of QD 
+        Pod long; // debit = last timestamp of long APR payment;
+        Pod short; // debit = last timestamp of short APR payment
+        bool deux; // pay...✌🏻xAPR for peace of mind, and flip debt
         bool grace; // ditto ^^^^^ pro-rated _call but no ^^^^ ^^^^ 
-    } // deuce almighty and grace are characters 
+    } // deux almighty and grace...married options are hard work...  
     struct Pool { Pod long; Pod short; } // work
-    /* Quote from a movie called...The Prestige
-        The first part is called "The Plunge"... 
-        The imagineer shows you something ordinary: 
+    /*  The first part is called "The Pledge"... 
+        An imagineer shows you something ordinary: 
         to see if it's...indeed un-altered, normal 
-    */ 
-    struct Plunge { // pledging to plunge into work
+    */ Pod internal carry; // cost of carry as we:
+    struct Plunge { // pledge to plunge into work...
         uint last; // timestamp of last state update
         Pool work; // debt and collat (long OR short)
-        Pod carry; // QD bonus CREDIT, DEBITable ETH
         Owe dues; // all kinds of utility variables
-    }   mapping (address => Plunge) Plunges; 
-    Pod internal wind; Pool internal work; 
-    Pod internal carry; // cost of carry
-    
-    // youtu.be/gQyV1wbPJXA?si=MvuPEnmFXnaRcvIB read offering
-    constructor(address _lotok, address _price) ERC20("QU!Dao", "QD") { 
-        _MO[0].start = 1719444444; lotok = _lotok; // MOlotock
-        require(_msgSender() == QUID, "MO: wrong deployer");
+        uint eth; // Marvel's (pet) Rock of Eternity
+    }   mapping (address => Plunge) Plunges;
+    Pod internal wind; Pool internal work; // internally 1 sDAI = 1 QD
+    constructor(address _lot, address _price) ERC20("QU!Dao", "QD") { 
+        _MO[0].start = 1719444444; lot = _lot; 
         feeTargets = [MIN_APR, 85000000000000000,  90000000000000000,
            95000000000000000, 100000000000000000, 105000000000000000,
           110000000000000000, 115000000000000000, 120000000000000000,
@@ -96,6 +85,12 @@ contract MO is ERC20 {
         longMedian = Medianiser(MIN_APR, blank, 0, 0, 0);
         shortMedian = Medianiser(MIN_APR, blank, 0, 0, 0); 
     }
+
+    event Minted (address indexed reciever, uint cost_in_usd, uint amt); // by !MO
+    // Events are emitted, so only when we emit profits for someone do we call...
+    event Long (address indexed owner, uint amt); 
+    event Short (address indexed owner, uint amt);
+    event Voted (address indexed voter, uint vote); // only emit when increasing
 
     /*«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-*/
     /*                       HELPER FUNCTIONS                     */
@@ -114,29 +109,30 @@ contract MO is ERC20 {
      * Override the ERC20 functions to account 
      * for QD balances that are still maturing  
      */
+
     function transfer(address recipient, uint256 amount) public override returns (bool) {
-        uint price = _get_price();
-        Plunge memory plunge = _get_update( 
-            _msgSender(), price, false, _msgSender()
-        ); _send(_msgSender(), recipient, amount); return true;
+        Plunge memory plunge = _fetch(_msgSender(), 
+                 _get_price(), false, _msgSender()
+        );  _send(_msgSender(), recipient, amount, true); 
+        return true;
     }
 
     function transferFrom(address from, address to, uint256 value) public override returns (bool) {
-        uint price = _get_price();
         _spendAllowance(from, _msgSender(), value);
-        Plunge memory plunge = _get_update( 
-            _msgSender(), price, false, _msgSender()
-        );  _send(from, to, value); return true;
+        Plunge memory plunge = _fetch(_msgSender(),  
+                 _get_price(), false, _msgSender()
+        );  _send(from, to, value, true); 
+        return true;
     }
 
     // in _call, the ground you stand on balances you...what balances the ground?
     function balanceOf(address account) public view override returns (uint256) {
         return super.balanceOf(account) + _maturing[account].debit +  _maturing[account].credit;
-        // matured QD ^^^^^^^ in the process of maturing as ^^^^ and just starting to mature
+        // mature QD ^^^^^^^^^ in the process of maturing as ^^^^^ or starting to mature ^^^^^^
     }
 
     function liquidated(uint when) public view returns (address[] memory) {
-        return _MO[when].d;
+        return _MO[when].own;
     }
 
     function _ratio(uint _multiplier, uint _numerator, uint _denominator) internal pure returns (uint ratio) {
@@ -147,7 +143,7 @@ contract MO is ERC20 {
         }
     }
 
-    // calculates CR (value of collat / value of debt)...if you look a little pale, might creditch a cold
+    // calculates CR (value of collat / value of debt)...if you look a little pale, might credshort a cold
     function _blush(uint _price, uint _collat, uint _debt, bool _short) internal pure returns (uint) {   
         if (_short) {
             uint debt_in_QD = _ratio(_price, _debt, ONE); 
@@ -158,55 +154,64 @@ contract MO is ERC20 {
         } 
     }
     
-    function _send(address from, address to, uint256 value) internal {
-        require(from != address(0) && to == address(0), 
-               "MO::transfer: passed in zero address");
+    // _send _it !
+    function _it(address from, address to, uint256 value) internal returns (uint) {
+        uint delta = _min(_maturing[from].credit, value);
+        _maturing[from].credit -= delta; value -= delta;
+        if (to != address(this)) { _maturing[to].credit += delta; }
+        if (value > 0) {
+            delta = _min(_maturing[from].debit, value);
+            _maturing[from].debit -= delta; value -= delta;
+            if (to != address(this)) { _maturing[to].debit += delta; }
+        }   return value; 
+    }
+
+    // bool matured indicates priority to use in control flow (to charge) 
+    function _send(address from, address to, uint256 value, bool matured) 
+        internal { require(from != address(0) && to == address(0), 
+                           "MO::send: passed in zero address");
         uint delta;
-        if (value > balanceOf(from)) { 
-            delta = value - balanceOf(from);
-            value -= delta; 
-            _maturing[from].credit -= delta; 
-            if (to != address(this)) { 
-                _maturing[to].credit += delta; 
-            } else { _burn(from, delta); 
-                     _mint(address(this), delta);
-            } // we never transfer QD back from
-            // (this) to plunge, so safe to mix
-        }   if (value > 0) { _transfer(from, to, value); }
+        if (!matured) {
+            delta = _it(from, to, value);
+            if (delta > 0) { _transfer(from, to, delta); }
+        } else { // fire doesn't erase blood, QD is never burned
+            delta = _min(super.balanceOf(from), value);
+            _transfer(from, to, delta); value -= delta;
+            if (value > 0) {
+                require(_it(from, to, value) == 0, 
+                "MO::send: insufficient funds");
+            } // address(this) will never _send QD
+        }   
     }
 
     /** 
      * Returns the latest price obtained from the Chainlink ETH:USD aggregator 
      * reference contract...https://docs.chain.link/docs/get-the-latest-price
      */
-    function _get_price() internal view returns (uint) {
+
+    function _get_price() internal view returns (uint price) {
         if (_PRICE != 0) { return _PRICE; } // TODO comment when done testing
         (, int priceAnswer,, uint timeStamp,) = chainlink.latestRoundData();
         require(timeStamp > 0 && timeStamp <= block.timestamp,
                 "MO::price: timestamp is 0, or in future");
         require(priceAnswer >= 0, "MO::price: negative");
         uint8 answerDigits = chainlink.decimals();
-        uint price = uint256(priceAnswer);
-        
+        price = uint256(priceAnswer);
         // currently the Aggregator returns an 8-digit precision, but we handle the case of future changes
-        if (answerDigits > DIGITS) { 
-            price /= 10 ** (answerDigits - DIGITS);
-        }
-        else if (answerDigits < DIGITS) {
-            price *= 10 ** (DIGITS - answerDigits);
-        } 
-        return price;
+        if (answerDigits > DIGITS) { price /= 10 ** (answerDigits - DIGITS); }
+        else if (answerDigits < DIGITS) { price *= 10 ** (DIGITS - answerDigits); } 
     }
 
     /** To be responsive to DSR changes we have dynamic APR 
      *  using a points-weighted median algorithm for voting:
+     *  not too dissimilar github.com/euler-xyz/median-oracle
      *  Find value of k in range(0, len(Weights)) such that 
      *  sum(Weights[0:k]) = sum(Weights[k:len(Weights)+1])
      *  = sum(Weights) / 2
      *  If there is no such value of k, there must be a value of k 
      *  in the same range range(0, len(Weights)) such that 
      *  sum(Weights[0:k]) > sum(Weights) / 2
-     *  TODO update total points only here ?
+     *  TODO update total points only here ? 
      */
     function _medianise(uint new_stake, uint new_vote, 
         uint old_stake, uint old_vote, bool short) internal { 
@@ -252,15 +257,19 @@ contract MO is ERC20 {
     // voting can allow LTV to act as moneyness,
     // but while DSR is high this is unnecessary  
 
-    // 
-    
-    function _get_owe(uint param) internal { // used in 3 places
+    // DRIP (divident reinvestmnent plan) 
+    // with respect to _get_owe(), called 
+    // internally in 3 places functions...
+    // http://instagram.com/p/C5XMnorLj-c 
+    function _get_owe(uint param) internal {   
         
         // using APR / into MIN = scale
         // if you over-collat by 8% x scale
         // then you get a discount from APR
         // that is exactly proportional...
         // means we do have to add it in _call
+
+        // transfer to Lot.
 
         uint excess = YEAR * TARGET; // excess wind.credit
         if (wind.credit > excess) {
@@ -270,15 +279,19 @@ contract MO is ERC20 {
         }
     }   // "so listen this is how I shed my tears (crying down coins)
     // ...a [_get_owe work] is the law that we live by" ~ Legal Money
+    
 
-    function _get_update(address addr, uint price, bool must_exist, address caller) 
-        internal returns (Plunge memory plunge) { plunge = Plunges[addr]; require(
-            !must_exist || plunge.last != 0, "MO: plunge must exist"); 
+    function _fetch(address addr, uint price, bool must_exist, address caller) 
+        internal returns (Plunge memory plunge) { plunge = Plunges[addr]; 
+        require(!must_exist || plunge.last != 0, "MO: plunge must exist");
+        // if it's not the last, then others will continue to exist...
         bool clocked = false; uint old_points; uint grace; uint time;
-        if ((YEAR % 2 == 1) && (_maturing[addr].credit > 0)) {
+        // over the course of a MO every participant must do at least
+        // one _fetch so balances are ready for call(once a year)
+        if ((YEAR % 2 == 1) && (_maturing[addr].credit > 0)) { // TODO only do this if pledge.last > 0 
             
             // TODO can't be a require must be an if 
-             // FIXME call from temporary balances if current MO failed ??
+            // FIXME call from temporary balances if current MO failed ??
             require(block.timestamp >= _MO[0].start + LENT &&
                 _MO[0].minted >= TARGET, "MO::get: early"); 
             if (_maturing[addr].debit == 0) {
@@ -288,344 +301,317 @@ contract MO is ERC20 {
             // TODO track total so that in mint or withdraw we know
         } else if (_maturing[addr].debit > 0) { // !MO # 2 4 6 8...
             // debit for 2 is credit from 0...then for 2 from 4...
-            _mint(addr, _maturing[addr].debit); 
-            _maturing[addr].debit = 0;
-        } // else if ()
-        if (plunge.last != 0) { Pod memory _carry = plunge.carry; 
-            old_points = plunge.dues.points; _POINTS -= old_points;
-            time = plunge.dues.long.debit > block.timestamp ? 0 : 
-                        block.timestamp - plunge.dues.long.debit; 
-            // wait oh wait oh wait oh wait oh wait oh wait oh wait...oh
-            uint fee = caller == addr ? 0 : MIN_APR / 100; // liquidator
-            uint in_carry = balanceOf(_msgSender()) + _carry.credit +
-                                      _ratio(price, _carry.debit, ONE); 
-            if (plunge.work.long.debit > 0) { // owes carried interest
-                Pod memory _work = plunge.work.long;
-                if (plunge.dues.long.debit == 0) { in_carry = 0; // TODO?
-                    plunge.dues.long.debit = block.timestamp;
-                }   if (plunge.dues.deuce) { grace = 1; 
-                    if (plunge.dues.grace) { // 15% per 6 months
-                        grace = fee * plunge.dues.long.debit;
-                    } 
-                }   (_work, _carry, clocked) = _fetch_plunge(addr, 
-                            _carry, _work, price, time, grace, false
-                ); 
-                if (clocked) { fee *= _work.debit / ONE;
-                    if (grace == 0) { // TODO check size at least 50k
-                        _MO[YEAR].d.push(addr);  
-                    }
-                    else if (grace == 1) {
-                        // carry.credit += fee; TODO??
-                        if (fee > 0) { _work.debit -= fee; } 
-                        work.short.debit += _work.debit;
-                        work.short.credit += _work.credit;
-                        plunge.work.short.debit = _work.debit;
-                        plunge.work.short.credit = _work.credit;
-                        plunge.dues.short.debit = block.timestamp + 96 hours; // TODO too much?
-                    }   else if (fee > 0) { carry.credit -= fee; 
-                        emit Long(addr, caller, fee);
-                    }   plunge.work.long.credit = 0;
-                        plunge.work.long.debit = 0;
-                        plunge.dues.long.debit = 0; 
-                } else { plunge.work.long.debit = _work.debit; 
-                        plunge.work.long.credit = _work.credit;
-                        // only update timestamp if charged otherwise can
-                        // keep resetting timestamp before 10 minutes pass
-                        // and never get charged APR at all (costs gas tho)
-                        if (in_carry > balanceOf(_msgSender()) + _carry.credit +
-                                                 _ratio(price, _carry.debit, ONE)) {
-                                                 plunge.dues.long.debit = block.timestamp; } 
-                }   plunge.carry = _carry; if (fee > 0) { Plunges[caller].carry.credit += fee; }
-            } // plunges should never be short AND a long at the same time
-            else if (plunge.work.short.debit > 0) { // that's why ELSE if
-                Pod memory _work = plunge.work.short;
-                time = plunge.dues.short.debit > block.timestamp ? 
-                    0 : block.timestamp - plunge.dues.short.debit; 
-                if (plunge.dues.short.debit == 0) { // edge case
-                    plunge.dues.short.debit = block.timestamp;
-                }   if (plunge.dues.deuce) { grace = 1;
-                    if (plunge.dues.grace) {  // 15% per 6 months
-                        grace = fee * plunge.dues.short.debit;
-                    }
-                }   (_work, _carry, clocked) = _fetch_plunge(addr, 
-                            _carry, _work, price, time, grace, true
-                );
-                if (clocked) { fee *= _work.debit / ONE;
-                    if (grace == 0) { // TODO check size at least 50k
-                        _MO[YEAR].d.push(addr);
-                    }
-                    else if (grace == 1) { 
-                        if (fee > 0) { _work.debit += fee; }
-                        work.long.credit += _work.credit;
-                        work.long.debit += _work.debit;
-                        plunge.work.long.credit = _work.credit;
-                        plunge.work.long.debit = _work.debit;
-                        plunge.dues.long.debit = block.timestamp + 96 hours; // TODO too much?
-                    }   if (fee > 0) { carry.credit -= fee; 
-                        emit Short(addr, caller, fee);
-                    }   plunge.work.short.credit = 0;
-                        plunge.work.short.debit = 0;
-                        plunge.dues.short.debit = 0; 
-                } else { 
+            _mint(addr, _maturing[addr].debit); // minting only here...
+            _maturing[addr].debit = 0; // no minting in mint() function
+        } // else if () FIXME
+        old_points = plunge.dues.points; 
+        _POINTS -= old_points; uint _eth = plunge.eth; 
+        // wait oh wait oh wait oh wait oh wait oh wait oh wait...
+        uint fee = caller == addr ? 0 : MIN_APR / 2000;  // 0.0041 %
+        if (plunge.work.short.debit > 0) { 
+            Pod memory _work = plunge.work.short; 
+            fee *= _work.debit / ONE;
+            time = plunge.dues.short.debit > block.timestamp ? 
+                0 : block.timestamp - plunge.dues.short.debit; 
+            if (plunge.dues.deux) { grace = 1; // used in _call
+                if (plunge.dues.grace) { // 144x per day is
+                    // (24 hours * 60 minutes) / 10 minutes
+                    grace = (MIN_APR / 1000) * _work.debit / ONE; // 1.15% per day
+                    grace += fee; // 0,5% per day for caller
+                } 
+            }   (_work, _eth, clocked) = _charge(addr, 
+                 _eth, _work, price, time, grace, true); 
+            if (clocked) { 
+                if (grace == 1) { plunge.dues.short.debit = 0;
+                    plunge.work.short.credit = 0;
+                    plunge.work.short.debit = 0;
+                    plunge.work.long.credit = _work.credit;
+                    plunge.work.long.debit = _work.debit;
+                    plunge.dues.long.debit = block.timestamp + 1 days; 
+                }   else if (grace > 1) { // slow drip option
+                    plunge.dues.short.debit = block.timestamp; 
+                }   else { plunge.dues.short.debit = 0; }
+            } else { plunge.dues.short.debit = block.timestamp; }   
+            plunge.work.short = _work; 
+        }   
+        else if (plunge.work.long.debit > 0) {
+            Pod memory _work = plunge.work.long;
+            fee *= _work.debit / ONE; // liquidator's fee for gas
+            time = plunge.dues.long.debit > block.timestamp ? 
+                0 : block.timestamp - plunge.dues.long.debit; 
+            if (plunge.dues.deux) { grace = 1; // used in _call
+                if (plunge.dues.grace) { // 144x per day is
+                    // (24 hours * 60 minutes) / 10 minutes
+                    grace = (MIN_APR / 1000) * _work.debit / ONE; // 1.15% per day
+                    grace += fee; // 0,5% per day for caller
+                } 
+            }   (_work, _eth, clocked) = _charge(addr, 
+                 _eth, _work, price, time, grace, false); 
+            if (clocked) { // festina...lent...eh? make haste
+                if (grace == 1) { plunge.dues.long.debit = 0;
+                    plunge.work.long.credit = 0;
+                    plunge.work.long.debit = 0;
                     plunge.work.short.credit = _work.credit;
                     plunge.work.short.debit = _work.debit;
-                    if (in_carry > balanceOf(_msgSender()) + _carry.credit +
-                                             _ratio(price, _carry.debit, ONE)) {
-                        plunge.dues.short.debit = block.timestamp; 
-                    }   plunge.dues.short.debit = block.timestamp;
-                }   plunge.carry = _carry;
-                if (fee > 0) {
-                    Plunges[caller].carry.credit += fee;
-                }
-            }
-            if (balanceOf(addr) > 0) { // TODO default vote not counted
-                // TODO simplify based on !MO
-                plunge.dues.points += ( // 
-                    ((block.timestamp - plunge.last) / 1 hours) 
-                    * (balanceOf(addr) + plunge.carry.credit) / ONE
-                ); 
-
-                // carry.credit; // is subtracted from 
-                // rebalance fee targets (governance)
-                if (plunge.dues.long.credit != 0) { 
-                    _medianise(plunge.dues.points, 
-                        plunge.dues.long.credit, old_points, 
-                        plunge.dues.long.credit, false
-                    );
-                } if (plunge.dues.short.credit != 0) {
-                    _medianise(plunge.dues.points, 
-                        plunge.dues.short.credit, old_points, 
-                        plunge.dues.short.credit, true
-                    );
-                }   _POINTS += plunge.dues.points;
-            }
-        }   plunge.last = block.timestamp; // TODO check
+                    plunge.dues.short.debit = block.timestamp + 1 days;
+                    // a grace period is provided for calling put(),
+                    // otherwise can get stuck in an infinite loop
+                    // of throwing back & forth between directions
+                }   else if (grace > 1) { // slow drip option
+                    plunge.dues.long.debit = block.timestamp; 
+                }   else { plunge.dues.long.debit = 0; }
+            } else { plunge.dues.long.debit = block.timestamp; }  
+            plunge.work.long = _work;
+        } 
+        if (fee > 0) { _maturing[caller].credit += fee; }
+        if (balanceOf(addr) > 0) { // TODO default vote not counted
+            // TODO simplify based on !MO
+            plunge.dues.points += ( // 
+                ((block.timestamp - plunge.last) / 1 hours) 
+                * balanceOf(addr) / ONE
+            ); 
+            // carry.credit; // is subtracted from 
+            // rebalance fee targets (governance)
+            if (plunge.dues.long.credit != 0) { 
+                _medianise(plunge.dues.points, 
+                    plunge.dues.long.credit, old_points, 
+                    plunge.dues.long.credit, false
+                );
+            } if (plunge.dues.short.credit != 0) {
+                _medianise(plunge.dues.points, 
+                    plunge.dues.short.credit, old_points, 
+                    plunge.dues.short.credit, true
+                );
+            }   _POINTS += plunge.dues.points;
+        }   
+        plunge.last = block.timestamp; plunge.eth = _eth;
     }
 
-    // deuce is a semaphor: 0 = false, 1 = just deuce, if grace > 1 deuce true
-    function _fetch_plunge(address addr, Pod memory _carry, Pod memory _work, 
-        uint price, uint delta, uint deuce, bool short) internal 
-        returns (Pod memory, Pod memory, bool clocked) {
+    function _charge(address addr, uint _eth, Pod memory _work, 
+        uint price, uint delta, uint grace, bool short) internal 
+        returns (Pod memory, uint, bool clocked) {
         // "though eight is not enough...no,
-        // it's like [deuce lest you] bust: 
+        // it's like [grace lest you] bust: 
         // now your whole [plunge] is dust" 
         if (delta >= 10 minutes) { // 52704 x 10 mins per year
             uint apr = short ? shortMedian.apr : longMedian.apr; 
-            delta /= 10 minutes; uint owe = (deuce > 0) ? 2 : 1; 
+            delta /= 10 minutes; uint owe = (grace > 0) ? 2 : 1; 
             owe *= (apr * _work.debit * delta) / (52704 * ONE);
+            // need to reuse the delta variable (or stack too deep)
             delta = _blush(price, _work.credit, _work.debit, short);
-            if (delta < ONE) {
-                (_work, _carry, clocked) = _call(addr, _work, _carry, 
-                                                 deuce, short, price);
-            }  else { 
-            // if (delta > MIN_CR) { // TODO APR discount based on CR/MIN_CR
-                // }
-                
-                uint most = short ? _min(_carry.debit, owe) : _min(_carry.credit, owe);
+            if (delta < ONE) { // liquidatable potentially
+                (_work, _eth, clocked) = _call(addr, _work, _eth, 
+                                               grace, short, price);
+            }  else { // healthy CR, proceed to charge APR
+                // if addr is shorting: indicates a desire
+                // to give priority towards getting rid of
+                // ETH first, before spending available QD
+                grace = _ratio(price, _eth, ONE); // reuse var lest stack too deep
+                uint most = short ? _min(grace, owe) : _min(balanceOf(addr), owe);
                 if (owe > 0 && most > 0) { 
-                    if (short) { 
-                        wind.debit += most;
-                        carry.debit -= most;
-                        _carry.debit -= most; 
-                        owe -= _ratio(price, most, ONE);
-                    } else { _carry.credit -= most;
-                        carry.credit += most; // TODO double check if double spend
+                    if (short) { owe -= most;
+                        most = _ratio(ONE, most, price);
+                        _eth -= most; carry.debit -= most;
+                        wind.debit += most; 
+                        bytes memory payload = abi.encodeWithSignature(
+                        "deposit(uint256,address)", most, address(this));
+                        (bool success,) = mevETH.call{value: most}(payload); 
+                    } else { _send(addr, address(this), most, false);
+                        wind.credit -= most; // equivalent of burning QD
+                        // carry.credit += most would be a double spend
                         owe -= most;
                     }
-                    // TODO the user's own _maturing balance?
                 } if (owe > 0) { 
-                    most = _min(balanceOf(addr), owe);
-                    _send(addr, address(this), most);
-                    owe -= most; carry.credit += most;
-                    if (short && owe > 0) { owe = _ratio(owe, price, ONE);
-                        most = _min(_carry.credit, owe); _carry.credit -= most;
-                        // TODO double check if double spend
-                        carry.credit += most; owe -= most;
-                    } else if (owe > 0) { owe = _ratio(ONE, owe, price); 
-                        most = _min(_carry.debit, owe); wind.debit += most;
-                        _carry.debit -= most; carry.debit -= most; owe -= most;
+                    // do it backwards from original calculation
+                    most = short ? _min(balanceOf(addr), owe) : _min(grace, owe);
+                    // if the last if block was a long, grace was untouched
+                    if (short && most > 0) { 
+                        _send(addr, address(this), most, false);
+                        wind.credit -= most; owe -= most;
+                    }   
+                    else if (!short && most > 0) { owe -= most;
+                        most = _ratio(ONE, most, price);
+                        _eth -= most; carry.debit -= most;
+                        wind.debit += most; 
+                        bytes memory payload = abi.encodeWithSignature(
+                        "deposit(uint256,address)", most, address(this));
+                        (bool success,) = mevETH.call{value: most}(payload); 
                     }   if (owe > 0) { // plunge cannot pay APR (delinquent)
-                        (_work, _carry, clocked) = _call(addr, 
-                         _work, _carry, 0, short, price);
-                    } 
+                            (_work, _eth, clocked) = _call(addr, _work, _eth, 
+                                                        0, short, price);
+                            // zero passed in for grace...^
+                            // because...even if the plunge
+                            // elected to be treated gracefully
+                            // there is an associated cost for it
+                        } 
                 }   
             } 
-        }   return (_work, _carry, clocked);
-    }
+        }   return (_work, _eth, clocked);
+    }  
     
-    // "Don't get no better than this, you creditch my drift?
-    // So close no matter how far, rage be in it like you 
+    // "So close no matter how far, rage be in it like you 
     // couldn’t believe...or work like one could scarcely 
     // imagine...if one isn’t satisfied, indulge the latter
     // ‘neath the halo of a street-lamp...I fold my collar
     // to the cold and damp...know when to hold 'em...know 
     // when to..." 
-    function _call(address owner, Pod memory _work, Pod memory _carry, 
-                   uint deuce, bool short, uint price) internal 
-                   returns (Pod memory, Pod memory, bool folded) {
-        uint in_QD = _ratio(price, _work.credit, ONE); // folded = true;
-        if (short && in_QD > 0) { // only if plunge owe any debt at all...
-            if (_work.debit > in_QD) { // profitable (probably voluntary)
-                folded = true;
-                _work.debit -= in_QD; // return debited
-                carry.credit += in_QD; // amount to carry
-                
-                // since we canceled all the credit then
-                // surplus debit is the plunge's profit
-             
-                
-                // FIXME increase wind.credit...???...as it were,
-                // PROFIT CAME AT THE EXPENSE OF carry (everyone):
-                
-                // throw caution to the wind 
-                // wind.credit += plunge.work.short.debit;
-
-                // for creating QD we add QDebt, but this shouldn't
-                // make the system more insolvent, no net change to 
-                // LTV overall (TVL CR)
-
-            } 
-            // in_QD is worth more than _work.debit, price went up...
-            else { // "Lightnin' strikes and the court lights get dim"
-                if (deuce == 0) { // no grace, and no way to flip debt
+    function _call(address owner, Pod memory _work, uint _eth, 
+                   uint grace, bool short, uint price) internal 
+                   returns (Pod memory, uint, bool folded) { 
+        uint in_QD = _ratio(price, _work.credit, ONE); uint in_eth;
+        require(in_QD > 0, "MO: nothing to _call in"); folded = true;
+        if (short) { // plunge into pool (caught the wind on low) 
+            if (_work.debit > in_QD) { // value of credit fell
+                work.short.debit -= _work.debit; // return what
+                carry.credit += _work.debit; // has been debited
+                _work.debit -= in_QD; // remainder is profit...
+                wind.credit += _work.debit; // associated debt 
+                _maturing[owner].credit += _work.debit;
+                // _maturing credit takes 1 year to get
+                // into _balances (redeemable for sDAI)
+                work.short.credit -= _work.credit;
+                _work.debit = 0; _work.credit = 0;  
+            } // in_QD is worth more than _work.debit, price went up... 
+            else { // "lightnin' strikes and the court lights get dim"
+                if (grace == 0) { // try to prevent folded from happening
                     uint delta = (in_QD * MIN_CR) / ONE - _work.debit;
-                    uint sp_value = balanceOf(owner) + _carry.credit +
-                    _ratio(price, _carry.debit, ONE); uint in_eth;
-                    if (delta > sp_value) { delta = in_QD - _work.debit; } 
+                    uint salve = balanceOf(owner) + _ratio(price, _eth, ONE); 
+                    if (delta > salve) { delta = in_QD - _work.debit; } 
                     // "It's like inch by inch and step by step...i'm closin'
-                    // in on your position and reconstruction is my mission"
-                    if (sp_value >= delta) { folded = false;
+                    // in on your position and [reconstruction] is my mission"
+                    if (salve >= delta) { folded = false; // salvageable...
                         // decrement QD first because ETH is rising
-                        uint most = _min(_carry.credit, delta);
-                        if (most > 0) { in_eth = _ratio(ONE, most, price);
-                            _work.credit -= in_eth; _carry.credit -= most;
-                            work.short.credit -= in_eth; delta -= most; 
-                        } if (delta > 0) { // use _balances
-                            most = _min(balanceOf(owner), delta);
-                            if (most > 0) { delta -= most;
-                                _send(owner, address(this), most);
-                                carry.credit += most; 
-                                in_eth = _ratio(ONE, most, price);
-                                _work.credit -= in_eth; 
-                                
-                                work.short.credit -= in_eth;
-                            }
-                        } if (delta > 0) { in_eth = _ratio(ONE, delta, price);
-                            carry.debit -= in_eth; _carry.debit -= in_eth;
-                            wind.debit += in_eth; _work.credit -= in_eth;
-                            work.short.credit -= in_eth;                            
-                        } 
-                    } 
-                } if (folded && deuce == 0) { 
-                    carry.credit += _work.debit; 
-                } // TODO cover grace
-            } if (folded) { 
-                if (deuce > 1) { in_QD = _min(deuce, _work.debit);
-                    work.short.debit -= in_QD; carry.credit += in_QD;
-                    work.short.credit -= _min(_work.credit,
-                        _ratio(ONE, in_QD, price)
-                    ); folded = false;
-                } else { work.short.credit -= _work.credit;
-                         work.short.debit -= _work.debit;  
-                }  // either deuce state was 0 or zero...
-                // TODO account if voluntary fold
-                // _carry.credit += _work.debit
-            }
-        } else if (in_QD > 0) { // leveraged long 
-            if (in_QD > _work.debit) { // profitable  
-                in_QD -= _work.debit; // remainder = profit
-                _carry.credit += in_QD;
-                // return the debited amount to carry
-                carry.credit += _work.debit; // FIXME 
-                // wind.credit += in_QD; 
-                // SOMETIMES WE NEED TO ADD DEBT
-                // if this was not credit from actual ETH puted
-                // but virtual credit based on sDAI
-            } else { 
-                if (deuce == 0) { // liquidatable
-                    uint delta = (_work.debit * MIN_CR) / ONE - in_QD;
-                    uint sp_value = balanceOf(owner) + _carry.credit +
-                    _ratio(price, _carry.debit, ONE); uint in_eth;
-                    if (delta > sp_value) { delta = _work.debit - in_QD; } 
-                    if (sp_value >= delta) { folded = false;
-                        // decrement ETH first because it's falling
                         in_eth = _ratio(ONE, delta, price);
-                        uint most = _min(_carry.debit, in_eth);
-                        if (most > 0) { carry.debit -= most; // remove ETH from carry
-                            _carry.debit -= most; wind.debit += most; // sell the ETH 
-                            _work.credit += most; work.short.credit += most;
-                            delta -= _ratio(price, most, ONE);
-                        } if (delta > 0) { carry.credit += most;
-                            most = _min(_carry.credit, delta); 
-                            _carry.credit -= most; _work.debit -= most;
-                            work.long.debit -= most; delta -= most;   
-                        } if (delta > 0) { carry.credit += delta;
-                            _send(owner, address(this), delta);
-                            _work.debit -= delta; work.long.debit -= delta;   
-                        }
-                    } 
-                } if (folded && deuce == 0) { carry.credit += _work.debit; }
-            } if (folded) {
-                if (deuce > 1) { in_QD = _min(deuce, _work.debit);
-                    work.long.debit -= in_QD; carry.credit += in_QD;
-                    work.long.credit -= _min(_work.credit,
-                                        _ratio(ONE, in_QD, price));
-                                        folded = false;
-                } else { work.long.credit -= _work.credit;
-                         work.long.debit -= _work.debit;
+                        uint most = _min(balanceOf(owner), delta);
+                        if (most > 0) { delta -= most;
+                            _send(owner, address(this), most, false);
+                            // TODO double check re carry.credit or wind.credit
+                        } if (delta > 0) { most = _ratio(ONE, delta, price);
+                            _eth -= most; wind.debit += most; carry.debit -= most; 
+                            bytes memory payload = abi.encodeWithSignature(
+                            "deposit(uint256,address)", most, address(this));
+                            (bool success,) = mevETH.call{value: most}(payload); 
+                            require(success, "MO::mevETH");
+                        } _work.credit -= in_eth;
+                        work.short.credit -= in_eth;
+                    } else { emit Short(owner, _work.debit);
+                        carry.credit += _work.debit; 
+                        if (_work.debit > 5 * STACK) { 
+                            _MO[YEAR].own.push(owner); // for Lot.sol
+                        }   work.short.debit -= _work.debit;
+                            work.short.credit -= _work.credit;
+                            _work.credit = 0; _work.debit = 0;
+                    }
+                }   else if (grace == 1) { // no return to carry
+                        work.short.credit -= _work.credit;
+                        work.long.credit += _work.credit;
+                        work.short.debit -= _work.debit;
+                        work.long.debit += _work.debit;
+                } else { // partial return to carry
+                    _work.debit -= grace; in_eth = _ratio(ONE, grace, price);
+                    _work.credit -= in_eth; work.short.credit -= in_eth; 
+                    work.short.debit -= grace; carry.credit += grace;
                 } 
-            }
-        } return (_work, _carry, folded);
+            }   
+        } else { // plunge into leveraged long pool  
+            if (in_QD > _work.debit) { // caught the wind (high)
+                in_QD -= _work.debit; // profit is remainder
+                _maturing[owner].credit += in_QD;
+                carry.credit += _work.debit; 
+                wind.credit += in_QD; 
+                work.long.debit -= _work.debit;
+                work.long.credit -= _work.credit;
+                _work.debit = 0; _work.credit = 0;                 
+            }   else {
+                if (grace == 0) {
+                    uint delta = (_work.debit * MIN_CR) / ONE - in_QD;
+                    uint salve = balanceOf(owner) + _ratio(price, _eth, ONE); 
+                    if (delta > salve) { delta = _work.debit - in_QD; } 
+                    if (salve >= delta) { folded = false; // salvageable
+                        // decrement ETH first because it's falling
+                        in_eth = _ratio(ONE, delta, price); 
+                        uint most = _min(_eth, in_eth);
+                        if (most > 0) { carry.debit -= most; // remove ETH from carry
+                            _eth -= most; wind.debit += most; // sell ETH, so 
+                            // original ETH is not callable or puttable by the Plunge
+                            in_QD = _ratio(price, most, ONE);
+                            work.long.debit -= in_QD;
+                            _work.debit -= in_QD; delta -= in_QD;
+                            bytes memory payload = abi.encodeWithSignature(
+                            "deposit(uint256,address)", most, address(this));
+                            (bool success,) = mevETH.call{value: most}(payload); 
+                            require(success, "MO::mevETH");
+                        } if (delta > 0) { _send(owner, address(this), delta, false); 
+                            in_eth = _ratio(ONE, delta, price); _work.credit += in_eth;
+                            work.long.credit += in_eth;
+                        }
+                    } // "Don't get no better than this, you catch my drift?"
+                    else { emit Long(owner, _work.debit);
+                        carry.credit += _work.debit; 
+                        if (_work.debit > 5 * STACK) { 
+                            _MO[YEAR].own.push(owner); // for Lot.sol
+                        }   work.long.debit -= _work.debit;
+                            work.long.credit -= _work.credit;
+                            _work.credit = 0; _work.debit = 0;
+                    }
+                } else if (grace == 1) { // no return to carry
+                    work.long.credit -= _work.credit;
+                    work.short.credit += _work.credit;
+                    work.long.debit -= _work.debit;
+                    work.short.debit += _work.debit;
+                } else { // partial return to carry
+                    _work.debit -= grace; in_eth = _ratio(ONE, grace, price);
+                    _work.credit -= in_eth; work.long.credit -= in_eth; 
+                    work.long.debit -= grace; carry.credit += grace;
+                }  
+            } 
+        }   return (_work, _eth, folded);
     }
 
     /*«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-*/
     /*                     EXTERNAL FUNCTIONS                     */
     /*-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»*/
-    // mint...clutch...vote...put...borrow...fold...call.
-    // verse 42: mom.sol carries wind to work (quidditas) 
+    // mint...flip...vote...put...borrow...fold...call...
     // "lookin' too hot...simmer down, or soon you'll get" 
     function clocked(address[] memory plunges) external { 
-        uint price = _get_price(); // TODO direction doesn't matter, but 
-        // an amplitude of price change since the last 10 minutes has to
-        // be more than 10%, require this or no point in looping through
+        uint price = _get_price(); 
         for (uint i = 0; i < plunges.length; i++ ) {
-            _get_update(plunges[i], price, true, _msgSender());
+            _fetch(plunges[i], price, true, _msgSender());
         } 
+    } 
+    
+    function flip(bool grace) external { uint price = _get_price();
+        Plunge memory plunge = _fetch(_msgSender(), price, true, _msgSender());
+        if (grace) { plunge.dues.deux = true; plunge.dues.grace = true; } else {
+            plunge.dues.deux = !plunge.dues.deux; plunge.dues.grace = false;
+        }   Plunges[_msgSender()] = plunge; // write to storage, we're done
     }
 
-    function clutch(bool grace) external { uint price = _get_price(); 
-        Plunge memory plunge = _get_update(_msgSender(), price, true, _msgSender());
-        if (grace) { plunge.dues.deuce = true; plunge.dues.grace = true; } else {
-            plunge.dues.deuce = !plunge.dues.deuce; plunge.dues.grace = false;
-        }   Plunges[_msgSender()] = plunge;
-    }
-
-    // a voluntary fold call, internally callable for requisition (involuntary yoga)
-    function fold(bool short) external { uint price = _get_price(); // Neo Jiu Jitsu
-        Plunge memory plunge = _get_update(_msgSender(), price, true, _msgSender());
-        Pod memory _carry = plunge.carry; uint deuce = plunge.dues.deuce ? 1 : 0;
-        if (short) { (,_carry,) = _call(_msgSender(), plunge.work.short, 
-                                        _carry, deuce, true, price);
-            plunge.work.short.credit = 0;
-            plunge.work.short.debit = 0;
+    function fold(bool short) external { 
+        Pod memory _work; uint price = _get_price();
+        Plunge memory plunge = _fetch(_msgSender(), price,
+                                      true, _msgSender());
+        if (short) { 
+            (_work,,) = _call(_msgSender(), plunge.work.short, 
+                              plunge.eth, 0, true, price); 
             plunge.dues.short.debit = 0;
-        } else { (,_carry,) = _call(_msgSender(), plunge.work.long,
-                                    _carry, deuce, false, price); 
-            plunge.work.long.credit = 0;
-            plunge.work.long.debit = 0;
+            plunge.work.short = _work; 
+        } else { 
+            (_work,,) = _call(_msgSender(), plunge.work.long, 
+                              plunge.eth, 0, false, price); 
             plunge.dues.long.debit = 0;
-        }   plunge.carry = _carry; // 🔫
-        Plunges[_msgSender()] = plunge; 
-    } // function even looks like an F
+            plunge.work.long = _work; 
+        }   Plunges[_msgSender()] = plunge; 
+    }
 
     // truth is the highest vibration (not love).  
     function vote(uint apr, bool short) external {
-        uint delta = MIN_APR / 16; // half a percent
-        require(apr >= MIN_APR && apr <= (MIN_APR * 3 - delta * 6)
-                && apr % delta == 0, "MO::vote: unacceptable APR");
+        uint delta = MIN_APR / 16; // half a percent 
+        require(apr >= MIN_APR && apr <= 
+            (MIN_APR * 3 - delta * 6) &&
+            apr % delta == 0, "MO::vote");
         uint old_vote; // a vote of confidence gives...credit (credit)
-        uint price = _get_price();
-        Plunge memory plunge = _get_update(
+        uint price = _get_price(); Plunge memory plunge = _fetch(
             _msgSender(), price, true, _msgSender()
         );
         if (short) {
@@ -635,54 +621,70 @@ contract MO is ERC20 {
             old_vote = plunge.dues.long.credit;
             plunge.dues.long.credit = apr;
         }
-        _medianise(plunge.dues.points, apr, plunge.dues.points, old_vote, short);
+        _medianise(plunge.dues.points, apr, 
+        plunge.dues.points, old_vote, short);
         Plunges[_msgSender()] = plunge;
     }
 
-    // putting down a deposit changes the moneyness of the option (work.long or work.short)...
-    // if _msgSender() is not the beneficiary...first do approve() in frontend to transfer QD
-    function put(address beneficiary, uint amount, bool _carry, bool long) external payable {
-        uint price = _get_price(); 
-        Plunge memory plunge = _get_update(beneficiary, price, false, beneficiary);
-        bool two_plunges = _msgSender() != beneficiary; 
-        if (!_carry) { uint most;
-            _send(_msgSender(), address(this), amount);
-            if (long) {
-                most = _min(amount, plunge.work.long.debit);
-                plunge.work.long.debit -= most;
-                work.long.debit -= most;
-                amount -= most;
-            } else { // we can't decrease the short debit because
-                // that would simply decrease profits in fold()
-                uint eth = _ratio(ONE, amount, price);
+    function put(address beneficiary, uint amount, bool _eth, bool long)
+        external payable { uint price = _get_price(); uint most;
+        Plunge memory plunge = _fetch(beneficiary, price,
+                                      false, _msgSender());
+        if (!_eth) { _send(_msgSender(), address(this), amount, false);
+            uint eth = _ratio(ONE, amount, price);
+            if (long) { work.long.credit += eth;
+                plunge.work.long.credit += eth;
+                // TODO decrement carry.credit and wind.credit?
+            } else { 
                 most = _min(eth, plunge.work.short.credit);
                 plunge.work.short.credit -= eth;
                 work.short.credit -= eth;
-                most = _ratio(price, most, ONE);
-                amount -= most;
-            }
-            // TODO helper function gets rate
-            carry.credit += most; // interchanging QD/sDAI consider ratio
-            if (amount > 0) { plunge.carry.credit += amount; }
-        }
-        else if (two_plunges) { _send(_msgSender(), beneficiary, amount); } // TODO sender.carry -= ; receiver.carry
-        else { // not two_plunges && not _carry
-            require(true, "MO::put: Can't transfer QD from and to the same balance");
+            }  // do nothing with remainder (amount - most)
+        }   else { 
+            if (!long && plunge.work.short.credit == 0) {
+                carry.debit += amount;
+                plunge.eth += amount; // deposit (no mevETH)
+                // must be withdrawable instantly (own funds)
+            }   else { // sell ETH (throw caution to the wind)
+                    if (plunge.work.short.credit > 0) { 
+                        most = _min(amount, plunge.work.short.credit);
+                        require(msg.value + plunge.eth >= most, "MO::put: short");
+                        plunge.work.short.credit -= most; work.short.credit -= most;
+                        uint delta;
+                        if (most > msg.value) { 
+                            delta = most - msg.value;
+                            carry.debit -= delta;
+                            plunge.eth -= delta; 
+                        } 
+                        else { delta = msg.value - most;
+                            plunge.eth += delta;
+                            carry.debit += delta; 
+                        }
+                    } else if (plunge.work.long.credit > 0) { 
+                        most = _min(msg.value + plunge.eth, amount);
+                        if (most > msg.value) { 
+                            uint delta = most - msg.value;
+                            carry.debit -= delta;
+                            plunge.eth -= delta; 
+                        }   plunge.work.long.credit += most;
+                    }   bool success; bytes memory payload = abi.encodeWithSignature(
+                            "deposit(uint256,address)", most, address(this)
+                        );  (success,) = mevETH.call{value: most}(payload); 
+                            require(success, "MO::put: mevETH");  
+                }
         }   Plunges[beneficiary] = plunge;
-    } // downpayment 
-    // keep track of what came from carry (own funds)
-    // so when grace invoked, return what was put()
+    }
 
     // "collect calls to the tip sayin' how ya changed" 
     function call(uint amt, bool qd, bool eth) external { 
         uint most; uint cr; uint price = _get_price();
-        Plunge memory plunge = _get_update(
+        Plunge memory plunge = _fetch(
             _msgSender(), price, true, _msgSender());
         if (!qd) { // call only from carry...use escrow() or fold() for work 
             // the work balance is a synthetic (virtual) representation of ETH
             // plunges only care about P&L, which can only be called in QD 
-            most = _min(plunge.carry.debit, amt);
-            plunge.carry.debit -= most;
+            most = _min(plunge.eth, amt);
+            plunge.eth -= most;
             carry.debit -= most;
             // require(address(this).balance > most, "MO::call: deficit ETH");
             payable(_msgSender()).transfer(most); // TODO use WETH to put % in Lock?
@@ -693,7 +695,7 @@ contract MO is ERC20 {
             // in order to satisfy call (in that sense perfection rights are priotised)
             // this automatically ensures that YEAR > 1
             
-            // try to burn carry.credit against existing
+            
 
             require(super.balanceOf(_msgSender()) >= amt, 
                     "MO::call: insufficient QD balance");
@@ -726,17 +728,17 @@ contract MO is ERC20 {
             if (liabilities > assets) {
 
             } else { 
+                
                 // carry.credit -= least; _burn(_msgSender(), amt); 
                 // sdai.transferFrom(address(this), _msgSender(), amt);
             }      
         }
-    }
+    } 
 
     // TODO bool qd, this will attempt to draw _max from _balances before sDAI 
     function mint(uint amount, address beneficiary) external returns (uint cost) {
-        require(beneficiary != address(0), "MO::mint: can't mint to the zero address");
-        require(block.timestamp >= _MO[YEAR].start, 
-        "MO::mint: can't mint before start date"); 
+        require(beneficiary != address(0), "MO::mint: zero address");
+        require(block.timestamp >= _MO[YEAR].start, "MO::mint: before start date"); 
         // TODO allow roll over QD value in sDAI from last !MO into new !MO...
 
         // evict the wei used to store Offering data after 
@@ -744,14 +746,14 @@ contract MO is ERC20 {
 
         if (block.timestamp >= _MO[YEAR].start + LENT + 144 days) { // 6 months
             if (_MO[YEAR].minted >= TARGET) { // _MO[YEAR].locked * MO_FEE / ONE
-                sdai.transferFrom(address(this), lotok, 1477741 * ONE); // ^  
+                sdai.transferFrom(address(this), lot, 1477741 * ONE); // ^  
                 _MO[YEAR].locked = 272222222 * ONE; // minus 0.54% of sDAI
             }   YEAR += 1; // "same level, the same
             //  rebel that never settled" in _get_owe()
             require(YEAR <= 16, "MO::mint: already had our final !MO");
             _MO[YEAR].start = block.timestamp + LENT; // in the next !MO
-        } else if (YEAR < 16) { // forte vento, LENT gives time to _get_update
-            require(amount >= RACK, "MO::mint: below minimum mint amount"); 
+        } else if (YEAR < 16) { // forte vento, LENT gives time to _fetch
+            require(amount >= RACK, "MO::mint: a rack minimum, no iraq"); 
             uint in_days = ((block.timestamp - _MO[YEAR].start) / 1 days) + 1; 
             require(in_days < 46, "MO::mint: current !MO is over"); 
             cost = (in_days * CENT + START_PRICE) * (amount / ONE);
@@ -760,14 +762,13 @@ contract MO is ERC20 {
                 Plunges[beneficiary].last = block.timestamp;
                 _approve(beneficiary, address(this),
                           type(uint256).max - 1);
-            }
-            _MO[YEAR].locked += cost; _MO[YEAR].minted += amount;
+            } _MO[YEAR].locked += cost; _MO[YEAR].minted += amount;
             wind.credit += amount; // the debts associated with QD
             // balances belong to everyone, not to any individual;
             // amount decremented by APR payments in QD (or call)
-            uint cut = MO_CUT * amount / ONE; // 0.22% 777,742 QD
+            uint cut = MO_CUT * amount / ONE; // .22% = 777742 QD
             _maturing[beneficiary].credit += amount - cut; // QD
-            _mint(lotok, cut); carry.credit += cost; 
+            _mint(lot, cut); carry.credit += cost; 
             emit Minted(beneficiary, cost, amount); 
             require(supply_cap >= wind.credit,
             "MO::mint: supply cap exceeded"); 
@@ -790,20 +791,30 @@ contract MO is ERC20 {
                 _MO[0].minted >= TARGET, "MO::escrow: early");    
         // if above fails must call call for sDAI refund ? 
         uint price = _get_price(); uint debit; uint credit; 
-        Plunge memory plunge = _get_update(_msgSender(), 
-                             price, false, _msgSender());  
+        Plunge memory plunge = _fetch(_msgSender(), price, 
+                                      false, _msgSender()); 
+
+        // TODO cannot borrow more while in grace
         if (short) { 
             require(plunge.work.long.debit == 0 
             && plunge.dues.long.debit == 0, // timestmap
             "MO::escrow: plunge is already long");
+            plunge.dues.short.debit = block.timestamp;
         } else { require(plunge.work.short.debit == 0 
             && plunge.dues.short.debit == 0, // timestamp
             "MO::escrow: plunge is already short");
+            plunge.dues.long.debit = block.timestamp;
         }
-        uint _carry = balanceOf(_msgSender()) + plunge.carry.credit + _ratio(
-        price, plunge.carry.debit, ONE); uint old = carry.credit * 85 / 100;
+        uint _carry = balanceOf(_msgSender()) + _ratio(price,
+        plunge.eth, ONE); uint old = carry.credit * 85 / 100;
         uint eth = _ratio(ONE, amount, price); // amount of ETH being credited:
-        uint max = plunge.dues.deuce ? 2 : 1; // used in require(max escrowable)
+        uint max = plunge.dues.deux ? 2 : 1; // used in require(max escrowable)
+        
+            // TODO
+            // bytes memory payload = abi.encodeWithSignature(
+            // "deposit(uint256,address)", most, address(this));
+            // (bool success,) = mevETH.call{value: most}(payload); 
+        
         if (!short) { max *= longMedian.apr; eth += msg.value; // wind
             // we are crediting the plunge's long with virtual credit 
             // in units of ETH (its sDAI value is owed back to carry) 
@@ -826,13 +837,12 @@ contract MO is ERC20 {
             plunge.work.short.credit -= eth; // there's no way
             work.short.credit -= eth; // to burn actual ETH so
             wind.debit += eth; // ETH belongs to all plunges
-            eth = msg.value - eth; plunge.carry.debit += eth;
+            eth = msg.value - eth; plunge.eth += eth;
             carry.debit += eth; work.short.debit += amount; 
-            
             debit = plunge.work.short.debit; credit = plunge.work.short.credit;
         }   require(old > work.short.credit + work.long.credit, "MO::escrow");
         require(_blush(price, credit, debit, short) >= MIN_CR && // too much...
-        (carry.credit / 5 > debit) && _carry > (debit * max * MIN_APR / ONE), 
+        (carry.credit / 5 > debit) && _carry > (debit * max / ONE), 
             "MO::escrow: taking on more leverage than considered healthy"
         ); Plunges[_msgSender()] = plunge; // write to storage last 
     }

@@ -30,10 +30,7 @@ interface INonfungiblePositionManager is IERC721 {
         );
 }
 
-/** 
- * @title лоток яиц
- */
-contract Lotok is Ownable, 
+contract Lot is Ownable, 
     VRFConsumerBaseV2, 
     IERC721Receiver { 
     // for tracking time deltas...
@@ -48,7 +45,7 @@ contract Lotok is Ownable,
     VRFCoordinatorV2Interface COORDINATOR;
     LinkTokenInterface LINK; bytes32 keyHash;
     uint64 public subscriptionId;
-    address public recentWinner; 
+    address public owed; 
     uint32 callbackGasLimit;
     uint16 requestConfirmations;
     uint public requestId; 
@@ -150,7 +147,7 @@ contract Lotok is Ownable,
     constructor(address _vrfCoordinator, address _link_token, 
         bytes32 _hash, uint32 _limit, uint16 _confirm) 
         VRFConsumerBaseV2(_vrfCoordinator) {
-            recentWinner = QUID;
+            owed = QUID;
             callbackGasLimit = _limit;
             requestConfirmations = _confirm;
             reward = 1_000_000_000_000; // 0.000001 WETH
@@ -160,39 +157,59 @@ contract Lotok is Ownable,
             LINK = LinkTokenInterface(_link_token); 
             weth = IERC20(WETH); sdai = IERC20(SDAI);
             deployed = block.timestamp; Gen = MO(QUID);
-            last_lotto_trigger = Gen.YEAR(); // rolling
             COORDINATOR = VRFCoordinatorV2Interface(_vrfCoordinator);    
             COORDINATOR.addConsumer(subscriptionId, address(this));
             subscriptionId = COORDINATOR.createSubscription(); // pubsub...
             nonfungiblePositionManager = INonfungiblePositionManager(NFPM);
     }
 
+    /** Whenever an {IERC721} `tokenId` token is transferred to this contract:
+     * @dev Safe transfer `tokenId` token from `from` to `address(this)`, 
+     * checking that contract recipient prevent tokens from being forever locked.
+     * Requirements: TODO
+     * - `tokenId` token must exist and be owned by `from`.
+     * - If the caller is not `from`, it must have been allowed 
+     *   to move this token by either {approve} or {setApprovalForAll}.
+     * - {onERC721Received}, is called upon
+     *   a safe transfer...
+     * - It must return its Solidity selector to confirm the token transfer.
+     *   If any other value is returned or the interface is not implemented
+     *   by the recipient, the transfer will be reverted.
+     */
     // QuidMint...foundation.app/@quid
     function onERC721Received( address, 
         address from, // previous owner's
         uint256 tokenId, bytes calldata data
     ) external override returns (bytes4) { 
-        require(from == recentWinner, "unauthorised");
+        require(from == owed, "unauthorised");
         require(Gen.YEAR() > last_lotto_trigger, "early"); // if 
         // TODO otherwise send the token back to sender?
         uint lambo = 16508; // youtu.be/sitXeGjm4Mc 
         uint last = ICollection(F8N_1).latestTokenId(); 
-        if (tokenId == lambo && address(this) // 
-            == ICollection(F8N_0).ownerOf(lambo)) {
+        address parked = ICollection(F8N_0).ownerOf(lambo);
+        require(ICollection(F8N_1).ownerOf(last) == parked);
+        if (tokenId == lambo && parked == address(this)) {
             sdai.transfer(from, 608358 * 1e18);
             // since this only gets called twice a year
             // 1477741 - (608358 x 2) stays in contract
-        }   else if (tokenId == last) { 
+        }   else if (tokenId == last) {
+                // trigger used for ratcheting
+                // send 
                 last_lotto_trigger = Gen.YEAR();
-                ICollection(F8N_0).transferFrom(
-                    address(this), QUID, lambo
-                );  sdai.transfer(from, 69383 * 1e18); 
+                if (parked == address(this)) {
+                    ICollection(F8N_0).transferFrom(
+                        address(this), QUID, lambo
+                    );  
+                }
+                // ; //
+                sdai.transfer(owed, 69383 * 1e18); 
                 requestId = COORDINATOR.requestRandomWords(
                     keyHash,subscriptionId,
                     requestConfirmations,
                     callbackGasLimit, 1
             );  emit RequestedRandomness(requestId);
-        } 
+        }
+        return this.onERC721Received.selector; 
     }
 
     // TODO require time delta once per MO
@@ -201,13 +218,13 @@ contract Lotok is Ownable,
         uint last = ICollection(F8N_1).latestTokenId(); // 2
         randomness = randomWords[0]; require(randomness > 0 &&
         address(this) == ICollection(F8N_1).ownerOf(last), "!"); 
-        address[] memory d = Gen.liquidated(when);
-        uint indexOfWinner = randomness % d.length;
-        recentWinner = d[indexOfWinner];
+        address[] memory own = Gen.liquidated(when);
+        uint indexOfWinner = randomness % own.length;
+        owed = own[indexOfWinner];
         ICollection(F8N_1).transferFrom(
-            address(this), recentWinner, last
+            address(this), owed, last
         ); // new lottery recipient
-    }
+    } // 
    
     function deposit(uint tokenId) external { 
         (address token0, address token1, uint128 liquidity) = _getInfo(tokenId);
@@ -228,23 +245,22 @@ contract Lotok is Ownable,
     /**
      * @dev Withdraw UniV3 LP deposit from vault (changing the owner back to original)
      */
-    function withdraw(uint tokenId) external {
+    function withdraw(uint tokenId) external returns (uint total) {
         uint timestamp = depositTimestamps[msg.sender][tokenId]; // verify a deposit exists
         require(timestamp > 0, "Lock::withdraw: no owner exists for this tokenId");
         require( // how long this deposit has been in the vault
             (block.timestamp - timestamp) > minLock,
             "Lock::withdraw: min duration hasn't elapsed yet"
-        );
-        (address token0, , uint128 liquidity) = _getInfo(tokenId);
+        );  (address token0, , uint128 liquidity) = _getInfo(tokenId);
+        // possible that 1st reward is fraction of week's worth
         uint week_iterator = (timestamp - deployed) / 1 weeks;
         // could've deposited right before end of the week, so need some granularity
         // otherwise an unfairly large portion of rewards may be obtained by staker
         uint so_far = (timestamp - deployed) / 1 hours;
         uint delta = so_far - (week_iterator * 168);
-        uint earn = (delta * reward) / 168; // 1st reward maybe fraction of week's worth
-        uint total = 0;
+        uint earn = (delta * reward) / 168; 
+        uint current_week = _roll();
         if (token0 == WETH) {
-            uint current_week =  _roll();
             while (week_iterator < current_week) {
                 uint thisWeek = totalsWETH[week_iterator];
                 if (thisWeek > 0) { // check lest div by 0
@@ -260,15 +276,12 @@ contract Lotok is Ownable,
             total += (earn * liquidity) / liquidityWETH;
             liquidityWETH -= liquidity;
         } else if (token0 == USDT) {
-            uint current_week =  _roll();
             while (week_iterator < current_week) {
                 uint thisWeek = totalsUSDT[week_iterator];
                 if (thisWeek > 0) { // need to check lest div by 0
                     // staker's share of rewards for given week...
                     total += (earn * liquidity) / thisWeek;
-                }
-                week_iterator += 1;
-                earn = reward;
+                }   week_iterator += 1; earn = reward;
             }
             so_far = (block.timestamp - deployed) / 1 hours;
             delta = so_far - (current_week * 168);
