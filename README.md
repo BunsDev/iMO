@@ -1,4 +1,4 @@
-## in my opinion..!nter*M*ittent *O*ffer: MO🔨Lot.sol 
+## in my opinion..!nterMittent Offe*ring* 💍
 
 No secondary token, just one. QD is like a promissory note:  
 notes are used for settlement. The promise is that 1 QD will  
@@ -10,11 +10,11 @@ are like *Itchy and Scratchy*...`credit` and `debit` are like *CatDog*.
 Those are the "primitives"; the main structural elements are sort   
 of like hook, line, and sinker: `wind`, `carry`, `work`, respectively.
 
-So, 3 primitives, 3 elements; glue two three's together into 8:
-`mint`...`flip`...`vote`...`put`...`borrow`...`fold`...`call`...  
+So, 3 primitives, 3 elements; glue two three's together into 8:  
+`mint`...`flip`...`vote`...`put`...`borrow`...`fold`...`call`...and    
 "lookin' too hot? simmer down, or soon you'll get," `clocked`:  
 
-those are all of the externally callable functions in MO.sol...a.k.a.   
+these are all of our externally callable functions in MO.sol...a.k.a.   
 **Diet Colla**~~boration~~ with [Clams](https://twitter.com/clammyclams/status/1781831323356733946) ~~Casino~~ [AV](https://youtu.be/1O25uUy90hU)...and...sDAI re-staking,  
 this [transmission](https://en.wikipedia.org/wiki/Intercarrier_method) is coming to [mix](https://youtu.be/ndQM3kVb06I) under-collat with over-collat.  
  The original Phat Farm slogan was, "the new American [Dream](https://www.youtube.com/clip/Ugkx6KgnkNJTp-w6l-UJbXc0ctnAmo8LgdOU)," 
@@ -40,7 +40,11 @@ taking an insured ETH deposit that already has
 
 volatility protection from MakerDAO, increasing  
 its capital efficiency (a.k.a. [capital deepening](https://www.wallstreetmojo.com/capital-deepening/))...  
-doing what cultured meat did (but for stake ETH). 
+doing what cultured meat did (but for stake ETH).  
+
+Why borrow for 8% if you can borrow DAI for 1%?  
+There's *much* less over-collat, and in most cases,  
+you actually get paid to borrow (scroll to [bottom](https://docs.google.com/spreadsheets/d/1uBG8jJGNCgQArKm4FlcmNuXb1cspG6-PRcDoFaRvQws)).  
 
 It's not good debt versus bad debt [compensation](https://www.tabers.com/tabersonline/view/Tabers-Dictionary/730522/all/compensation),  
 only what we delight in, and how to obtain *Oneg*:  

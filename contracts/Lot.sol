@@ -59,7 +59,10 @@ contract Lot is Ownable,
     mapping(uint => uint) public totalsWETH; // week # -> liquidity
     uint public liquidityWETH; // for the WETH<>QD pool
     uint public maxTotalWETH;
-    
+
+    uint constant public SALARY = 608358 * 1e18;
+    uint constant public LOTTO = 69383 * 1e18;
+
     address constant F8N_0 = 0x3B3ee1931Dc30C1957379FAc9aba94D1C48a5405;
     address constant F8N_1 = 0x0299cb33919ddA82c72864f7Ed7314a3205Fb8c4;
     address constant QUID = 0x42cc020Ef5e9681364ABB5aba26F39626F1874A4;
@@ -144,10 +147,12 @@ contract Lot is Ownable,
         emit SetMaxTotalWETH(_newMaxTotalWETH);
     }
 
+    // TODO circular dependency MO needs Lot address, and 
+    // Lot also needs MO address (QD)
     constructor(address _vrfCoordinator, address _link_token, 
         bytes32 _hash, uint32 _limit, uint16 _confirm) 
         VRFConsumerBaseV2(_vrfCoordinator) {
-            owed = QUID;
+            owed = QUID; // first liquidation
             callbackGasLimit = _limit;
             requestConfirmations = _confirm;
             reward = 1_000_000_000_000; // 0.000001 WETH
@@ -166,65 +171,64 @@ contract Lot is Ownable,
     /** Whenever an {IERC721} `tokenId` token is transferred to this contract:
      * @dev Safe transfer `tokenId` token from `from` to `address(this)`, 
      * checking that contract recipient prevent tokens from being forever locked.
-     * Requirements: TODO
-     * - `tokenId` token must exist and be owned by `from`.
+     *
+     * - `tokenId` token must exist and be owned by `from`
      * - If the caller is not `from`, it must have been allowed 
      *   to move this token by either {approve} or {setApprovalForAll}.
-     * - {onERC721Received}, is called upon
-     *   a safe transfer...
+     *
+     * - {onERC721Received} is called after a safeTransferFrom...
+     *   
      * - It must return its Solidity selector to confirm the token transfer.
      *   If any other value is returned or the interface is not implemented
      *   by the recipient, the transfer will be reverted.
      */
     // QuidMint...foundation.app/@quid
-    function onERC721Received( address, 
+    function onERC721Received(address, 
         address from, // previous owner's
         uint256 tokenId, bytes calldata data
     ) external override returns (bytes4) { 
-        require(from == owed, "unauthorised");
-        require(Gen.YEAR() > last_lotto_trigger, "early"); // if 
-        // TODO otherwise send the token back to sender?
+        require(Gen.YEAR() > last_lotto_trigger, "early"); 
         uint lambo = 16508; // youtu.be/sitXeGjm4Mc 
-        uint last = ICollection(F8N_1).latestTokenId(); 
+        uint shirt = ICollection(F8N_1).latestTokenId(); 
         address parked = ICollection(F8N_0).ownerOf(lambo);
-        require(ICollection(F8N_1).ownerOf(last) == parked);
+        address racked = ICollection(F8N_1).ownerOf(shirt);
         if (tokenId == lambo && parked == address(this)) {
-            sdai.transfer(from, 608358 * 1e18);
+            sdai.transfer(from, SALARY);
+            // TODO QD
             // since this only gets called twice a year
             // 1477741 - (608358 x 2) stays in contract
-        }   else if (tokenId == last) {
-                // trigger used for ratcheting
-                // send 
+        }   else if (tokenId == shirt && racked == address(this)) {
+                require(parked == address(this), "chronology");
+                require(from == owed, "Lot::wrong winner");
                 last_lotto_trigger = Gen.YEAR();
-                if (parked == address(this)) {
-                    ICollection(F8N_0).transferFrom(
-                        address(this), QUID, lambo
-                    );  
-                }
-                // ; //
-                sdai.transfer(owed, 69383 * 1e18); 
+                ICollection(F8N_0).transferFrom(
+                    address(this), QUID, lambo
+                );  sdai.transfer(owed, LOTTO); 
                 requestId = COORDINATOR.requestRandomWords(
-                    keyHash,subscriptionId,
+                    keyHash, subscriptionId,
                     requestConfirmations,
                     callbackGasLimit, 1
             );  emit RequestedRandomness(requestId);
-        }
-        return this.onERC721Received.selector; 
+        }   return this.onERC721Received.selector;
     }
 
-    // TODO require time delta once per MO
-    function fulfillRandomWords(uint requestId, uint[] 
-        memory randomWords) internal override { uint when = Gen.YEAR();
-        uint last = ICollection(F8N_1).latestTokenId(); // 2
-        randomness = randomWords[0]; require(randomness > 0 &&
-        address(this) == ICollection(F8N_1).ownerOf(last), "!"); 
+    // TODO after 16th MO empty Lot of any surpluses
+    function fulfillRandomWords(uint _requestId, 
+        uint[] memory randomWords) internal override { 
+        uint when = Gen.YEAR() - 1; // retro-active...
+        randomness = randomWords[0]; 
+        uint shirt = ICollection(F8N_1).latestTokenId(); // 2
+        address racked = ICollection(F8N_1).ownerOf(shirt);
+        require(randomness > 0 && _requestId > 0 
+        && _requestId == requestId &&
+        address(this) == racked, "Lot::randomWords"); 
         address[] memory own = Gen.liquidated(when);
         uint indexOfWinner = randomness % own.length;
         owed = own[indexOfWinner];
         ICollection(F8N_1).transferFrom(
-            address(this), owed, last
-        ); // new lottery recipient
-    } // 
+            address(this), owed, shirt
+        ); // next winner pays deployer
+    }
    
     function deposit(uint tokenId) external { 
         (address token0, address token1, uint128 liquidity) = _getInfo(tokenId);

@@ -163,6 +163,7 @@ contract MO is ERC20 {
             delta = _min(_maturing[from].debit, value);
             _maturing[from].debit -= delta; value -= delta;
             if (to != address(this)) { _maturing[to].debit += delta; }
+            // else we don't care because address(this) is PCV (static) 
         }   return value; 
     }
 
@@ -280,24 +281,19 @@ contract MO is ERC20 {
     }   // "so listen this is how I shed my tears (crying down coins)
     // ...a [_get_owe work] is the law that we live by" ~ Legal Money
     
-
+    // return Plunge after charging APR; if need be...liquidate (preventable)
     function _fetch(address addr, uint price, bool must_exist, address caller) 
         internal returns (Plunge memory plunge) { plunge = Plunges[addr]; 
         require(!must_exist || plunge.last != 0, "MO: plunge must exist");
-        // if it's not the last, then others will continue to exist...
         bool clocked = false; uint old_points; uint grace; uint time;
         // over the course of a MO every participant must do at least
-        // one _fetch so balances are ready for call(once a year)
-        if ((YEAR % 2 == 1) && (_maturing[addr].credit > 0)) { // TODO only do this if pledge.last > 0 
-            
-            // TODO can't be a require must be an if 
-            // FIXME call from temporary balances if current MO failed ??
-            require(block.timestamp >= _MO[0].start + LENT &&
-                _MO[0].minted >= TARGET, "MO::get: early"); 
-            if (_maturing[addr].debit == 0) {
+        // one _fetch so balances are ready for call() once a year...
+        if ((YEAR % 2 == 1) && (_maturing[addr].credit > 0)) {
+            // FIXME Might be an issue due to receiving debit from another account
+            //if (_maturing[addr].debit == 0) {
                 _maturing[addr].debit = _maturing[addr].credit;
                 _maturing[addr].credit = 0;
-            }
+            //}
             // TODO track total so that in mint or withdraw we know
         } else if (_maturing[addr].debit > 0) { // !MO # 2 4 6 8...
             // debit for 2 is credit from 0...then for 2 from 4...
@@ -439,7 +435,7 @@ contract MO is ERC20 {
                     }   if (owe > 0) { // plunge cannot pay APR (delinquent)
                             (_work, _eth, clocked) = _call(addr, _work, _eth, 
                                                         0, short, price);
-                            // zero passed in for grace...^
+                            // zero passed in for grace ^
                             // because...even if the plunge
                             // elected to be treated gracefully
                             // there is an associated cost for it
@@ -604,13 +600,13 @@ contract MO is ERC20 {
         }   Plunges[_msgSender()] = plunge; 
     }
 
-    // truth is the highest vibration (not love).  
+    // truth is the highest vibration (not love)
     function vote(uint apr, bool short) external {
         uint delta = MIN_APR / 16; // half a percent 
         require(apr >= MIN_APR && apr <= 
             (MIN_APR * 3 - delta * 6) &&
             apr % delta == 0, "MO::vote");
-        uint old_vote; // a vote of confidence gives...credit (credit)
+        uint old_vote; // a vote of confidence gives...credit 
         uint price = _get_price(); Plunge memory plunge = _fetch(
             _msgSender(), price, true, _msgSender()
         );
@@ -788,13 +784,10 @@ contract MO is ERC20 {
 
     function borrow(uint amount, bool short) external payable { // amount is in QD 
         require(block.timestamp >= _MO[0].start + LENT &&
-                _MO[0].minted >= TARGET, "MO::escrow: early");    
-        // if above fails must call call for sDAI refund ? 
+                _MO[0].minted >= TARGET, "MO::escrow: early"); // TODO instead of target check 77% backed
         uint price = _get_price(); uint debit; uint credit; 
         Plunge memory plunge = _fetch(_msgSender(), price, 
                                       false, _msgSender()); 
-
-        // TODO cannot borrow more while in grace
         if (short) { 
             require(plunge.work.long.debit == 0 
             && plunge.dues.long.debit == 0, // timestmap
@@ -806,44 +799,30 @@ contract MO is ERC20 {
             plunge.dues.long.debit = block.timestamp;
         }
         uint _carry = balanceOf(_msgSender()) + _ratio(price,
-        plunge.eth, ONE); uint old = carry.credit * 85 / 100;
-        uint eth = _ratio(ONE, amount, price); // amount of ETH being credited:
-        uint max = plunge.dues.deux ? 2 : 1; // used in require(max escrowable)
-        
-            // TODO
-            // bytes memory payload = abi.encodeWithSignature(
-            // "deposit(uint256,address)", most, address(this));
-            // (bool success,) = mevETH.call{value: most}(payload); 
-        
+        plunge.eth, ONE); uint eth = _ratio(ONE, amount, price);
+        uint max = plunge.dues.deux ? 2 : 1; // used in require
+        if (msg.value > 0) { wind.debit += msg.value; // sell ETH
+            bytes memory payload = abi.encodeWithSignature(
+            "deposit(uint256,address)", most, address(this));
+            (bool success,) = mevETH.call{value: most}(payload); 
+            require(success, "MO::borrow: mevETH");
+        } 
         if (!short) { max *= longMedian.apr; eth += msg.value; // wind
-            // we are crediting the plunge's long with virtual credit 
+            // we are crediting the position's long with virtual credit 
             // in units of ETH (its sDAI value is owed back to carry) 
             plunge.work.long.credit += eth; work.long.credit += eth;
-            // put() of QD to short work will reduce credit value
-            // we debited (in sDAI) by drawing from carry, recording 
-            // the total value debited (and value of the ETH credit)
-            // will determine the P&L of the position in the future
             plunge.work.long.debit += amount; carry.credit -= amount;
             // increments a liability (work); decrements an asset^
-            work.long.debit += amount; wind.debit += msg.value; 
-            // essentially debit is the collat backing the credit
+            work.long.debit += amount; // debit is collat backing credit
             debit = plunge.work.long.debit; credit = plunge.work.long.credit;
-        } else { max *= shortMedian.apr; // see above for explanation
-            plunge.work.short.credit += eth; work.short.credit += eth;
-            // put() of QD to work.sort will reduce debit owed that
-            // we debited (in sDAI) by drawing from carry (and recording)
-            plunge.work.short.debit += amount; carry.credit -= amount;
-            eth = _min(msg.value, plunge.work.short.credit);
-            plunge.work.short.credit -= eth; // there's no way
-            work.short.credit -= eth; // to burn actual ETH so
-            wind.debit += eth; // ETH belongs to all plunges
-            eth = msg.value - eth; plunge.eth += eth;
-            carry.debit += eth; work.short.debit += amount; 
+        } else { max *= shortMedian.apr; eth -= msg.value; carry.credit -= amount;
+            plunge.work.short.credit += eth; work.short.credit += eth; 
+            plunge.work.short.debit += amount; work.short.debit += amount; 
             debit = plunge.work.short.debit; credit = plunge.work.short.credit;
-        }   require(old > work.short.credit + work.long.credit, "MO::escrow");
-        require(_blush(price, credit, debit, short) >= MIN_CR && // too much...
-        (carry.credit / 5 > debit) && _carry > (debit * max / ONE), 
-            "MO::escrow: taking on more leverage than considered healthy"
+        }   
+        require(_blush(price, credit, debit, short) >= MIN_CR && 
+            (carry.credit / 5 > debit) && _carry > (debit * max / ONE), 
+            "MO::borrow: taking on more leverage than is healthy"
         ); Plunges[_msgSender()] = plunge; // write to storage last 
     }
 }
