@@ -66,7 +66,7 @@ matching service as such to *Come Together*...
 This yield is used to pay APR...while profitable  
 trades (active management) also capture gains  
 away from dormant ROI (in !MO participation):  
-see `_maturing[owner].credit` in `_call` 
+see `_maturing[owner].credit` in `_call()`... 
 
 ### Through de*ferral* reserve (not federal)
 

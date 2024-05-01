@@ -19,16 +19,17 @@ contract MO is ERC20 {
     uint constant public TARGET = 35700 * STACK; // !MO mint target
     uint constant public START_PRICE = 53 * CENT; // .54 actually
     uint constant public LENT = 46 days; // ends on the 47th day
-    uint constant public STACK = C_NOTE * 100; // 10_000 in QD.
+    uint constant public STACK = C_NOTE * 100;
     uint constant public C_NOTE = 100 * ONE; 
     uint constant public RACK = STACK / 10;
     uint constant public CENT = ONE / 100;
-    // investment banks underwriting IPO 
+    // investment banks underwriting IPOs 
     // take 2-7%...compare this to 0.76%
     uint constant public MO_FEE = 54 * CENT; 
     uint constant public MO_CUT = 22 * CENT; 
     uint constant public MIN_CR = 108080808080808080; 
-    uint constant public MIN_APR =  8080808080808080;               
+    // wait oh wait oh wait oh wait oh wait oh wait...
+    uint constant public MIN_APR =  8080808080808080;
     uint[27] public feeTargets; struct Medianiser { 
         uint apr; // most recent weighted median fee 
         uint[27] weights; // sum weights for each fee
@@ -44,7 +45,7 @@ contract MO is ERC20 {
         uint minted; // QD
         uint burned; // ^
         address[] own;
-    }  uint public YEAR; // actually half a year, every 6 months
+    }  uint public SEMESTER; // actually half a year, every 6 months
     uint internal _PRICE; // TODO comment out when finish testing
     uint internal _POINTS; // used in call() weights (medianiser)
     struct Pod { // used in Pools (incl. individual Plunges')
@@ -80,14 +81,15 @@ contract MO is ERC20 {
           170000000000000000, 175000000000000000, 180000000000000000,
           185000000000000000, 190000000000000000, 195000000000000000,
           200000000000000000, 205000000000000000, 210000000000000000];
+        // CANTO 0x6D882e6d7A04691FCBc5c3697E970597C68ADF39 redstone
         chainlink = AggregatorV3Interface(_price);
         uint[27] memory blank; sdai = IERC20(SDAI);
         longMedian = Medianiser(MIN_APR, blank, 0, 0, 0);
         shortMedian = Medianiser(MIN_APR, blank, 0, 0, 0); 
     }
 
-    event Minted (address indexed reciever, uint cost_in_usd, uint amt); // by !MO
-    // Events are emitted, so only when we emit profits for someone do we call...
+    event Minted (address indexed reciever, uint amt);
+    // Events are emitted, so only when we emit profits
     event Long (address indexed owner, uint amt); 
     event Short (address indexed owner, uint amt);
     event Voted (address indexed voter, uint vote); // only emit when increasing
@@ -253,57 +255,27 @@ contract MO is ERC20 {
         if (!short) { longMedian = data; } 
         else { shortMedian = data; } // fin
     }
-
-    // ------------ OPTIONAL -----------------
-    // voting can allow LTV to act as moneyness,
-    // but while DSR is high this is unnecessary  
-
-    // DRIP (divident reinvestmnent plan) 
-    // with respect to _get_owe(), called 
-    // internally in 3 places functions...
-    // http://instagram.com/p/C5XMnorLj-c 
-    function _get_owe(uint param) internal {   
-        
-        // using APR / into MIN = scale
-        // if you over-collat by 8% x scale
-        // then you get a discount from APR
-        // that is exactly proportional...
-        // means we do have to add it in _call
-
-        // transfer to Lot.
-
-        uint excess = YEAR * TARGET; // excess wind.credit
-        if (wind.credit > excess) {
-
-        } else {
-
-        }
-    }   // "so listen this is how I shed my tears (crying down coins)
-    // ...a [_get_owe work] is the law that we live by" ~ Legal Money
     
     // return Plunge after charging APR; if need be...liquidate (preventable)
     function _fetch(address addr, uint price, bool must_exist, address caller) 
         internal returns (Plunge memory plunge) { plunge = Plunges[addr]; 
         require(!must_exist || plunge.last != 0, "MO: plunge must exist");
         bool clocked = false; uint old_points; uint grace; uint time;
-        // over the course of a MO every participant must do at least
-        // one _fetch so balances are ready for call() once a year...
-        if ((YEAR % 2 == 1) && (_maturing[addr].credit > 0)) {
-            // FIXME Might be an issue due to receiving debit from another account
-            //if (_maturing[addr].debit == 0) {
-                _maturing[addr].debit = _maturing[addr].credit;
+        // time window to roll over balances before the start of new MO
+        if (block.timestamp < _MO[SEMESTER].start) {
+            if (SEMESTER % 2 == 1) { // odd semester
+                _maturing[addr].debit += _maturing[addr].credit;
                 _maturing[addr].credit = 0;
-            //}
-            // TODO track total so that in mint or withdraw we know
-        } else if (_maturing[addr].debit > 0) { // !MO # 2 4 6 8...
-            // debit for 2 is credit from 0...then for 2 from 4...
-            _mint(addr, _maturing[addr].debit); // minting only here...
-            _maturing[addr].debit = 0; // no minting in mint() function
-        } // else if () FIXME
-        old_points = plunge.dues.points; 
-        _POINTS -= old_points; uint _eth = plunge.eth; 
-        // wait oh wait oh wait oh wait oh wait oh wait oh wait...
+            } else if (_maturing[addr].debit > 0) { // SEMESTER % 2 == 0 
+                // credit from 0 is debit for 2...then for 2 from 4...
+                _mint(addr, _maturing[addr].debit); // minting only here...
+                _maturing[addr].debit = 0; // no minting in mint() function
+                // because freshly minted QD in !MO is still _maturing...
+            }
+        } old_points = plunge.dues.points; _POINTS -= old_points; 
+        // caller may earn a fee for paying gas to update a Plunge
         uint fee = caller == addr ? 0 : MIN_APR / 2000;  // 0.0041 %
+        uint _eth = plunge.eth; // carry.debit
         if (plunge.work.short.debit > 0) { 
             Pod memory _work = plunge.work.short; 
             fee *= _work.debit / ONE;
@@ -315,9 +287,9 @@ contract MO is ERC20 {
                     grace = (MIN_APR / 1000) * _work.debit / ONE; // 1.15% per day
                     grace += fee; // 0,5% per day for caller
                 } 
-            }   (_work, _eth, clocked) = _charge(addr, 
+            }   (_work, _eth, clocked) = _charge(addr,
                  _eth, _work, price, time, grace, true); 
-            if (clocked) { 
+            if (clocked) { // grace == 1 flips the debt
                 if (grace == 1) { plunge.dues.short.debit = 0;
                     plunge.work.short.credit = 0;
                     plunge.work.short.debit = 0;
@@ -360,6 +332,7 @@ contract MO is ERC20 {
             plunge.work.long = _work;
         } 
         if (fee > 0) { _maturing[caller].credit += fee; }
+
         if (balanceOf(addr) > 0) { // TODO default vote not counted
             // TODO simplify based on !MO
             plunge.dues.points += ( // 
@@ -388,7 +361,7 @@ contract MO is ERC20 {
         returns (Pod memory, uint, bool clocked) {
         // "though eight is not enough...no,
         // it's like [grace lest you] bust: 
-        // now your whole [plunge] is dust" 
+        // now your whole [plunge] is dust" ~ Hit 'em High
         if (delta >= 10 minutes) { // 52704 x 10 mins per year
             uint apr = short ? shortMedian.apr : longMedian.apr; 
             delta /= 10 minutes; uint owe = (grace > 0) ? 2 : 1; 
@@ -493,7 +466,7 @@ contract MO is ERC20 {
                     } else { emit Short(owner, _work.debit);
                         carry.credit += _work.debit; 
                         if (_work.debit > 5 * STACK) { 
-                            _MO[YEAR].own.push(owner); // for Lot.sol
+                            _MO[SEMESTER].own.push(owner); // for Lot.sol
                         }   work.short.debit -= _work.debit;
                             work.short.credit -= _work.credit;
                             _work.credit = 0; _work.debit = 0;
@@ -545,7 +518,7 @@ contract MO is ERC20 {
                     else { emit Long(owner, _work.debit);
                         carry.credit += _work.debit; 
                         if (_work.debit > 5 * STACK) { 
-                            _MO[YEAR].own.push(owner); // for Lot.sol
+                            _MO[SEMESTER].own.push(owner); // for Lot.sol
                         }   work.long.debit -= _work.debit;
                             work.long.credit -= _work.credit;
                             _work.credit = 0; _work.debit = 0;
@@ -676,109 +649,68 @@ contract MO is ERC20 {
         uint most; uint cr; uint price = _get_price();
         Plunge memory plunge = _fetch(
             _msgSender(), price, true, _msgSender());
-        if (!qd) { // call only from carry...use escrow() or fold() for work 
-            // the work balance is a synthetic (virtual) representation of ETH
-            // plunges only care about P&L, which can only be called in QD 
-            most = _min(plunge.eth, amt);
-            plunge.eth -= most;
-            carry.debit -= most;
-            // require(address(this).balance > most, "MO::call: deficit ETH");
-            payable(_msgSender()).transfer(most); // TODO use WETH to put % in Lock?
+        if (!qd) { most = _min(plunge.eth, amt);
+            plunge.eth -= most; carry.debit -= most;
+            payable(_msgSender()).transfer(most); 
         } 
-        else if (qd) {         
-            // but we must also be able to evict (involuntary fold from profitables)
-            // consider that extra minting happens here 
-            // in order to satisfy call (in that sense perfection rights are priotised)
-            // this automatically ensures that YEAR > 1
-            
-            
-
-            require(super.balanceOf(_msgSender()) >= amt, 
-                    "MO::call: insufficient QD balance");
-            require(amt >= RACK, "MO::call: must be over 1000");
-                   
-            // POINTS (per plunge are products) sum in total
-            // _get_owe(_POINTS);
+        else if (qd) { uint debt_minted; // total since start    
+            most = _min(super.balanceOf(_msgSender()), amt);
+            wind.credit -= most; _burn(_msgSender(), most); 
+            for (uint i = 0; i < SEMESTER; i++) {
+                debt_minted += _MO[SEMESTER].minted;
+            }   uint surplus = wind.credit - debt_minted;
+            uint share = plunge.dues.points * surplus / _POINTS;
+            uint paying = most - (surplus - share); // dilution
             // so that plunges that have been around since
             // the beginning don't take the same proportion
             // as recently joined plegdes, which may other-
             // wise have the same stake-based equity in wind
-            // so it's a product of the age and stake instead
-
-            // carry.CREDIT OVER TIME (TOTAL POINTS)
-            // WILL GET ITS SHARE OF THE WP AT THE END  ??
-            // 1/16 * _get_owe_scale 
-            // (carry - wind).credit
-              
-            uint assets = carry.credit + work.short.debit + work.long.debit + 
-            _ratio(price, wind.debit, ONE) + _ratio(price, carry.debit, ONE); 
-
-            // TODO collapse work positions back into carry 
-            // can only call from what is inside carry
-
-            // 1/16th or 1/8th 
-            uint liabilities = wind.credit + // QDebt from !MO 
-            _ratio(price, work.long.credit, ONE) + // synthetic ETH collat
-            _ratio(price, work.short.credit, ONE);  // synthetic ETH debt
-         
-            if (liabilities > assets) {
-
-            } else { 
-                
-                // carry.credit -= least; _burn(_msgSender(), amt); 
-                // sdai.transferFrom(address(this), _msgSender(), amt);
-            }      
+            carry.credit -= paying;
+            require(carry.credit >= work.long.debit +
+                    work.short.debit, "MO::call");
+            sdai.transfer(_msgSender(), paying);
         }
     } 
 
-    // TODO bool qd, this will attempt to draw _max from _balances before sDAI 
+    // TODO bool qd, this will attempt to draw _max from _balances before sDAI...
     function mint(uint amount, address beneficiary) external returns (uint cost) {
-        require(beneficiary != address(0), "MO::mint: zero address");
-        require(block.timestamp >= _MO[YEAR].start, "MO::mint: before start date"); 
-        // TODO allow roll over QD value in sDAI from last !MO into new !MO...
-
-        // evict the wei used to store Offering data after 
-        // the end of the offering? TODO
-
-        if (block.timestamp >= _MO[YEAR].start + LENT + 144 days) { // 6 months
-            if (_MO[YEAR].minted >= TARGET) { // _MO[YEAR].locked * MO_FEE / ONE
-                sdai.transferFrom(address(this), lot, 1477741 * ONE); // ^  
-                _MO[YEAR].locked = 272222222 * ONE; // minus 0.54% of sDAI
-            }   YEAR += 1; // "same level, the same
-            //  rebel that never settled" in _get_owe()
-            require(YEAR <= 16, "MO::mint: already had our final !MO");
-            _MO[YEAR].start = block.timestamp + LENT; // in the next !MO
-        } else if (YEAR < 16) { // forte vento, LENT gives time to _fetch
-            require(amount >= RACK, "MO::mint: a rack minimum, no iraq"); 
-            uint in_days = ((block.timestamp - _MO[YEAR].start) / 1 days) + 1; 
-            require(in_days < 46, "MO::mint: current !MO is over"); 
-            cost = (in_days * CENT + START_PRICE) * (amount / ONE);
-            uint supply_cap = in_days * MAX_PER_DAY + totalSupply();
-            if (Plunges[beneficiary].last == 0) { // init. plunge
+        require(beneficiary != address(0) && beneficiary != address(this), "MO::mint");
+        require(block.timestamp >= _MO[SEMESTER].start, "MO::mint: before start date"); 
+        if (block.timestamp >= _MO[SEMESTER].start) {
+            if (block.timestamp <= _MO[SEMESTER].start + LENT) {
+                require(amount >= RACK, "MO::mint: 1 rack min"); 
+                uint in_days = ((block.timestamp - _MO[SEMESTER].start) / 1 days) + 1; 
+                require(in_days < 47, "MO::mint: current !MO is over"); 
+                cost = (in_days * CENT + START_PRICE) * amount / ONE;
                 Plunges[beneficiary].last = block.timestamp;
-                _approve(beneficiary, address(this),
-                          type(uint256).max - 1);
-            } _MO[YEAR].locked += cost; _MO[YEAR].minted += amount;
-            wind.credit += amount; // the debts associated with QD
-            // balances belong to everyone, not to any individual;
-            // amount decremented by APR payments in QD (or call)
-            uint cut = MO_CUT * amount / ONE; // .22% = 777742 QD
-            _maturing[beneficiary].credit += amount - cut; // QD
-            _mint(lot, cut); carry.credit += cost; 
-            emit Minted(beneficiary, cost, amount); 
-            require(supply_cap >= wind.credit,
-            "MO::mint: supply cap exceeded"); 
-
-            // TODO helper function
-            // for how much credit to mint
-            // based on target (what was minted before) and what is surplus from fold
-            // different input to _get_owe(). fold only credits a carry to the plunge winsin
-            
-            // wind.credit 
-            // TODO add amt to plunge.carry.credit ??
-            
-            sdai.transferFrom(_msgSender(), address(this), cost); // TODO approve in frontend
-            
+                uint supply_cap = in_days * MAX_PER_DAY; 
+                _MO[SEMESTER].locked += cost; _MO[SEMESTER].minted += amount;
+                wind.credit += amount; // the debts associated with QD
+                // balances belong to everyone, not to any individual;
+                // amount decremented by APR payments in QD (or call)
+                uint cut = MO_CUT * amount / ONE; // .22% = 777742 QD
+                _maturing[beneficiary].credit += amount - cut; // QD
+                _mint(lot, cut); carry.credit += cost; 
+                require(_MO[SEMESTER].minted <= supply_cap, 
+                        "MO::mint: supply cap exceeded"); 
+                        emit Minted(beneficiary, cut); 
+                require(sdai.transferFrom( // TODO approve in frontend
+                    _msgSender(), address(this), cost
+                ), "MO::mint: sDAI transfer failed");
+            } else if (block.timestamp >= _MO[SEMESTER].start + LENT + 144 days) { // 6 months
+                uint ratio = _MO[SEMESTER].locked * 100 / _MO[SEMESTER].minted; // % backing
+                require(ratio >= 76, "MO::mint: must respect minimum backing");
+                _MO[SEMESTER].locked -= _MO[SEMESTER].locked * MO_FEE / ONE;
+                uint fee = MO_FEE * amount / ONE; // .54% = 1477741 sDAI
+                require(sdai.transferFrom(
+                    address(this), lot, fee
+                ), "MO::mint: sDAI transfer failed"); // OpEx
+                if (SEMESTER < 15) { // "same level...the same 
+                    SEMESTER += 1; // rebel that never settled"
+                    _MO[SEMESTER].start = block.timestamp + LENT; 
+                    // LENT gives time window for _fetch update 
+                }
+            }
         }
     }
 

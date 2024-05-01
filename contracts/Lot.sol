@@ -186,36 +186,38 @@ contract Lot is Ownable,
     function onERC721Received(address, 
         address from, // previous owner's
         uint256 tokenId, bytes calldata data
-    ) external override returns (bytes4) { 
-        require(Gen.YEAR() > last_lotto_trigger, "early"); 
+    ) external override returns (bytes4) { bool refund = false;
+        require(Gen.SEMESTER() > last_lotto_trigger, "early"); 
         uint lambo = 16508; // youtu.be/sitXeGjm4Mc 
         uint shirt = ICollection(F8N_1).latestTokenId(); 
         address parked = ICollection(F8N_0).ownerOf(lambo);
         address racked = ICollection(F8N_1).ownerOf(shirt);
         if (tokenId == lambo && parked == address(this)) {
-            sdai.transfer(from, SALARY);
+            require(sdai.transfer(from, SALARY), "sDAI");
             // TODO QD
             // since this only gets called twice a year
             // 1477741 - (608358 x 2) stays in contract
         }   else if (tokenId == shirt && racked == address(this)) {
                 require(parked == address(this), "chronology");
                 require(from == owed, "Lot::wrong winner");
-                last_lotto_trigger = Gen.YEAR();
+                last_lotto_trigger = Gen.SEMESTER();
                 ICollection(F8N_0).transferFrom(
                     address(this), QUID, lambo
-                );  sdai.transfer(owed, LOTTO); 
+                );  
+                require(sdai.transfer(owed, LOTTO), "sDAI"); 
                 requestId = COORDINATOR.requestRandomWords(
                     keyHash, subscriptionId,
                     requestConfirmations,
                     callbackGasLimit, 1
-            );  emit RequestedRandomness(requestId);
-        }   return this.onERC721Received.selector;
+                );  emit RequestedRandomness(requestId);
+        }   else { refund = true; }
+        if (!refund) { return this.onERC721Received.selector; }
     }
 
     // TODO after 16th MO empty Lot of any surpluses
     function fulfillRandomWords(uint _requestId, 
         uint[] memory randomWords) internal override { 
-        uint when = Gen.YEAR() - 1; // retro-active...
+        uint when = Gen.SEMESTER() - 1; // retro-active...
         randomness = randomWords[0]; 
         uint shirt = ICollection(F8N_1).latestTokenId(); // 2
         address racked = ICollection(F8N_1).ownerOf(shirt);
