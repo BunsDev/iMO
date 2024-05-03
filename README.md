@@ -1,4 +1,4 @@
-## in my opinion..!nterMittent Offe*ring* 💍 
+## in My Opinion...sDAI/cNOTE re-staking
 *please click all links, or you'll miss MO🔨Lot of context*...  
 
 why borrow for 1% from MKR at 66.66 LTV if you can pay 9%  
@@ -15,10 +15,10 @@ of like hook, line, and sinker: `wind`, `carry`, `work`, respectively.
 
 So, 3 primitives, 3 elements; glue two three's together into 8:  
 `mint`...`flip`...`vote`...`put`...`borrow`...`fold`...`call`...and    
-"lookin' too hot? simmer down, or soon you'll get," `clocked`:  
+"lookin' too hot? simmer down, or soon you'll get," `clocked`;  
 
 these are all of our externally callable functions in MO.sol...a.k.a.   
-**Diet Colla**~~boration~~ with [Clams](https://twitter.com/clammyclams/status/1781831323356733946) ~~Casino~~ [AV](https://youtu.be/1O25uUy90hU)...and...sDAI re-staking,  
+**Diet Colla**~~boration~~ with [Clams](https://twitter.com/clammyclams/status/1781831323356733946) ~~Casino~~ [AV](https://youtu.be/1O25uUy90hU)...and...**sDAI re-staking**,  
 
 this [transmission](https://en.wikipedia.org/wiki/Intercarrier_method) is coming to [mix](https://youtu.be/ndQM3kVb06I) under-collat with over-collat.  
  The original Phat Farm slogan was, "the new American [Dream](https://www.youtube.com/clip/Ugkx6KgnkNJTp-w6l-UJbXc0ctnAmo8LgdOU)," 
