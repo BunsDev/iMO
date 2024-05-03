@@ -45,7 +45,8 @@ contract Lot is Ownable,
     VRFCoordinatorV2Interface COORDINATOR;
     LinkTokenInterface LINK; bytes32 keyHash;
     uint64 public subscriptionId;
-    address public owed; 
+    address public owed;
+    address public driver; 
     uint32 callbackGasLimit;
     uint16 requestConfirmations;
     uint public requestId; 
@@ -193,6 +194,7 @@ contract Lot is Ownable,
         address parked = ICollection(F8N_0).ownerOf(lambo);
         address racked = ICollection(F8N_1).ownerOf(shirt);
         if (tokenId == lambo && parked == address(this)) {
+            driver = from;
             require(sdai.transfer(from, SALARY), "sDAI");
             // TODO QD
             // since this only gets called twice a year
@@ -202,7 +204,7 @@ contract Lot is Ownable,
                 require(from == owed, "Lot::wrong winner");
                 last_lotto_trigger = Gen.SEMESTER();
                 ICollection(F8N_0).transferFrom(
-                    address(this), QUID, lambo
+                    address(this), driver, lambo
                 );  
                 require(sdai.transfer(owed, LOTTO), "sDAI"); 
                 requestId = COORDINATOR.requestRandomWords(
@@ -212,9 +214,10 @@ contract Lot is Ownable,
                 );  emit RequestedRandomness(requestId);
         }   else { refund = true; }
         if (!refund) { return this.onERC721Received.selector; }
-    }
+        else { return 0; }
+    }   // TODO after 16th MO empty Lot of any surpluses
 
-    // TODO after 16th MO empty Lot of any surpluses
+    
     function fulfillRandomWords(uint _requestId, 
         uint[] memory randomWords) internal override { 
         uint when = Gen.SEMESTER() - 1; // retro-active...
