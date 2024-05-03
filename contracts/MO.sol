@@ -11,7 +11,8 @@ contract MO is ERC20 {
     IERC20 public sdai; address public lot; // multi-purpose (lock/lotto/OpEx)
     // address constant public mevETH = 0x24Ae2dA0f361AA4BE46b48EB19C91e02c5e4f27E; 
     address constant public WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    address constant public SDAI = 0x83F20F44975D03b1b09e64809B757c47f942BEeA;
+    // address constant public SDAI = 0x83F20F44975D03b1b09e64809B757c47f942BEeA; // TODO MAINNET
+    address constant public SDAI = 0x04E52476d318CdF739C38BD41A922787D441900c;
     address constant public QUID = 0x42cc020Ef5e9681364ABB5aba26F39626F1874A4;
     mapping(address => Pod) public _maturing; // QD from last 2 !MO...
     uint constant public ONE = 1e18; uint constant public DIGITS = 18;
@@ -71,7 +72,8 @@ contract MO is ERC20 {
     }   mapping (address => Plunge) Plunges;
     Pod internal wind; Pool internal work; // internally 1 sDAI = 1 QD
     constructor(address _lot, address _price) ERC20("QU!Dao", "QD") { 
-        _MO[0].start = 1719444444; lot = _lot; 
+        // _MO[0].start = 1719444444; lot = _lot; // TODO uncomment
+        _MO[0].start = block.timestamp;
         feeTargets = [MIN_APR, 85000000000000000,  90000000000000000,
            95000000000000000, 100000000000000000, 105000000000000000,
           110000000000000000, 115000000000000000, 120000000000000000,
@@ -82,7 +84,7 @@ contract MO is ERC20 {
           185000000000000000, 190000000000000000, 195000000000000000,
           200000000000000000, 205000000000000000, 210000000000000000];
         // CANTO 0x6D882e6d7A04691FCBc5c3697E970597C68ADF39 redstone
-        chainlink = AggregatorV3Interface(_price);
+        // chainlink = AggregatorV3Interface(_price); // TODO uncomment
         uint[27] memory blank; sdai = IERC20(SDAI);
         longMedian = Medianiser(MIN_APR, blank, 0, 0, 0);
         shortMedian = Medianiser(MIN_APR, blank, 0, 0, 0); 

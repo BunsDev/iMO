@@ -1,11 +1,8 @@
 ## in my opinion..!nterMittent Offe*ring* 💍 
-*please click the links, or you'll miss MO🔨Lot of context*...  
+*please click all links, or you'll miss MO🔨Lot of context*...  
 
 why borrow for 1% from MKR at 66.66 LTV if you can pay 9%  
-and borrow at 92 LTV? That's still less than 0.5% mint fee and  
-
-0.5% redeem fee (12% APR), but with liquidation protection, an  
-[otherwise](https://github.com/QuidLabs/iMO/blob/main/contracts/Lot.sol#L229) "essential" feature, pay double. no secondary token...  
+and borrow at 92 LTV...with shorts and liquidation protection.
 
 QD is like a promissory note: notes are used for settlement,   
 be worth $1 over time, so that's how QD is valued internally.
@@ -31,7 +28,7 @@ this [transmission](https://en.wikipedia.org/wiki/Intercarrier_method) is coming
 = $1 in ETH emulates a principal-protected characteristic of zero  
 -coupon bonds, and [swappable](https://twitter.com/guil_lambert/status/1772423853316219051) [puts](https://twitter.com/futurenomics/status/1766173245949014373) for the `call` to offering, or   
 
-r[ICO](https://twitter.com/ceterispar1bus/status/1747212170960466316) (r stands for recurring). QuidMint Foundation sees over (not  
+r[ICO](https://twitter.com/QuidMint/status/1786533263139369265) (r stands for recurring). QuidMint Foundation sees over (not  
 over-sieze) !MO as a project for futures students'...`work` credits   
 in the school of trade-offs, sweat equity, escalation; only what we  
  delight in, It's not good debt versus bad debt [compensation](https://www.tabers.com/tabersonline/view/Tabers-Dictionary/730522/all/compensation),  and  
@@ -47,21 +44,15 @@ Requires [customers](https://twitter.com/QuidMint/status/1784201484143358433) wi
 provided as a service that they're continously paying for...(with `deux`  
 and `grace`, or neither). Either way, the result of hot `wind` (*hamsin* in  
 Hebrew), is a synonym for gilt or debt in Sanskrit, where they share a  
- word with sin). Those who know when to `fold`...may net a profit (as  
- 
-an increase to the total debt in the system); otherwise get `clocked`:  
 
-"yester-day's price is not today's price" in !MO. `_balances` 18% re-  
-insurance. Only 34% of the TVL actually pays 18% for it out of pocket  
-(bringing  funds from outside of the protocol, adding to `wind.debit`),  
+word with sin. Those who know when to `fold`...may net a profit (as   
+an increase to the total debt in the system); otherwise get `clocked`;  
+
+"yesterday's price is not today's price" in !MO. Only 34% of the TVL  
+ actually pays 18% for it out of pocket (adding ETH to `wind.debit`),  
 
 or the rest simply pay with their QD (decreasing `wind.credit`): both  
-`wind` and `carry` together compose the real collateralisation of QD.
-
-`Work`.credit is a virtual debt (in ETH units or another reference price),  
-fully backed by an equivalent debit from `carry`, this allocation (1:1) is  
-made by `borrow` (must advance LTV with `msg.value` or
-calling `put`)
+`wind` and `carry` together compose the real collateralisation of QD...
 
 ### Through de*ferral* reserve (not federal)
 
@@ -96,7 +87,7 @@ when the dealin' done." We never know if the bad
 debt actually happens...in our best interests...like  
 Proverbs 11, when all deeds are weighed together.    
 
-though we save on gas from not compounding P&L   
+Though we save on gas from not compounding P&L   
 from `carry` constantly, we spend a lil gas to keep  
 the voted median (for APR) perpetually up to date.   
 If borrowers pay 8% APR, they can get ~~liquidated~~...
