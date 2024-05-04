@@ -52,7 +52,9 @@ function App() {
 
     const fetchData = () => {
       if (selectedAccount) {
-        getAccountInfo(selectedAccount).then(setUserInfo) // TODO
+
+        quidContract?.get_into(selectedAccount).then(setUserInfo)
+        
       } else {
         setUserInfo(null)
       }

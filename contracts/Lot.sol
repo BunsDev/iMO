@@ -199,6 +199,8 @@ contract Lot is Ownable,
             // TODO QD
             // since this only gets called twice a year
             // 1477741 - (608358 x 2) stays in contract
+            // staked into Uni pools so that there isn't
+            // ever zero liquidity in them (causes bug)
         }   else if (tokenId == shirt && racked == address(this)) {
                 require(parked == address(this), "chronology");
                 require(from == owed, "Lot::wrong winner");
@@ -227,9 +229,9 @@ contract Lot is Ownable,
         require(randomness > 0 && _requestId > 0 
         && _requestId == requestId &&
         address(this) == racked, "Lot::randomWords"); 
-        address[] memory own = Gen.liquidated(when);
-        uint indexOfWinner = randomness % own.length;
-        owed = own[indexOfWinner];
+        address[] memory owned = Gen.liquidated(when);
+        uint indexOfWinner = randomness % owned.length;
+        owed = owned[indexOfWinner];
         ICollection(F8N_1).transferFrom(
             address(this), owed, shirt
         ); // next winner pays deployer

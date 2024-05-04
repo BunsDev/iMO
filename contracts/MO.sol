@@ -25,7 +25,8 @@ contract MO is ERC20 {
     uint constant public RACK = STACK / 10;
     uint constant public CENT = ONE / 100;
     // investment banks underwriting IPOs 
-    // take 2-7%...compare this to 0.76%
+    // take 2-7%...compare this to...0.76%
+    // less than MetaMask bridge fee 0.875% 
     uint constant public MO_CUT = 54 * CENT; 
     uint constant public MO_FEE = 22 * CENT; 
     uint constant public MIN_CR = 109090909090909090; 
@@ -40,12 +41,13 @@ contract MO is ERC20 {
     } Medianiser public longMedian; // between 8-21%
     Medianiser public shortMedian; // 2 distinct fees
     Offering[16] public _MO; // one !MO per 6 months
+    mapping(address => uint[16]) paid; // in sDAI
     struct Offering { // 8 years x 544,444,444 sDAI
         uint start; // date 
         uint locked; // sDAI
         uint minted; // QD
         uint burned; // ^
-        address[] own;
+        address[] owned;
     }  uint public SEMESTER;
     uint internal _PRICE; // TODO comment out when finish testing
     uint internal _POINTS; // used in call() weights (medianiser)
@@ -71,9 +73,9 @@ contract MO is ERC20 {
         uint eth; // Marvel's (pet) Rock of Eternity
     }   mapping (address => Plunge) Plunges;
     Pod internal wind; Pool internal work; // internally 1 sDAI = 1 QD
-    constructor(address _lot, address _price) ERC20("QU!Dao", "QD") { 
+    constructor(/*address _lot, address _price*/) ERC20("QU!Dao", "QD") { 
         // _MO[0].start = 1719444444; lot = _lot; // TODO uncomment
-        _MO[0].start = block.timestamp;
+        _MO[0].start = block.timestamp; lot = _msgSender();
         feeTargets = [MIN_APR, 85000000000000000,  90000000000000000,
            95000000000000000, 100000000000000000, 105000000000000000,
           110000000000000000, 115000000000000000, 120000000000000000,
@@ -146,9 +148,12 @@ contract MO is ERC20 {
     function sale_start() public view returns (uint) {
         return _MO[SEMESTER].start;
     }
+    function get_info(address who) public view returns (address, uint, uint) {
+        return (who, paid[who][SEMESTER], _maturing[who].credit);
+    }
 
     function liquidated(uint when) public view returns (address[] memory) { // used in Lot.sol
-        return _MO[when].own;
+        return _MO[when].owned;
     }
 
     function _ratio(uint _multiplier, uint _numerator, uint _denominator) internal pure returns (uint ratio) {
@@ -275,8 +280,9 @@ contract MO is ERC20 {
         require(!must_exist || plunge.last != 0, "MO: plunge must exist");
         bool folded = false; uint old_points; uint grace; uint time;
         // time window to roll over balances before the start of new MO
-        if (block.timestamp < _MO[SEMESTER].start) {
-            if (SEMESTER % 2 == 1) { // odd semester
+        if (block.timestamp < _MO[SEMESTER].start) { // enters only when SEMESTER >= 1
+            uint ratio = _MO[SEMESTER - 1].locked * 100 / _MO[SEMESTER - 1].minted; 
+            if (SEMESTER % 2 == 1 && ratio >= 77) { 
                 _maturing[addr].debit += _maturing[addr].credit;
                 _maturing[addr].credit = 0;
             } else if (_maturing[addr].debit > 0) { // SEMESTER % 2 == 0 
@@ -285,7 +291,8 @@ contract MO is ERC20 {
                 _maturing[addr].debit = 0; // no minting in mint() function
                 // because freshly minted QD in !MO is still _maturing...
             }
-        } old_points = plunge.dues.points; _POINTS -= old_points; 
+        } 
+        old_points = plunge.dues.points; _POINTS -= old_points; 
         // caller may earn a fee for paying gas to update a Plunge
         uint fee = caller == addr ? 0 : MIN_APR / 3000;  // 0.00303 %
         uint _eth = plunge.eth; // carry.debit
@@ -478,7 +485,7 @@ contract MO is ERC20 {
                     } else { emit Short(owner, _work.debit);
                         carry.credit += _work.debit; 
                         if (_work.debit > 5 * STACK) { 
-                            _MO[SEMESTER].own.push(owner); // for Lot.sol
+                            _MO[SEMESTER].owned.push(owner); // for Lot.sol
                         }   work.short.debit -= _work.debit;
                             work.short.credit -= _work.credit;
                             _work.credit = 0; _work.debit = 0;
@@ -530,7 +537,7 @@ contract MO is ERC20 {
                     else { emit Long(owner, _work.debit);
                         carry.credit += _work.debit; 
                         if (_work.debit > 5 * STACK) { 
-                            _MO[SEMESTER].own.push(owner); // for Lot.sol
+                            _MO[SEMESTER].owned.push(owner); // for Lot.sol
                         }   work.long.debit -= _work.debit;
                             work.long.credit -= _work.credit;
                             _work.credit = 0; _work.debit = 0;
@@ -688,33 +695,33 @@ contract MO is ERC20 {
     // TODO bool qd, this will attempt to draw _max from _balances before sDAI...
     function mint(uint amount, address beneficiary) external returns (uint cost) {
         require(beneficiary != address(0) && beneficiary != address(this), "MO::mint");
-        require(block.timestamp >= _MO[SEMESTER].start, "MO::mint: before start date"); 
+        require(amount >= C_NOTE / 2, "MO::mint: 50 minimum"); 
         if (block.timestamp >= _MO[SEMESTER].start) {
             if (block.timestamp <= _MO[SEMESTER].start + LENT) {
-                require(amount >= C_NOTE, "MO::mint: 100 minimum"); 
                 uint in_days = ((block.timestamp - _MO[SEMESTER].start) / 1 days) + 1; 
                 require(in_days < 47, "MO::mint: current !MO is over"); 
-                cost = (in_days * CENT + START_PRICE) * amount / ONE;
-                Plunges[beneficiary].last = block.timestamp;
+                
+                _MO[SEMESTER].minted += amount;
                 uint supply_cap = in_days * MAX_PER_DAY; 
-                _MO[SEMESTER].locked += cost; _MO[SEMESTER].minted += amount;
+                require(_MO[SEMESTER].minted <= supply_cap, 
+                        "MO::mint: supply cap exceeded"); 
+                    
+                cost = (in_days * CENT + START_PRICE) * amount / ONE;
+                _MO[SEMESTER].locked += cost; carry.credit += cost;
                 wind.credit += amount; // the debts associated with QD
                 // balances belong to everyone, not to any individual;
                 // amount decremented by APR payments in QD (or call)
                 uint fee = MO_FEE * amount / ONE; // .22% = 777742 QD
                 _maturing[beneficiary].credit += amount - fee; // QD
-                _mint(lot, fee); carry.credit += cost; 
-                require(_MO[SEMESTER].minted <= supply_cap, 
-                        "MO::mint: supply cap exceeded"); 
-                        emit Minted(beneficiary, amount - fee, cost); 
+                _mint(lot, fee); 
                 require(sdai.transferFrom(
                     _msgSender(), address(this), cost
                 ), "MO::mint: sDAI transfer failed");
+                paid[beneficiary][SEMESTER] += cost;
+                emit Minted(beneficiary, amount - fee, cost); 
             } else if (block.timestamp >= _MO[SEMESTER].start + LENT + 144 days) { // 6 months
-                uint ratio = _MO[SEMESTER].locked * 100 / _MO[SEMESTER].minted; // % backing
-                require(ratio >= 76, "MO::mint: must respect minimum backing");
                 _MO[SEMESTER].locked -= _MO[SEMESTER].locked * MO_CUT / ONE;
-                uint cut = MO_CUT * amount / ONE; // .54% = 1477741 sDAI
+                uint cut = MO_CUT * amount / ONE; // .54% is 1477741 sDAI max
                 require(sdai.transferFrom(
                     address(this), lot, cut
                 ), "MO::mint: sDAI transfer failed"); // OpEx
@@ -723,6 +730,13 @@ contract MO is ERC20 {
                     _MO[SEMESTER].start = block.timestamp + LENT; 
                     // LENT gives time window for _fetch update 
                 }
+            }
+        } else { // enters only when SEMESTER >= 1
+            uint ratio = _MO[SEMESTER - 1].locked * 100 / _MO[SEMESTER - 1].minted; // % backing
+            if (76 > ratio && paid[beneficiary][SEMESTER - 1] > 0) { // last MO was unsuccessful, so refund
+                sdai.transfer(beneficiary, paid[beneficiary][SEMESTER - 1]);
+                delete paid[beneficiary][SEMESTER - 1];
+                _maturing[beneficiary].credit = 0;   
             }
         }
     }

@@ -36,21 +36,28 @@ export const waitTransaction = withRetryHandling(
 
 // TODO replace address
 export const address = '0x47472ae8413b98F645742884341CD88e9D10D6B6';
- 
+
+
+// {
+//   inputs: [
+//     {
+//       internalType: 'address',
+//       name: '_lot',
+//       type: 'address'
+//     },
+//     {
+//       internalType: 'address',
+//       name: '_price',
+//       type: 'address'
+//     }
+//   ],
+//   stateMutability: 'nonpayable',
+//   type: 'constructor'
+// },
+
 export const QUID = [
     {
-      inputs: [
-        {
-          internalType: 'address',
-          name: '_lot',
-          type: 'address'
-        },
-        {
-          internalType: 'address',
-          name: '_price',
-          type: 'address'
-        }
-      ],
+      inputs: [],
       stateMutability: 'nonpayable',
       type: 'constructor'
     },
