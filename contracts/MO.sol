@@ -10,9 +10,8 @@ contract MO is ERC20 {
     AggregatorV3Interface public chainlink; // or RedStone if deployment CANTO
     IERC20 public sdai; address public lot; // multi-purpose (lock/lotto/OpEx)
     // address constant public mevETH = 0x24Ae2dA0f361AA4BE46b48EB19C91e02c5e4f27E; 
-    address constant public WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     // address constant public SDAI = 0x83F20F44975D03b1b09e64809B757c47f942BEeA; // TODO MAINNET
-    address constant public SDAI = 0x04E52476d318CdF739C38BD41A922787D441900c;
+    address constant public SDAI = 0x04E52476d318CdF739C38BD41A922787D441900c; // cNOTE on CANTO
     address constant public QUID = 0x42cc020Ef5e9681364ABB5aba26F39626F1874A4;
     mapping(address => Pod) public _maturing; // QD from last 2 !MO...
     uint constant public ONE = 1e18; uint constant public DIGITS = 18;
@@ -59,8 +58,8 @@ contract MO is ERC20 {
         Pod long; // debit = last timestamp of long APR payment;
         Pod short; // debit = last timestamp of short APR payment
         bool deux; // pay...✌🏻xAPR for peace of mind, and flip debt
-        bool grace; // ditto ^^^^^ pro-rated _call but no ^^^^ ^^^^ 
-    } // deux almighty and grace...married options are hard work...  
+        bool clutch; // ditto ^^^^ pro-rated _call but no ^^^^ ^^^^ 
+    }  
     struct Pool { Pod long; Pod short; } // work
     /*  The first part is called "The Pledge"... 
         An imagineer shows you something ordinary: 
@@ -278,7 +277,7 @@ contract MO is ERC20 {
     function _fetch(address addr, uint price, bool must_exist, address caller) 
         internal returns (Plunge memory plunge) { plunge = Plunges[addr]; 
         require(!must_exist || plunge.last != 0, "MO: plunge must exist");
-        bool folded = false; uint old_points; uint grace; uint time;
+        bool folded = false; uint old_points; uint clutch; uint time;
         // time window to roll over balances before the start of new MO
         if (block.timestamp < _MO[SEMESTER].start) { // enters only when SEMESTER >= 1
             uint ratio = _MO[SEMESTER - 1].locked * 100 / _MO[SEMESTER - 1].minted; 
@@ -301,21 +300,21 @@ contract MO is ERC20 {
             fee *= _work.debit / ONE;
             time = plunge.dues.short.debit > block.timestamp ? 
                 0 : block.timestamp - plunge.dues.short.debit; 
-            if (plunge.dues.deux) { grace = 1; // used in _call
-                if (plunge.dues.grace) { grace += fee; 
+            if (plunge.dues.deux) { clutch = 1; // used in _call
+                if (plunge.dues.clutch) { clutch += fee; 
                     // 144x per day is (24 hours * 60 minutes) / 10 minutes
-                    grace = (MIN_APR / 1000) * _work.debit / ONE; // 1.3% per day
+                    clutch = (MIN_APR / 1000) * _work.debit / ONE; // 1.3% per day
                 } 
             }   (_work, _eth, folded) = _charge(addr,
-                 _eth, _work, price, time, grace, true); 
-            if (folded) { // grace == 1 flips the debt
-                if (grace == 1) { plunge.dues.short.debit = 0;
+                 _eth, _work, price, time, clutch, true); 
+            if (folded) { // clutch == 1 flips the debt
+                if (clutch == 1) { plunge.dues.short.debit = 0;
                     plunge.work.short.credit = 0;
                     plunge.work.short.debit = 0;
                     plunge.work.long.credit = _work.credit;
                     plunge.work.long.debit = _work.debit;
                     plunge.dues.long.debit = block.timestamp + 1 days; 
-                }   else if (grace > 1) { // slow drip option
+                }   else if (clutch > 1) { // slow drip option
                     plunge.dues.short.debit = block.timestamp; 
                 }   else { plunge.dues.short.debit = 0; }
             } else { plunge.dues.short.debit = block.timestamp; }   
@@ -326,24 +325,24 @@ contract MO is ERC20 {
             fee *= _work.debit / ONE; // liquidator's fee for gas
             time = plunge.dues.long.debit > block.timestamp ? 
                 0 : block.timestamp - plunge.dues.long.debit; 
-            if (plunge.dues.deux) { grace = 1; // used in _call
-                if (plunge.dues.grace) { grace += fee;
+            if (plunge.dues.deux) { clutch = 1; // used in _call
+                if (plunge.dues.clutch) { clutch += fee;
                     // 144x per day is (24 hours * 60 minutes) / 10 minutes
-                    grace += (MIN_APR / 1000) * _work.debit / ONE; // 1.3% per day
+                    clutch += (MIN_APR / 1000) * _work.debit / ONE; // 1.3% per day
                 } 
             }   (_work, _eth, folded) = _charge(addr, 
-                 _eth, _work, price, time, grace, false); 
+                 _eth, _work, price, time, clutch, false); 
             if (folded) { // festina...lent...eh? make haste
-                if (grace == 1) { plunge.dues.long.debit = 0;
+                if (clutch == 1) { plunge.dues.long.debit = 0;
                     plunge.work.long.credit = 0;
                     plunge.work.long.debit = 0;
                     plunge.work.short.credit = _work.credit;
                     plunge.work.short.debit = _work.debit;
                     plunge.dues.short.debit = block.timestamp + 1 days;
-                    // a grace period is provided for calling put(),
+                    // a clutch period is provided for calling put(),
                     // otherwise can get stuck in an infinite loop
                     // of throwing back & forth between directions
-                }   else if (grace > 1) { // slow drip option
+                }   else if (clutch > 1) { // slow drip option
                     plunge.dues.long.debit = block.timestamp; 
                 }   else { plunge.dues.long.debit = 0; }
             } else { plunge.dues.long.debit = block.timestamp; }  
@@ -374,26 +373,26 @@ contract MO is ERC20 {
     }
 
     function _charge(address addr, uint _eth, Pod memory _work, 
-        uint price, uint delta, uint grace, bool short) internal 
+        uint price, uint delta, uint clutch, bool short) internal 
         returns (Pod memory, uint, bool folded) {
         // "though eight is not enough...no,
-        // it's like [grace lest you] bust: 
+        // it's like [clutch lest you] bust: 
         // now your whole [plunge] is dust" ~ Hit 'em High
         if (delta >= 10 minutes) { // 52704 x 10 mins per year
             uint apr = short ? shortMedian.apr : longMedian.apr; 
-            delta /= 10 minutes; uint owe = (grace > 0) ? 2 : 1; 
+            delta /= 10 minutes; uint owe = (clutch > 0) ? 2 : 1; 
             owe *= (apr * _work.debit * delta) / (52704 * ONE);
             // need to reuse the delta variable (or stack too deep)
             delta = _blush(price, _work.credit, _work.debit, short);
             if (delta < ONE) { // liquidatable potentially
                 (_work, _eth, folded) = _call(addr, _work, _eth, 
-                                               grace, short, price);
+                                               clutch, short, price);
             }  else { // healthy CR, proceed to charge APR
                 // if addr is shorting: indicates a desire
                 // to give priority towards getting rid of
                 // ETH first, before spending available QD
-                grace = _ratio(price, _eth, ONE); // reuse var lest stack too deep
-                uint most = short ? _min(grace, owe) : _min(balanceOf(addr), owe);
+                clutch = _ratio(price, _eth, ONE); // reuse var lest stack too deep
+                uint most = short ? _min(clutch, owe) : _min(balanceOf(addr), owe);
                 if (owe > 0 && most > 0) { 
                     if (short) { owe -= most;
                         most = _ratio(ONE, most, price);
@@ -410,8 +409,8 @@ contract MO is ERC20 {
                     }
                 } if (owe > 0) { 
                     // do it backwards from original calculation
-                    most = short ? _min(balanceOf(addr), owe) : _min(grace, owe);
-                    // if the last if block was a long, grace was untouched
+                    most = short ? _min(balanceOf(addr), owe) : _min(clutch, owe);
+                    // if the last if block was a long, clutch was untouched
                     if (short && most > 0) { 
                         _send(addr, address(this), most, false);
                         wind.credit -= most; owe -= most;
@@ -427,9 +426,9 @@ contract MO is ERC20 {
                     }   if (owe > 0) { // plunge cannot pay APR (delinquent)
                             (_work, _eth, folded) = _call(addr, _work, _eth, 
                                                         0, short, price);
-                            // zero passed in for grace ^
+                            // zero passed in for clutch ^
                             // because...even if the plunge
-                            // elected to be treated gracefully
+                            // elected to be treated clutchfully
                             // there is an associated cost for it
                         } 
                 }   
@@ -444,7 +443,7 @@ contract MO is ERC20 {
     // to the cold and damp...know when to hold 'em...know 
     // when to..." 
     function _call(address owner, Pod memory _work, uint _eth, 
-                   uint grace, bool short, uint price) internal 
+                   uint clutch, bool short, uint price) internal 
                    returns (Pod memory, uint, bool folded) { 
         uint in_QD = _ratio(price, _work.credit, ONE); uint in_eth;
         require(in_QD > 0, "MO: nothing to _call in"); folded = true;
@@ -461,7 +460,7 @@ contract MO is ERC20 {
                 _work.debit = 0; _work.credit = 0;  
             } // in_QD is worth more than _work.debit, price went up... 
             else { // "lightnin' strikes and the court lights get dim"
-                if (grace == 0) { // try to prevent from liquidating...
+                if (clutch == 0) { // try to prevent from liquidating...
                     uint delta = (in_QD * MIN_CR) / ONE - _work.debit;
                     uint salve = balanceOf(owner) + _ratio(price, _eth, ONE); 
                     if (delta > salve) { delta = in_QD - _work.debit; } 
@@ -490,15 +489,15 @@ contract MO is ERC20 {
                             work.short.credit -= _work.credit;
                             _work.credit = 0; _work.debit = 0;
                     }
-                }   else if (grace == 1) { // no return to carry
+                }   else if (clutch == 1) { // no return to carry
                         work.short.credit -= _work.credit;
                         work.long.credit += _work.credit;
                         work.short.debit -= _work.debit;
                         work.long.debit += _work.debit;
                 } else { // partial return to carry
-                    _work.debit -= grace; in_eth = _ratio(ONE, grace, price);
+                    _work.debit -= clutch; in_eth = _ratio(ONE, clutch, price);
                     _work.credit -= in_eth; work.short.credit -= in_eth; 
-                    work.short.debit -= grace; carry.credit += grace;
+                    work.short.debit -= clutch; carry.credit += clutch;
                 } 
             }   
         } else { // plunge into leveraged long pool  
@@ -511,7 +510,7 @@ contract MO is ERC20 {
                 work.long.credit -= _work.credit;
                 _work.debit = 0; _work.credit = 0;                 
             }   else {
-                if (grace == 0) {
+                if (clutch == 0) {
                     uint delta = (_work.debit * MIN_CR) / ONE - in_QD;
                     uint salve = balanceOf(owner) + _ratio(price, _eth, ONE); 
                     if (delta > salve) { delta = _work.debit - in_QD; } 
@@ -542,15 +541,15 @@ contract MO is ERC20 {
                             work.long.credit -= _work.credit;
                             _work.credit = 0; _work.debit = 0;
                     }
-                } else if (grace == 1) { // no return to carry
+                } else if (clutch == 1) { // no return to carry
                     work.long.credit -= _work.credit;
                     work.short.credit += _work.credit;
                     work.long.debit -= _work.debit;
                     work.short.debit += _work.debit;
                 } else { // partial return to carry
-                    _work.debit -= grace; in_eth = _ratio(ONE, grace, price);
+                    _work.debit -= clutch; in_eth = _ratio(ONE, clutch, price);
                     _work.credit -= in_eth; work.long.credit -= in_eth; 
-                    work.long.debit -= grace; carry.credit += grace;
+                    work.long.debit -= clutch; carry.credit += clutch;
                 }  
             } 
         }   return (_work, _eth, folded);
@@ -568,10 +567,10 @@ contract MO is ERC20 {
         } 
     } 
     
-    function flip(bool grace) external { uint price = _get_price();
+    function flip(bool clutch) external { uint price = _get_price();
         Plunge memory plunge = _fetch(_msgSender(), price, true, _msgSender());
-        if (grace) { plunge.dues.deux = true; plunge.dues.grace = true; } else {
-            plunge.dues.deux = !plunge.dues.deux; plunge.dues.grace = false;
+        if (clutch) { plunge.dues.deux = true; plunge.dues.clutch = true; } else {
+            plunge.dues.deux = !plunge.dues.deux; plunge.dues.clutch = false;
         }   Plunges[_msgSender()] = plunge; // write to storage, we're done
     }
 
