@@ -7,23 +7,32 @@ import { withRetryHandling } from '../utils/wrap-with-retry-handling';
 
 // let defaultProvider = new Web3Provider(window.ethereum);
 // let defaultProvider = new JsonRpcProvider('https://testnet-archive.plexnode.wtf')
-let defaultProvider = new InfuraProvider('sepolia', 'b5f82a82234f4acbb433a964256ed97f')
 
 export const createQuidContract = (defaultProvider) => {
+  const createDefaultProvider = defaultProvider ? defaultProvider : new InfuraProvider('sepolia', 'b5f82a82234f4acbb433a964256ed97f')
+  
   return new Contract(
     address, QUID,
-    defaultProvider
+    createDefaultProvider
   )
 }
+
 export const useQuidContract = () => {
+  const defaultProvider = new InfuraProvider('sepolia', 'b5f82a82234f4acbb433a964256ed97f')
+  
   return new Contract(address, QUID, defaultProvider);
-};
+}
+
 export const useSdaiContract = () => { // TODO currently set to cNOTE on CANTO testnet
+  const defaultProvider = new InfuraProvider('sepolia', 'b5f82a82234f4acbb433a964256ed97f')
+
   return new Contract('0x522902E55db6F870a80B21c69BC6b9903D1560f8', SDAI, defaultProvider)
-};
+}
 
 export const waitTransaction = withRetryHandling(
   async hash => {
+    const defaultProvider = new InfuraProvider('sepolia', 'b5f82a82234f4acbb433a964256ed97f')
+
     const receipt = await defaultProvider.getTransactionReceipt(hash)
 
     if (!receipt) {
@@ -34,6 +43,8 @@ export const waitTransaction = withRetryHandling(
 )
 
 export const useWallet = () => {
+  const defaultProvider = new InfuraProvider('sepolia', 'b5f82a82234f4acbb433a964256ed97f')
+
   const [state, setState] = useState({
     isActivating: false,
     accounts: [],
@@ -95,13 +106,13 @@ export const useWallet = () => {
     const { chainId, accounts } = await activate()
 
     updateState({ chainId, accounts, isActivating: false })
-  }, [state.provider, updateState])
+  }, [activate, updateState, state.provider])
 
   useEffect(() => {
     if (!state.provider) {
       return
     }
-
+    
     const handleConnect = ({ chainId }) => {
       updateState({ chainId })
     }
@@ -136,7 +147,7 @@ export const useWallet = () => {
         handleAccountsChanged
       )
     }
-  }, [connect, state.provider, updateState])
+  }, [connect, isConnected, updateState, state.provider])
 
   const setNewProvider = useCallback(
     provider => {
@@ -145,7 +156,7 @@ export const useWallet = () => {
       })
       provider = defaultProvider
     },
-    [updateState]
+    [updateState, defaultProvider]
   )
 
   return {
@@ -156,3 +167,4 @@ export const useWallet = () => {
     setProvider: setNewProvider
   }
 }
+new InfuraProvider('sepolia', 'b5f82a82234f4acbb433a964256ed97f')
