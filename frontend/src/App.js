@@ -11,15 +11,7 @@ import { Header } from './components/Header'
 import { Mint } from './components/Mint'
 
 import { NotificationContext, NotificationProvider } from './contexts/NotificationProvider'
-import { useWallet } from './contexts/use-wallet'
-import { useQuidContract } from './utils/constant'
-import { MetamaskConnector } from './utils/MetamaskConnector'
-
-// export UserInfo = {
-//   address: '',
-//   costInUsd: 0,
-//   qdAmount: 0,
-// };
+import { useWallet, useQuidContract } from './contexts/use-wallet'
 
 function App() {
   const [swiperRef, setSwiperRef] = useState(null)
@@ -27,11 +19,12 @@ function App() {
 
   const { notify } = useContext(NotificationContext);
   
-  const { chainId, selectedAccount, setConnector } = useWallet();
+  const { chainId, selectedAccount } = useWallet();
   const quidContract = useQuidContract()
 
   useEffect(() => {
-    if (chainId && parseInt(chainId, 16) !== 7701) { // TODO change 7701
+    // if (chainId && parseInt(chainId, 16) !== 7701) { // TODO change 7701
+    if (chainId && parseInt(chainId, 16) !== 11155111) { // TODO change 7701
       notify({
         autoHideDuration: 3500,
         severity: 'error',
@@ -40,28 +33,20 @@ function App() {
     }    
   }, [chainId, notify]);
 
-  useEffect(() => {
-    if (window.ethereum) {
-      setConnector(new MetamaskConnector(window.ethereum))
-    }
-  }, [setConnector])
-
   // TODO set price by owner (deployer)
 
   useEffect(() => {
-
-
     const fetchData = () => {
       if (selectedAccount) {
-        quidContract?.get_info(selectedAccount).then(setUserInfo)
+        // quidContract?.get_info(selectedAccount).then(setUserInfo)
       } else {
         setUserInfo(null)
       }
     }
-    quidContract.on("Mint", fetchData)
+    quidContract.on("Minted", fetchData)
     fetchData()
     return () => {
-      quidContract.removeListener("Mint", fetchData)
+      quidContract.removeListener("Minted", fetchData)
     }
   }, [quidContract, selectedAccount])
 

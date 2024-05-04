@@ -1,4 +1,4 @@
-import { cx } from "classnames"
+import cx from "classnames"
 import { Icon } from "./Icon"
 import styles from "./Footer.module.scss"
 import { useEffect, useRef, useState } from "react"

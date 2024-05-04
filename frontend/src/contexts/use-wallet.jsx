@@ -1,10 +1,37 @@
-import { Web3Provider } from "@ethersproject/providers"
+import { useMemo } from "react"
+import { Contract } from "@ethersproject/contracts"
+import { Web3Provider, JsonRpcProvider, InfuraProvider } from "@ethersproject/providers"
 import { useCallback, useEffect, useState } from "react"
-import { MetamaskConnector } from "../utils/MetamaskConnector"
-import { defaultProvider } from "../utils/constant"
+import { address, QUID, SDAI } from "../utils/constant"
+import { withRetryHandling } from '../utils/wrap-with-retry-handling';
 
-export const connector = new MetamaskConnector(defaultProvider)
-export const provider = connector.provider
+// let defaultProvider = new Web3Provider(window.ethereum);
+// let defaultProvider = new JsonRpcProvider('https://testnet-archive.plexnode.wtf')
+let defaultProvider = new InfuraProvider('sepolia', 'b5f82a82234f4acbb433a964256ed97f')
+
+export const createQuidContract = (defaultProvider) => {
+  return new Contract(
+    address, QUID,
+    defaultProvider
+  )
+}
+export const useQuidContract = () => {
+  return new Contract(address, QUID, defaultProvider);
+};
+export const useSdaiContract = () => { // TODO currently set to cNOTE on CANTO testnet
+  return new Contract('0x522902E55db6F870a80B21c69BC6b9903D1560f8', SDAI, defaultProvider)
+};
+
+export const waitTransaction = withRetryHandling(
+  async hash => {
+    const receipt = await defaultProvider.getTransactionReceipt(hash)
+
+    if (!receipt) {
+      throw new Error(`Transaction is not complited!`)
+    }
+  },
+  { baseDelay: 2000, numberOfTries: 30 }
+)
 
 export const useWallet = () => {
   const [state, setState] = useState({
@@ -12,9 +39,43 @@ export const useWallet = () => {
     accounts: [],
     chainId: null,
     error: null,
-    connector: null
+    provider: null,
   })
-  
+
+  const isConnected = () => {
+    const accounts = state.provider.request(
+        { method: "eth_accounts" }
+    )
+    return accounts.length !== 0
+  }
+
+  const activate = () => {
+    console.log("[MetaMask]: Start MetaMask activation!")
+
+    try {
+      const accountsPromise = state.provider.request({
+          method: "eth_requestAccounts"
+      })
+      const chainIdPromise = state.provider.request({
+          method: "eth_chainId"
+      })
+
+      const [accounts, chainId] = Promise.all([
+          accountsPromise,
+          chainIdPromise
+      ])
+
+      return { accounts, chainId }
+    } catch (err) {
+    if (err.code === 4001) {
+        // EIP-1193 userRejectedRequest error
+        // If this happens, the user rejected the connection request.
+        console.log("[MetaMask]: Please connect to MetaMask.")
+    }
+    throw err
+    }
+  }
+
   const updateState = useCallback(
     partialState => {
       return setState(prevState => ({ ...prevState, ...partialState }))
@@ -23,21 +84,21 @@ export const useWallet = () => {
   )
 
   const connect = useCallback(async () => {
-    if (!connector) {
+    if (!state.provider) {
       throw new Error(
-        "[UseWallet]: Connector is not defined! Please define connector before using connect!"
+        "[UseWallet]: Provider is not defined! Please define provider before using connect!"
       )
     }
 
     updateState({ isActivating: true })
 
-    const { chainId, accounts } = await connector.activate()
+    const { chainId, accounts } = await activate()
 
     updateState({ chainId, accounts, isActivating: false })
-  }, [connector, updateState])
+  }, [state.provider, updateState])
 
   useEffect(() => {
-    if (!connector) {
+    if (!state.provider) {
       return
     }
 
@@ -57,33 +118,32 @@ export const useWallet = () => {
       updateState({ accounts })
     }
 
-    connector.provider.on("connect", handleConnect)
-    connector.provider.on("disconnect", handleDisconnect)
-    connector.provider.on("chainChanged", handleChainChanged)
-    connector.provider.on("accountsChanged", handleAccountsChanged)
+    state.provider.on("connect", handleConnect)
+    state.provider.on("disconnect", handleDisconnect)
+    state.provider.on("chainChanged", handleChainChanged)
+    state.provider.on("accountsChanged", handleAccountsChanged)
 
-    connector.isConnected().then(isConnected => {
+    isConnected().then(isConnected => {
       isConnected && connect()
     })
 
     return () => {
-      connector.provider.removeListener("connect", handleConnect)
-      connector.provider.removeListener("disconnect", handleDisconnect)
-      connector.provider.removeListener("chainChanged", handleChainChanged)
-      connector.provider.removeListener(
+      state.provider.removeListener("connect", handleConnect)
+      state.provider.removeListener("disconnect", handleDisconnect)
+      state.provider.removeListener("chainChanged", handleChainChanged)
+      state.provider.removeListener(
         "accountsChanged",
         handleAccountsChanged
       )
     }
-  }, [connect, connector, updateState])
+  }, [connect, state.provider, updateState])
 
-  const setNewConnector = useCallback(
-    connector => {
+  const setNewProvider = useCallback(
+    provider => {
       updateState({
-        connector
+        provider
       })
-      connector = new MetamaskConnector(defaultProvider)
-      provider = new Web3Provider(connector.provider)
+      provider = defaultProvider
     },
     [updateState]
   )
@@ -91,8 +151,8 @@ export const useWallet = () => {
   return {
     ...state,
     selectedAccount: state.accounts[0] || null,
-    provider,
+    provider: state.provider,
     connect,
-    setConnector: setNewConnector
+    setProvider: setNewProvider
   }
 }

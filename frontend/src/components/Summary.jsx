@@ -1,9 +1,9 @@
 
-import { formatUnits, parseUnits } from "@ethersproject/units"
 import { useEffect, useState } from "react"
-
-import { useSdaiContract, useQuidContract, address } from "../utils/constant"
+import { formatUnits, parseUnits } from "@ethersproject/units"
+import { useSdaiContract, useQuidContract } from "../contexts/use-wallet"
 import { numberWithCommas } from "../utils/number-with-commas"
+import { address } from "../utils/constant"
 import styles from "./Summary.module.scss"
 
 const SECONDS_IN_DAY = 86400
@@ -40,7 +40,7 @@ export const Summary = () => {
         setPrice(String(n))
       })
 
-      contract?.get_total_supply(1).then(totalSupply => {
+      contract?.get_total_supply().then(totalSupply => {
         setTotalMinted(formatUnits(totalSupply, 18).split(".")[0])
       })
 

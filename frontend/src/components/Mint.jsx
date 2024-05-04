@@ -2,16 +2,16 @@
 import { useContext, useEffect, useState, useRef } from "react"
 import { formatUnits, parseUnits } from "@ethersproject/units"
 import { BigNumber } from "@ethersproject/bignumber"
-import { cn } from "classnames"
+import cn from "classnames"
 import { Modal } from "./Modal"
 import { Icon } from "./Icon"
 import styles from "./Mint.module.scss"
 
-import { useQuidContract, useSdaiContract, waitTransaction } from "../utils/constant"
+import { useDebounce } from "../utils/use-debounce"
 import { NotificationContext } from "../contexts/NotificationProvider"
 import { numberWithCommas } from "../utils/number-with-commas"
-import { useWallet } from "../contexts/use-wallet"
-import { useDebounce } from "../utils/use-debounce"
+import { useWallet, waitTransaction, 
+        useQuidContract, useSdaiContract } from "../contexts/use-wallet"
 
 const DELAY = 60 * 60 * 8 // some buffer for allowance
 
@@ -171,10 +171,10 @@ export const Mint = () => {
       return
     }
 
-    if (+mintValue < 1000) {
+    if (+mintValue < 50) {
       notify({
         severity: "error",
-        message: "The amount should be more than 1000"
+        message: "The amount should be more than 50"
       })
       return
     }

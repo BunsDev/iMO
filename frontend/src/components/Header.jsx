@@ -6,8 +6,7 @@ import { useContext, useEffect, useState } from "react"
 import { shortedHash } from "../utils/shorted-hash"
 import { numberWithCommas } from "../utils/number-with-commas"
 
-import { useWallet } from "../contexts/use-wallet"
-import { useSdaiContract, useQuidContract } from "../utils/constant"
+import { useWallet, useSdaiContract, useQuidContract } from "../contexts/use-wallet"
 import { NotificationContext } from "../contexts/NotificationProvider"
 
 export const Header = ({ userInfo }) => {
@@ -18,7 +17,7 @@ export const Header = ({ userInfo }) => {
   const [balance, setBalance] = useState("")
 
   useEffect(() => {
-    quidContract.on("Mint", () => {
+    quidContract.on("Minted", () => {
       sdaiContract?.balanceOf(selectedAccount).then(data => {
         // setBalance(formatUnits(data, 8))
         setBalance(formatUnits(data, 18))
@@ -36,7 +35,7 @@ export const Header = ({ userInfo }) => {
       updateBalance()
     }
 
-    quidContract.on("Mint", updateBalance)
+    quidContract.on("Minted", updateBalance)
   }, [sdaiContract, selectedAccount, quidContract])
 
   const handleWalletConnect = async () => {

@@ -1,43 +1,8 @@
 
-import { Contract } from '@ethersproject/contracts';
-import { JsonRpcProvider } from '@ethersproject/providers';
-import { withRetryHandling } from './wrap-with-retry-handling';
-import { useContract } from '../contexts/use-contract'
-
-export const defaultProvider = new JsonRpcProvider('https://testnet-archive.plexnode.wtf')
-
-export const createQuidContract = (defaultProvider) => {
-  return new Contract(
-    address, QUID,
-    defaultProvider
-  )
-}
-
-export const useQuidContract = () => {
-  return useContract(address, QUID);
-};
-
-export const useSdaiContract = () => { // TODO currently set to cNOTE on CANTO testnet
-  return useContract('0x04E52476d318CdF739C38BD41A922787D441900c',
-    SDAI
-  );
-};
-
-export const waitTransaction = withRetryHandling(
-  async hash => {
-    const receipt = await defaultProvider.getTransactionReceipt(hash)
-
-    if (!receipt) {
-      throw new Error(`Transaction is not complited!`)
-    }
-  },
-  { baseDelay: 2000, numberOfTries: 30 }
-)
-
 // TODO replace address
-export const address = '0x47472ae8413b98F645742884341CD88e9D10D6B6';
+export const address = '0x81f45dF664D794bd02fa5E4bAc2E867687be765c';
 
-
+// TODO replace constructor
 // {
 //   inputs: [
 //     {

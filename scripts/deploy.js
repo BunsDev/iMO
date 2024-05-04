@@ -8,17 +8,17 @@ async function getContract(name, addr) {
 }
 
 async function main() {
-  const noteAddress = '0x04E52476d318CdF739C38BD41A922787D441900c'; // cNOTE
+  // const noteAddress = '0x04E52476d318CdF739C38BD41A922787D441900c'; // cNOTE
   // const currentTimestampInSeconds = Math.round(Date.now() / 1000);
   
-  const note = await getContract('ERC20', noteAddress);
-  const name = await note.name();
-  console.log(name);
+  // const note = await getContract('ERC20', noteAddress);
+  // const name = await note.name();
+  // console.log(name);
 
   console.log('deploy MO');
   let MO = await ethers.getContractFactory("MO");
   const mo = await MO.deploy();
-  console.log('MO deployed! ' + mo);
+  console.log('MO deployed! ' + await mo.getAddress());
 }
 
 // We recommend this pattern to be able to use async/await everywhere

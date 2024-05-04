@@ -1,5 +1,5 @@
 import React from "react"
-import { cx } from "classnames"
+import cx from "classnames"
 import styles from "./Icon.module.scss"
 
 import arrowDown from '../icons/arrow-down.svg'
@@ -20,7 +20,6 @@ import youtube from '../icons/youtube.svg'
 
 
 export const Icon = ({ className, name, onClick, ...other }) => {
-  const { viewBox, url } = icons[name]
   const icons = {
     'arrow-down': arrowDown,
     book,
@@ -38,6 +37,7 @@ export const Icon = ({ className, name, onClick, ...other }) => {
     twitter,
     youtube,
   };
+  const { viewBox, url } = icons[name]
   return (
     <svg
       viewBox={viewBox}
