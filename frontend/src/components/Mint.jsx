@@ -1,22 +1,21 @@
 
 import { useContext, useEffect, useState, useRef } from "react"
 import { formatUnits, parseUnits } from "@ethersproject/units"
-import BigNumber from "@ethersproject/bignumber"
-import cn from "classnames"
-import Modal from "./Modal"
-import Icon from "./Icon"
+import { BigNumber } from "@ethersproject/bignumber"
+import { cn } from "classnames"
+import { Modal } from "./Modal"
+import { Icon } from "./Icon"
 import styles from "./Mint.module.scss"
 
 import { useQuidContract, useSdaiContract, waitTransaction } from "../utils/constant"
 import { NotificationContext } from "../contexts/NotificationProvider"
-import numberWithCommas from "../utils/number-with-commas"
-import useWallet from "../contexts/use-wallet"
-import useDebounce from "../utils/use-debounce"
-
+import { numberWithCommas } from "../utils/number-with-commas"
+import { useWallet } from "../contexts/use-wallet"
+import { useDebounce } from "../utils/use-debounce"
 
 const DELAY = 60 * 60 * 8 // some buffer for allowance
 
-const Mint = () => {
+export const Mint = () => {
   const [mintValue, setMintValue] = useState("")
   const inputRef = useRef(null)
   const buttonRef = useRef(null)
@@ -418,5 +417,3 @@ const Mint = () => {
     </form>
   )
 }
-
-export default Mint

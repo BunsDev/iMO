@@ -1,16 +1,16 @@
-import Icon from "./Icon"
+import { Icon } from "./Icon"
 import styles from "./Header.module.scss"
-import formatUnits from "@ethersproject/units"
+import { formatUnits } from "@ethersproject/units"
 import { useContext, useEffect, useState } from "react"
 
-import shortedHash from "../utils/shorted-hash"
-import numberWithCommas  from "../utils/number-with-commas"
+import { shortedHash } from "../utils/shorted-hash"
+import { numberWithCommas } from "../utils/number-with-commas"
 
-import useWallet from "../contexts/use-wallet"
+import { useWallet } from "../contexts/use-wallet"
 import { useSdaiContract, useQuidContract } from "../utils/constant"
-import NotificationContext from "../contexts/NotificationProvider"
+import { NotificationContext } from "../contexts/NotificationProvider"
 
-const Header = ({ userInfo }) => {
+export const Header = ({ userInfo }) => {
   const { notify } = useContext(NotificationContext)
   const { selectedAccount, connect } = useWallet()
   const sdaiContract = useSdaiContract()
@@ -135,5 +135,3 @@ const Header = ({ userInfo }) => {
     </header>
   )
 }
-
-export default Header

@@ -1,10 +1,10 @@
 import { Web3Provider } from "@ethersproject/providers"
 import { useCallback, useEffect, useState } from "react"
-import MetamaskConnector from "../utils/MetamaskConnector"
-import defaultProvider from "../utils/constant"
+import { MetamaskConnector } from "../utils/MetamaskConnector"
+import { defaultProvider } from "../utils/constant"
 
-let currentConnector = new MetamaskConnector(defaultProvider)
-let provider = currentConnector.provider
+export const connector = new MetamaskConnector(defaultProvider)
+export const provider = connector.provider
 
 export const useWallet = () => {
   const [state, setState] = useState({
@@ -12,11 +12,9 @@ export const useWallet = () => {
     accounts: [],
     chainId: null,
     error: null,
-    connector: currentConnector
+    connector: null
   })
-
-  const connector = currentConnector
-
+  
   const updateState = useCallback(
     partialState => {
       return setState(prevState => ({ ...prevState, ...partialState }))
@@ -84,7 +82,7 @@ export const useWallet = () => {
       updateState({
         connector
       })
-      currentConnector = connector
+      connector = new MetamaskConnector(defaultProvider)
       provider = new Web3Provider(connector.provider)
     },
     [updateState]

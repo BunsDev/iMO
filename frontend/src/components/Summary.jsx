@@ -9,7 +9,7 @@ import styles from "./Summary.module.scss"
 const SECONDS_IN_DAY = 86400
 const currentTimestamp = (Date.now() / 1000).toFixed(0)
 
-const Summary = () => {
+export const Summary = () => {
   const contract = useQuidContract()
   const sdaiContract = useSdaiContract()
   const [
@@ -101,5 +101,3 @@ const Summary = () => {
     </div>
   )
 }
-
-export default Summary

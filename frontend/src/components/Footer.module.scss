@@ -1,4 +1,4 @@
-@use 'styles/variables';
+
 
 .root {
   display: flex;
@@ -22,7 +22,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  font-family: variables.$primary-font;
+  font-family: "Outfit";
   padding: 0;
   &:hover {
     height: 0;

@@ -1,5 +1,6 @@
 import React from "react"
-import cx from "classnames"
+import { cx } from "classnames"
+import styles from "./Icon.module.scss"
 
 import arrowDown from '../icons/arrow-down.svg'
 import book from '../icons/book.svg'
@@ -13,35 +14,30 @@ import information from '../icons/information.svg'
 import linkHover1 from '../icons/link-hover-1.svg'
 import linkHover2 from '../icons/link-hover-2.svg'
 import linkHover3 from '../icons/link-hover-3.svg'
-import medium from '../icons/medium.svg'
 import musicWave from '../icons/music-wave.svg'
 import twitter from '../icons/twitter.svg'
 import youtube from '../icons/youtube.svg'
 
-const icons = {
-  'arrow-down': arrowDown,
-  book,
-  'btn-bg': btnBg,
-  'composite-btn-l1': compositeBtnL1,
-  'composite-btn-l2': compositeBtnL2,
-  'composite-btn-l3': compositeBtnL3,
-  email,
-  github,
-  information,
-  'link-hover-1': linkHover1,
-  'link-hover-2': linkHover2,
-  'link-hover-3': linkHover3,
-  medium,
-  'music-wave': musicWave,
-  twitter,
-  youtube,
-};
 
-import styles from "./Icon.module.scss"
-
-const Icon = ({ className, name, onClick, ...other }) => {
+export const Icon = ({ className, name, onClick, ...other }) => {
   const { viewBox, url } = icons[name]
-
+  const icons = {
+    'arrow-down': arrowDown,
+    book,
+    'btn-bg': btnBg,
+    'composite-btn-l1': compositeBtnL1,
+    'composite-btn-l2': compositeBtnL2,
+    'composite-btn-l3': compositeBtnL3,
+    email,
+    github,
+    information,
+    'link-hover-1': linkHover1,
+    'link-hover-2': linkHover2,
+    'link-hover-3': linkHover3,
+    'music-wave': musicWave,
+    twitter,
+    youtube,
+  };
   return (
     <svg
       viewBox={viewBox}
@@ -52,5 +48,3 @@ const Icon = ({ className, name, onClick, ...other }) => {
     </svg>
   )
 }
-
-export default Icon

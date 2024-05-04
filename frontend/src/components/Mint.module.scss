@@ -1,4 +1,3 @@
-@use 'styles/variables';
 
 .root {
   display: flex;
@@ -52,7 +51,7 @@
 }
 
 .dollarSign {
-  font-family: variables.$secondary-font;
+  font-family: "Road Rage";
   margin-right: 12px;
   opacity: 0.8;
   height: 112px;
@@ -62,7 +61,7 @@
 }
 
 .idSign {
-  font-family: variables.$secondary-font;
+  font-family: "Road Rage";
   margin-right: 12px;
   opacity: 0.8;
   height: 30px;
@@ -79,12 +78,12 @@
   border: none;
   outline: none;
   color: #fff;
-  font-family: variables.$secondary-font;
+  font-family: "Road Rage";
   opacity: 0.8;
   user-select: none;
 
   &::placeholder {
-    font-family: variables.$secondary-font;
+    font-family: "Road Rage";
     opacity: 0.33;
     line-height: 112px;
     font-size: 108px;
@@ -105,12 +104,12 @@
   border: none;
   outline: none;
   color: #fff;
-  font-family: variables.$secondary-font;
+  font-family: "Road Rage";
   opacity: 0.8;
   user-select: none;
 
   &::placeholder {
-    font-family: variables.$secondary-font;
+    font-family: "Road Rage";
     opacity: 0.33;
     line-height: 30px;
     font-size: 28px;
@@ -212,7 +211,7 @@
   cursor: pointer;
   font-size: 14px;
   font-weight: 600;
-  font-family: variables.$primary-font;
+  font-family: "Outfit";
   position: relative;
   user-select: none;
 
@@ -275,7 +274,7 @@
   font-size: 14px;
   line-height: 24px;
   color: #fff;
-  font-family: variables.$primary-font;
+  font-family: "Outfit";
   border: none;
   top: 80px;
   font-weight: 600;

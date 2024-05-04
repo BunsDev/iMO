@@ -1,7 +1,7 @@
-import useMemo from "react"
-import Contract from "@ethersproject/contracts"
-import useWallet from "./use-wallet"
-import defaultProvider from "../utils/constant"
+import { useMemo } from "react"
+import { Contract } from "@ethersproject/contracts"
+import { useWallet } from "./use-wallet"
+import { defaultProvider } from "../utils/constant"
 
 export const useContract = (contractId, abi) => {
   const { provider, selectedAccount, chainId } = useWallet()

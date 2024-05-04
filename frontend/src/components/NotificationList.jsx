@@ -6,7 +6,6 @@ import styles from "./NotificationList.module.scss"
 
 export const NotificationList = () => {
   const { notifications, close } = useContext(NotificationContext)
-
   return (
     <div className={styles.root}>
       {notifications.map(notification => (

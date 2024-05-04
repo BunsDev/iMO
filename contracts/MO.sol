@@ -148,7 +148,7 @@ contract MO is ERC20 {
     function sale_start() public view returns (uint) {
         return _MO[SEMESTER].start;
     }
-    function get_info(address who) public view returns (address, uint, uint) {
+    function get_info(address who) public view returns (address, uint costInUsd, uint qdAmount) {
         return (who, paid[who][SEMESTER], _maturing[who].credit);
     }
 

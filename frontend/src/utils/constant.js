@@ -1,8 +1,8 @@
 
-import Contract from '@ethersproject/contracts';
-import JsonRpcProvider from '@ethersproject/providers';
-import withRetryHandling from './wrap-with-retry-handling';
-import useContract from '../contexts/use-contract'
+import { Contract } from '@ethersproject/contracts';
+import { JsonRpcProvider } from '@ethersproject/providers';
+import { withRetryHandling } from './wrap-with-retry-handling';
+import { useContract } from '../contexts/use-contract'
 
 export const defaultProvider = new JsonRpcProvider('https://testnet-archive.plexnode.wtf')
 
@@ -78,12 +78,12 @@ export const QUID = [
         },
         {
           internalType: 'uint256',
-          name: '',
+          name: 'costInUsd',
           type: 'uint256'
         },
         {
           internalType: 'uint256',
-          name: '',
+          name: 'qdAmount',
           type: 'uint256'
         }
       ],

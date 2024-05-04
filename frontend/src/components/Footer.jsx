@@ -1,9 +1,9 @@
-import cx from "classnames"
+import { cx } from "classnames"
 import { Icon } from "./Icon"
 import styles from "./Footer.module.scss"
 import { useEffect, useRef, useState } from "react"
 
-const Footer = () => {
+export const Footer = () => {
   const [isPlaying, setIsPlaying] = useState(false)
   const player = useRef()
 
@@ -57,7 +57,7 @@ const Footer = () => {
         </a>
         <a href="https://mirror.xyz/quid.eth"
           className={cx(styles.socialLink, styles.socialLink3)}>
-          <Icon name="medium" className={styles.socialIcon} />
+          <Icon name="book" className={styles.socialIcon} />
           <Icon name="link-hover-3" className={styles.socialIconHover} />
         </a>
         <a href="https://github.com/QuidLabs/iMO/blob/main/README.md"
@@ -76,5 +76,3 @@ const Footer = () => {
     </footer>
   )
 }
-
-export default Footer
