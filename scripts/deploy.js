@@ -18,7 +18,7 @@ async function main() {
   console.log('deploy MO');
   let MO = await ethers.getContractFactory("MO");
   const mo = await MO.deploy();
-  console.log('MO deployed! ' + mo.address);
+  console.log('MO deployed! ' + mo);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

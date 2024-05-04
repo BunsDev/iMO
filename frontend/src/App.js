@@ -1,14 +1,16 @@
 import { useContext, useEffect, useState } from 'react'
 import { Swiper, SwiperSlide } from 'swiper/react'
 
-import 'swiper/swiper.min.css'
+// import 'swiper/swiper.min.css'
 import styles from './App.scss'
-import {
-  NotificationList,
-  NotificationProvider,
-  Footer, Header, Mint,
-  Summary
-} from './components'
+
+
+import NotificationList from './components/NotificationList'
+import Summary from './components/Summary'
+import Footer from './components/Footer'
+import Header from './components/Header' 
+import Mint from './components/Mint'
+
 import NotificationContext from './contexts/NotificationProvider'
 import useWallet from './contexts/use-wallet'
 import useQuidContract from './utils/constant'
@@ -53,7 +55,7 @@ function App() {
     const fetchData = () => {
       if (selectedAccount) {
 
-        quidContract?.get_into(selectedAccount).then(setUserInfo)
+        quidContract?.get_info(selectedAccount).then(setUserInfo)
         
       } else {
         setUserInfo(null)
