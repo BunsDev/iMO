@@ -1,15 +1,17 @@
-import { useMemo } from "react"
+//import { useMemo } from "react"
+//import { Web3Provider, JsonRpcProvider, InfuraProvider } from "@ethersproject/providers"
 import { Contract } from "@ethersproject/contracts"
-import { Web3Provider, JsonRpcProvider, InfuraProvider } from "@ethersproject/providers"
 import { useCallback, useEffect, useState } from "react"
 import { address, QUID, SDAI } from "../utils/constant"
-import { withRetryHandling } from '../utils/wrap-with-retry-handling';
+import { withRetryHandling } from '../utils/wrap-with-retry-handling'
+
+import {defaultProvider, useIsConnected, useActivate} from './middlewares.jsx'
 
 // let defaultProvider = new Web3Provider(window.ethereum);
 // let defaultProvider = new JsonRpcProvider('https://testnet-archive.plexnode.wtf')
 
-export const createQuidContract = (defaultProvider) => {
-  const createDefaultProvider = defaultProvider ? defaultProvider : new InfuraProvider('sepolia', 'b5f82a82234f4acbb433a964256ed97f')
+export const createQuidContract = (customProvider) => {
+  const createDefaultProvider = customProvider ? customProvider : defaultProvider
   
   return new Contract(
     address, QUID,
@@ -18,21 +20,15 @@ export const createQuidContract = (defaultProvider) => {
 }
 
 export const useQuidContract = () => {
-  const defaultProvider = new InfuraProvider('sepolia', 'b5f82a82234f4acbb433a964256ed97f')
-  
   return new Contract(address, QUID, defaultProvider);
 }
 
 export const useSdaiContract = () => { // TODO currently set to cNOTE on CANTO testnet
-  const defaultProvider = new InfuraProvider('sepolia', 'b5f82a82234f4acbb433a964256ed97f')
-
   return new Contract('0x522902E55db6F870a80B21c69BC6b9903D1560f8', SDAI, defaultProvider)
 }
 
 export const waitTransaction = withRetryHandling(
   async hash => {
-    const defaultProvider = new InfuraProvider('sepolia', 'b5f82a82234f4acbb433a964256ed97f')
-
     const receipt = await defaultProvider.getTransactionReceipt(hash)
 
     if (!receipt) {
@@ -43,8 +39,6 @@ export const waitTransaction = withRetryHandling(
 )
 
 export const useWallet = () => {
-  const defaultProvider = new InfuraProvider('sepolia', 'b5f82a82234f4acbb433a964256ed97f')
-
   const [state, setState] = useState({
     isActivating: false,
     accounts: [],
@@ -53,39 +47,9 @@ export const useWallet = () => {
     provider: null,
   })
 
-  const isConnected = () => {
-    const accounts = state.provider.request(
-        { method: "eth_accounts" }
-    )
-    return accounts.length !== 0
-  }
+  const isConnected = useIsConnected(state.provider)
 
-  const activate = () => {
-    console.log("[MetaMask]: Start MetaMask activation!")
-
-    try {
-      const accountsPromise = state.provider.request({
-          method: "eth_requestAccounts"
-      })
-      const chainIdPromise = state.provider.request({
-          method: "eth_chainId"
-      })
-
-      const [accounts, chainId] = Promise.all([
-          accountsPromise,
-          chainIdPromise
-      ])
-
-      return { accounts, chainId }
-    } catch (err) {
-    if (err.code === 4001) {
-        // EIP-1193 userRejectedRequest error
-        // If this happens, the user rejected the connection request.
-        console.log("[MetaMask]: Please connect to MetaMask.")
-    }
-    throw err
-    }
-  }
+  const activate = useActivate(state.provider)
 
   const updateState = useCallback(
     partialState => {
@@ -103,7 +67,7 @@ export const useWallet = () => {
 
     updateState({ isActivating: true })
 
-    const { chainId, accounts } = await activate()
+    const { chainId, accounts } = activate()
 
     updateState({ chainId, accounts, isActivating: false })
   }, [activate, updateState, state.provider])
@@ -156,7 +120,7 @@ export const useWallet = () => {
       })
       provider = defaultProvider
     },
-    [updateState, defaultProvider]
+    [updateState]
   )
 
   return {
@@ -167,4 +131,5 @@ export const useWallet = () => {
     setProvider: setNewProvider
   }
 }
-new InfuraProvider('sepolia', 'b5f82a82234f4acbb433a964256ed97f')
+
+//new InfuraProvider('sepolia', 'b5f82a82234f4acbb433a964256ed97f')
