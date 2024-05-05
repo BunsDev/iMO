@@ -7,20 +7,22 @@ import styles from './App.scss'
 import { NotificationList } from './components/NotificationList'
 import { Summary } from './components/Summary'
 import { Footer } from './components/Footer'
-import { Header } from './components/Header' 
+import { Header } from './components/Header'
 import { Mint } from './components/Mint'
 
 import { NotificationContext, NotificationProvider } from './contexts/NotificationProvider'
 import { useWallet, useQuidContract } from './contexts/use-wallet'
 
 function App() {
-  const [swiperRef, setSwiperRef] = useState(null)
+  //const [swiperRef, setSwiperRef] = useState(null)
   const [userInfo, setUserInfo] = useState(null)
 
   const { notify } = useContext(NotificationContext);
-  
+
   const { chainId, selectedAccount } = useWallet();
   const quidContract = useQuidContract()
+
+  // TODO set price by owner (deployer)
 
   useEffect(() => {
     // if (chainId && parseInt(chainId, 16) !== 7701) { // TODO change 7701
@@ -30,12 +32,8 @@ function App() {
         severity: 'error',
         message: `Wrong network selected please switch to CANTO`,
       });
-    }    
-  }, [chainId, notify]);
+    }
 
-  // TODO set price by owner (deployer)
-
-  useEffect(() => {
     const fetchData = () => {
       if (selectedAccount) {
         // quidContract?.get_info(selectedAccount).then(setUserInfo)
@@ -48,35 +46,36 @@ function App() {
     return () => {
       quidContract.removeListener("Minted", fetchData)
     }
-  }, [quidContract, selectedAccount])
+  }, [notify, quidContract, selectedAccount, chainId])
 
   return (
-      <NotificationProvider>
-          <NotificationList />
+    <NotificationProvider>
+      <NotificationList />
+      <div className={styles.root}>
+        <Header userInfo={userInfo} />
+        <main className={styles.main}>
           <div className={styles.root}>
-              <Header userInfo={userInfo} />
-              <main className={styles.main}> 
-                  <div className={styles.root}>
-                      <Swiper onSwiper={(swiper) => setSwiperRef(swiper)}
-                      slidesPerView={1} direction={'vertical'}
-                      className={styles.carousel} allowTouchMove={false}>
-                          <SwiperSlide className={styles.slide}>
-                              <div className={styles.side}>
-                                <Summary />
-                              </div>
-                              <div className={styles.content}>
-                                <div className={styles.mintContainer}>
-                                  <Mint />
-                                </div>
-                              </div>
-                              <div className={styles.fakeCol} />
-                          </SwiperSlide>  
-                      </Swiper>
+            <Swiper 
+            /*onSwiper={(swiper) => setSwiperRef(swiper)}*/
+              slidesPerView={1} direction={'vertical'}
+              className={styles.carousel} allowTouchMove={false}>
+              <SwiperSlide className={styles.slide}>
+                <div className={styles.side}>
+                  <Summary />
+                </div>
+                <div className={styles.content}>
+                  <div className={styles.mintContainer}>
+                    <Mint />
                   </div>
-              </main>    
-              <Footer />
+                </div>
+                <div className={styles.fakeCol} />
+              </SwiperSlide>
+            </Swiper>
           </div>
-      </NotificationProvider>
+        </main>
+        <Footer />
+      </div>
+    </NotificationProvider>
   );
 }
 
