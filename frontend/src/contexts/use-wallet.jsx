@@ -20,7 +20,7 @@ export const createQuidContract = (customProvider) => {
 }
 
 export const useQuidContract = () => {
-  return new Contract(address, QUID, defaultProvider);
+  return new Contract(address, QUID, defaultProvider)
 }
 
 export const useSdaiContract = () => { // TODO currently set to cNOTE on CANTO testnet
@@ -31,9 +31,8 @@ export const waitTransaction = withRetryHandling(
   async hash => {
     const receipt = await defaultProvider.getTransactionReceipt(hash)
 
-    if (!receipt) {
-      throw new Error(`Transaction is not complited!`)
-    }
+    if (!receipt) throw new Error(`Transaction is not complited!`)
+    
   },
   { baseDelay: 2000, numberOfTries: 30 }
 )
@@ -59,11 +58,8 @@ export const useWallet = () => {
   )
 
   const connect = useCallback(async () => {
-    if (!state.provider) {
-      throw new Error(
-        "[UseWallet]: Provider is not defined! Please define provider before using connect!"
-      )
-    }
+    if (!state.provider) throw new Error("[UseWallet]: Provider is not defined! Please define provider before using connect!")
+    
 
     updateState({ isActivating: true })
 
@@ -73,34 +69,26 @@ export const useWallet = () => {
   }, [activate, updateState, state.provider])
 
   useEffect(() => {
-    if (!state.provider) {
-      return
-    }
+    if (!state.provider) return
     
-    const handleConnect = ({ chainId }) => {
-      updateState({ chainId })
-    }
+    const handleConnect = ({ chainId }) => updateState({ chainId })
+    
 
-    const handleDisconnect = error => {
-      updateState({ error })
-    }
+    const handleDisconnect = error => updateState({ error })
+    
 
-    const handleChainChanged = chainId => {
-      updateState({ chainId })
-    }
+    const handleChainChanged = chainId => updateState({ chainId })
+    
 
-    const handleAccountsChanged = accounts => {
-      updateState({ accounts })
-    }
+    const handleAccountsChanged = accounts => updateState({ accounts })
+    
 
     state.provider.on("connect", handleConnect)
     state.provider.on("disconnect", handleDisconnect)
     state.provider.on("chainChanged", handleChainChanged)
     state.provider.on("accountsChanged", handleAccountsChanged)
 
-    isConnected().then(isConnected => {
-      isConnected && connect()
-    })
+    isConnected().then(isConnected => isConnected && connect())
 
     return () => {
       state.provider.removeListener("connect", handleConnect)
