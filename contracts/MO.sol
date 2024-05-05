@@ -278,6 +278,9 @@ contract MO is ERC20 {
         internal returns (Plunge memory plunge) { plunge = Plunges[addr]; 
         require(!must_exist || plunge.last != 0, "MO: plunge must exist");
         bool folded = false; uint old_points; uint clutch; uint time;
+        // console.log("Transferring from %s to %s %s tokens",
+        //              msg.sender, to, amount);
+
         // time window to roll over balances before the start of new MO
         if (block.timestamp < _MO[SEMESTER].start) { // enters only when SEMESTER >= 1
             uint ratio = _MO[SEMESTER - 1].locked * 100 / _MO[SEMESTER - 1].minted; 

@@ -57,7 +57,7 @@ const etherscanApiKey: string | undefined = process.env.ETHERSCAN_API_KEY;
   }
 
 const config: HardhatUserConfig = {
-  defaultNetwork: "cantoTestnet",
+  defaultNetwork: "hardhat",
   networks: {
     hardhat: {
       allowUnlimitedContractSize: true,

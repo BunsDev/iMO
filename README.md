@@ -48,7 +48,7 @@ Yield can be used to pay APR...while profitable
 trades (active management) also capture gains  
 
 away from the dormant ROI of !MO participation:  
-see `_maturing[owner].credit` in `_call`...   
+see `_maturing[owner].credit` in `_call()`...   
 distinctly, `call` is used to redeem matured QD  
 
 
@@ -80,7 +80,7 @@ by 👕 is passed back and forth between `winner`s.
 
 `deux` (2x APR) payment is an extra option to treat  
 the `work` as [vice versa](https://www.instagram.com/p/CnPsieFKzRQ/),
-or `grace` as slow option:  
+or `clutch` as slow option:  
 pro-rated price, provided continuous 2x payment.
 
 
@@ -88,7 +88,7 @@ pro-rated price, provided continuous 2x payment.
 
 A total of 16 MO issuances are scheduled, each  
 paying 0.76% to the owner of the lambo NFT...  
-this pegs the valuation of QU!D at $16M...the  
-lambo may be transferred to the new `driver`  
+this pegs the valuation of QU!D at $16M...and  
+lambo may be transferred to some new `driver`  
 "Secret to survivin' is knowin' what to throw 🏀  
 and knowin' what to keep..." on commodifying 

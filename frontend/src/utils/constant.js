@@ -668,7 +668,7 @@ export const QUID = [
       inputs: [
         {
           internalType: 'bool',
-          name: 'grace',
+          name: 'clutch',
           type: 'bool'
         }
       ],

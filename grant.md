@@ -9,7 +9,7 @@ for Liquidity  Management and Derivatives
 **Payment Address**: `quid.eth`  
 
 
-**Foudation Address**: PO Box 144, 3119 9 Forum Lane  
+**Foundation Address**: PO Box 144, 3119 9 Forum Lane  
 Quid Labs' public key ends with 4A4, so what we did...   
 was build a simplified ERC404: took the zero (coupon)  
 
