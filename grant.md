@@ -1,27 +1,26 @@
 ## UNISWAP-ARBITRUM GRANT PROGRAM (UAGP)
 
 **Request for Proposal (RFP)**: New Protocols   
-for Liquidity  Management and Derivatives
+for Liquidity [Management](https://twitter.com/futurenomics/status/1766187064444309984) and *"Derivatives"*
 
 
 **Proposer**: QuidMint Foundation  
 **Requested Funding**: 76 000 ARB  
 **Payment Address**: `quid.eth`  
+which collects 0.76% x 16 [MO]()  
+pegs seed valuation  at $16M  
 
-
-**Foundation Address**: PO Box 144, 3119 9 Forum Lane  
+**Parking Address**: PO Box 144, 3119 9 Forum Lane  
 Quid Labs' public key ends with 4A4, so what we did...   
-was build a simplified ERC404: took the zero (coupon)  
+was build simplified ERC404: took out the zero (coupon)
 
-The funds for the grant will be used to  
-pay for audits (contract testing costs),    
-minor development costs (frontend),  
-as well as integrations (partnerships).    
-
+lambo may be transferred to some new `driver`  
+"Secret to  survivin' is knowin' what to throw 🏀  
+and knowin' what to keep..." on [commodifying]()
 
   - **Maintenance:** 42000 USD
-    - Audit + counsel [retainer](https://twitter.com/lex_node/status/1760701615424630848): 30000 USD
-    -   Cayman & BVI annual fees: 12000 USD
+    - Solidity [audit](https://www.zellic.io/) + general counsel [retainer](https://twitter.com/lex_node/status/1760701615424630848): 30000 USD
+    -   [Cayman](https://arbiscan.io/tx/0x5e4b70fad2039257bfe742d42a0fe085525351b99f1f979c424ddf93a60c882a) & BVI annual fees: 12000 USD + 2024 late fees
   - **R&D Costs:** 34000 USD
     - **Full-Time Equivalent (FTE)**: 2 x 2 months
       - Senior frontend developer
@@ -33,20 +32,16 @@ as well as integrations (partnerships).
 [Derivatives](https://twitter.com/lex_node/status/1740509787690086847) derive their value from an underlying asset. Our certicificate of deposite (CD) is a [Capital Deepening](https://www.wallstreetmojo.com/capital-deepening/)  
 token (QD) deriving value from sDAI, and demand for borrowing and lending ETH with maximal capital efficiency.  
 
-
-ETH public keys are 42 characters; Arbitrum's chainId starts with 42; sDAI's public key ends with 42🐝, `quid.eth`  
+ETH public keys are 42 characters; Arbitrum's chainId starts with 42; sDAI's public key ends with 42🐝, `quid.eth`'s  
 starts with 42. Bridging liquidity (benefitting the entire Arbitrum ecosystem as a result), this project seeks to extend  
 
-the capabilities of decentralised finance by introducing simple financial instruments (sDAI re-staking) that solve a   
 
-complex problem (rich art of bi-directional leverage with maximum capital efficiency), while adhering to principles  
-of UAGP Code of Conduct (and the 42 Laws of Ma'at), prioritizing transparency, user empowerment, and security.
-
-### Team Members:
+### its team members:
 
 Before Euromaidan, Ukraine had one of the world's first central bank-tethered digital currencies, issued by a company  
 whose EIN was 36**42**51**42** (without the use of DLT): interned there as a paralegal before learning C through http://42.fr ;   
-after that, helped build the [predecessor](https://patentscope.wipo.int/search/en/detail.jsf?docId=WO2020102401) to Liquity on EOS, then worked for Bancor, also audited THOR and bZx (CertiK).
+after that, helped build the [predecessor](https://patentscope.wipo.int/search/en/detail.jsf?docId=WO2020102401) to Liquity on EOS, then worked for Bancor, also audited THOR and bZx (CertiK)  
+
 
 ### Use of funds, milestones, and goals (KPIs):
 
@@ -55,7 +50,9 @@ after that, helped build the [predecessor](https://patentscope.wipo.int/search/e
 - User Adoption: 357M QD in    
  Q2
 (same minted within Q4)  
-- Liquidity: 544M sDAI locked for 2024
+  544M sDAI locked for 2024...  
+as reach goal (minimum [54M](https://twitter.com/WethWood/status/1786389167292772697))
+  
 - Contract Interaction: Facilitate at least  
   1000 `Plunge` positions, which, instead  
   of importing liquidity step-wise as we're     
@@ -72,10 +69,11 @@ just over 800 lines. The majority of the work for this milestone is devoted to t
 
 Tether to give QD a way to earn outside of being used in QU!D protocol. Potentially, all the sDAI that gets locked in PCV can  
 also be deployed as single-sided liquidity in a pool with sDAI and ETH. We may extend our medianiser to vote between UNI  
-and other liquidity pools (for % of sDAI to lock in AMMs against ETH), but this is seen as V2 feature (given enough interest).  
+and other liquidity pools (for % of sDAI to lock in AMMs against ETH), but this is seen as V2 feature (given enough interest),  
 
 
-Also as part of the 1st milestone, `yo.quid.io` will be the first external operator (QU!D Ltd in BVI) running `frontend` as a fully featured, standalone web application for the protocol (currently just allows minting,
+Also as part of the 1st milestone, `yo.quid.io` will be the first external operator (QU!D Ltd in BVI) running `frontend`  
+standalone web application for the protocol (currently just allows minting,
 and seeing some basic stats: e.g. P&L...etc).  
 
 | Number | Deliverable | Specification |
@@ -96,10 +94,10 @@ and seeing some basic stats: e.g. P&L...etc).
 | -----: | ----------- | ------------- |
 | **0a.** | License GPLv3 | Copyleft (same as previous milestone’s…of the public, by the public, for the public). |
 | **0b.** | Documentation |  We provide both code comments and instructions for running the protocol as well as sanity checking the operability with some test transactions. |
-| 1. | NFT marketplaces + Fiat [off-ramps](https://www.flashy.cash/) + deployment | Exclusive NFT [marketplaces](http://polyone.io) will enable payment with QD (for preferential pricing of NFTs) as a well as other bonuses. Providing real-world utility for our token (beyond crypto trading) is further possible through trusted partners for bridging into the domain of bank accounts and cash. We plan to sub-contract operation and hosting of yo.quid.io (on-ramp for web). |
-| 2. | Event bus (Watcher) | Publish code that reads the blockchain for liquidation opportunities, so anyone can run it. Later, this code could be potentially integrated with ZigZag exchange's off-chain order matcher so that the beneficiaries of `grace` can become arbitrary accounts, purchasing a liqudiated position's collateral for the value of its debt at the time of liquidation.  |
-| 3. | Kickoff Twitter spaces | Demonstrate the extent of readiness of the frontend by interacting with all protocol functions (minting is the only thing that may be done for the first 46 days after deloyment). |
-| 4. | Protocol integrations (multi-collateral) | CCIP will enable re-using the same QD tokens across deployments of the core protocol (MO) on separate EVMs (each having their own domain-specific plugins, such as cNOTE on CANTO as the replacement for sDAI, as well as different price feed source). |
-| 5. |  UX personalisation | Advancing on the results from milestone 1 should include push notifications based on more data feeds (to better inform trading decisions). Over-bought / over-sold signaling can involve a handful of technical analysis indicators (e.g. RSI, MACD, SMA, BBands). |
+| 1. | NFT marketplaces + Fiat [off-ramps](https://www.flashy.cash/) + deployment | Exclusive NFT [marketplaces](http://polyone.io) will enable payment with QD (for preferential pricing of NFTs) as a well as other bonuses. Providing real-world utility for our token (beyond crypto trading) is further possible through trusted partners for bridging into the domain of bank accounts and cash. |
+| 2. | Event bus (Watcher) | Publish code that reads the blockchain for liquidation opportunities, so anyone can run it. Later, this code could be potentially integrated with ZigZag exchange's off-chain order matcher for purchasing a liqudiated position's collateral, valued by its debt at the time of liquidation (abstracting out `clutch`). |
+| 3. | Kickoff [Twitter spaces](https://t.ly/B7pin) | Demonstrate the extent of readiness of the frontend by interacting with all protocol functions (minting is the only thing that may be done for the first 46 days after deloyment). |
+| 4. | Protocol integrations (multi-collateral) | CCIP will enable re-using the same QD tokens across deployments of the core protocol (MO) on multiple EVMs (each having their own domain-specific plugins, such as cNOTE on CANTO as the local  alternative for sDAI, as well as RedStone instead of Chainlink). |
+| 5. |  UX personalisation (preferences profile) | Advancing on the frontend results from milestone 1, users should have the ability to pull insights into their  should include push notifications based on more data feeds (to better inform trading decisions). Over-bought / over-sold signaling can involve a handful of technical analysis indicators (e.g. RSI, MACD, SMA, BBands). Other kind of indicators (globally significant astrological insights) are also a pontential vector of exploration. |
 
 

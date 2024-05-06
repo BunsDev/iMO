@@ -11,6 +11,11 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+interface IMigratorChef {
+    // Take the current LP token address and return the new LP token address.
+    // Migrator should have full access to the caller's LP token.
+    function migrate(IERC20 token) external returns (IERC20);
+}
 interface ICollection is IERC721 {
     function latestTokenId() external view returns (uint256);
 }
@@ -21,13 +26,13 @@ interface LinkTokenInterface is IERC20 {
 }
 interface INonfungiblePositionManager is IERC721 {
     function positions(uint256 tokenId) external
-        view returns (uint96 nonce,address operator,
-            address token0, address token1, uint24 fee,
-            int24 tickLower, int24 tickUpper, uint128 liquidity,
-            uint feeGrowthInside0LastX128,
-            uint feeGrowthInside1LastX128,
-            uint128 tokensOwed0, uint128 tokensOwed1
-        );
+    view returns (uint96 nonce,address operator,
+        address token0, address token1, uint24 fee,
+        int24 tickLower, int24 tickUpper, uint128 liquidity,
+        uint feeGrowthInside0LastX128,
+        uint feeGrowthInside1LastX128,
+        uint128 tokensOwed0, uint128 tokensOwed1
+    );
 }
 
 contract Lot is Ownable, 
@@ -60,9 +65,9 @@ contract Lot is Ownable,
     mapping(uint => uint) public totalsWETH; // week # -> liquidity
     uint public liquidityWETH; // for the WETH<>QD pool
     uint public maxTotalWETH;
-
+    uint constant public LAMBO = 16508; // youtu.be/sitXeGjm4Mc 
     uint constant public SALARY = 608358 * 1e18;
-    uint constant public LOTTO = 69383 * 1e18;
+    uint constant public LOTTO = 73888 * 1e18;
 
     address constant F8N_0 = 0x3B3ee1931Dc30C1957379FAc9aba94D1C48a5405;
     address constant F8N_1 = 0x0299cb33919ddA82c72864f7Ed7314a3205Fb8c4;
@@ -150,23 +155,23 @@ contract Lot is Ownable,
 
     // TODO circular dependency MO needs Lot address, and 
     // Lot also needs MO address (QD)
-    constructor(address _vrfCoordinator, address _link_token, 
-        bytes32 _hash, uint32 _limit, uint16 _confirm) 
-        VRFConsumerBaseV2(_vrfCoordinator) {
-            owed = QUID; // first liquidation
-            callbackGasLimit = _limit;
-            requestConfirmations = _confirm;
-            reward = 1_000_000_000_000; // 0.000001 WETH
-            minLock = Gen.LENT(); keyHash = _hash;
-            maxTotalWETH = type(uint256).max - 1;
-            maxTotalUSDT = type(uint256).max - 1;
-            LINK = LinkTokenInterface(_link_token); 
-            weth = IERC20(WETH); sdai = IERC20(SDAI);
-            deployed = block.timestamp; Gen = MO(QUID);
-            COORDINATOR = VRFCoordinatorV2Interface(_vrfCoordinator);    
-            COORDINATOR.addConsumer(subscriptionId, address(this));
-            subscriptionId = COORDINATOR.createSubscription(); // pubsub...
-            nonfungiblePositionManager = INonfungiblePositionManager(NFPM);
+    constructor(address _vrf, address _link, bytes32 _hash, 
+                uint32 _limit, uint16 _confirm, address JO) 
+                VRFConsumerBaseV2(_vrf) { owed = QUID; // TODO 0xdasha...
+                callbackGasLimit = _limit; requestConfirmations = _confirm;
+        
+        // TODO should be in QD
+        reward = 1_000_000_000_000; // 0.000001 WETH
+        minLock = Gen.LENT(); keyHash = _hash;
+        maxTotalWETH = type(uint256).max - 1;
+        maxTotalUSDT = type(uint256).max - 1;
+        LINK = LinkTokenInterface(_link); 
+        weth = IERC20(WETH); sdai = IERC20(SDAI);
+        deployed = block.timestamp; Gen = MO(JO);
+        COORDINATOR = VRFCoordinatorV2Interface(_vrf);    
+        COORDINATOR.addConsumer(subscriptionId, address(this));
+        subscriptionId = COORDINATOR.createSubscription(); // pubsub...
+        nonfungiblePositionManager = INonfungiblePositionManager(NFPM);
     }
 
     /** Whenever an {IERC721} `tokenId` token is transferred to this contract:
@@ -189,24 +194,24 @@ contract Lot is Ownable,
         uint256 tokenId, bytes calldata data
     ) external override returns (bytes4) { bool refund = false;
         require(Gen.SEMESTER() > last_lotto_trigger, "early"); 
-        uint lambo = 16508; // youtu.be/sitXeGjm4Mc 
         uint shirt = ICollection(F8N_1).latestTokenId(); 
-        address parked = ICollection(F8N_0).ownerOf(lambo);
+        address parked = ICollection(F8N_0).ownerOf(LAMBO);
         address racked = ICollection(F8N_1).ownerOf(shirt);
-        if (tokenId == lambo && parked == address(this)) {
-            driver = from;
-            require(sdai.transfer(from, SALARY), "sDAI");
-            // TODO QD
+        if (tokenId == LAMBO && parked == address(this)) {
+            require(Gen.transfer(from, SALARY), "Lot::QD");
+            require(sdai.transfer(from, SALARY), "Lot::sDAI");
             // since this only gets called twice a year
             // 1477741 - (608358 x 2) stays in contract
-            // staked into Uni pools so that there isn't
-            // ever zero liquidity in them (causes bug)
+            
+            // TODO staked into Uni pools so that there isn't
+            // ever zero liquidity in them (causes 4626 bug)
+            driver = from;
         }   else if (tokenId == shirt && racked == address(this)) {
                 require(parked == address(this), "chronology");
                 require(from == owed, "Lot::wrong winner");
                 last_lotto_trigger = Gen.SEMESTER();
                 ICollection(F8N_0).transferFrom(
-                    address(this), driver, lambo
+                    address(this), driver, LAMBO
                 );  
                 require(sdai.transfer(owed, LOTTO), "sDAI"); 
                 requestId = COORDINATOR.requestRandomWords(
@@ -217,8 +222,20 @@ contract Lot is Ownable,
         }   else { refund = true; }
         if (!refund) { return this.onERC721Received.selector; }
         else { return 0; }
-    }   // TODO after 16th MO empty Lot of any surpluses
+    }
 
+    function cede(address to) external { // cede authority
+        address parked = ICollection(F8N_0).ownerOf(LAMBO);
+        require(parked == address(this) 
+        && _msgSender() == driver, "chronology");
+        require(sdai.transfer(driver, 
+        sdai.balanceOf(address(this))), "Lot::swap sDAI");
+        require(Gen.transfer(driver, 
+        Gen.balanceOf(address(this))), "Lot::swap QD"); 
+        driver = to; // "unless a kernel of wheat falls
+        // to the ground and dies, it remains a single
+        // seed. But if it dies, it produces many seeds.
+    }
     
     function fulfillRandomWords(uint _requestId, 
         uint[] memory randomWords) internal override { 

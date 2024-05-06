@@ -1,7 +1,6 @@
 import { useContext, useEffect, useState } from 'react'
 import { Swiper, SwiperSlide } from 'swiper/react'
 
-// import 'swiper/swiper.min.css'
 import styles from './App.scss'
 
 import { NotificationList } from './components/NotificationList'
@@ -11,42 +10,36 @@ import { Header } from './components/Header'
 import { Mint } from './components/Mint'
 
 import { NotificationContext, NotificationProvider } from './contexts/NotificationProvider'
-import { useWallet, useQuidContract } from './contexts/use-wallet'
+import { useAppContext } from "./contexts/AppContext";
 
 function App() {
-  //const [swiperRef, setSwiperRef] = useState(null)
+  
+  const { quid, account, connected, connecting } =
+    useAppContext();
+
+  const [isLoading, setIsLoading] = useState("idle");
+
   const [userInfo, setUserInfo] = useState(null)
 
   const { notify } = useContext(NotificationContext);
 
-  const { chainId, selectedAccount } = useWallet();
-  const quidContract = useQuidContract()
 
   // TODO set price by owner (deployer)
 
   useEffect(() => {
-    // if (chainId && parseInt(chainId, 16) !== 7701) { // TODO change 7701
-    if (chainId && parseInt(chainId, 16) !== 11155111) { // TODO change 7701
-      notify({
-        autoHideDuration: 3500,
-        severity: 'error',
-        message: `Wrong network selected please switch to CANTO`,
-      });
-    }
-
-    const fetchData = () => {
-      if (selectedAccount) {
-        // quidContract?.get_info(selectedAccount).then(setUserInfo)
+    const fetchData = async () => {
+      if (account) { // connected is implied to be true
+        await quid.methods.get_info(account).call().then(setUserInfo)
       } else {
         setUserInfo(null)
       }
     }
-    quidContract.on("Minted", fetchData)
-    fetchData()
-    return () => {
-      quidContract.removeListener("Minted", fetchData)
-    }
-  }, [notify, quidContract, selectedAccount, chainId])
+    // quidContract.on("Minted", fetchData) TODO!!!!
+    fetchData() // TODO repeating too often, only do once, then do after Minted
+    // return () => {
+    //   quidContract.removeListener("Minted", fetchData)
+    // }
+  }, [notify, quid, account])
 
   return (
     <NotificationProvider>

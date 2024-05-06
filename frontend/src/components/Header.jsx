@@ -5,65 +5,59 @@ import { useContext, useEffect, useState } from "react"
 
 import { shortedHash } from "../utils/shorted-hash"
 import { numberWithCommas } from "../utils/number-with-commas"
-
-import { useWallet, useSdaiContract, useQuidContract } from "../contexts/use-wallet"
+import { useAppContext } from "../contexts/AppContext";
 import { NotificationContext } from "../contexts/NotificationProvider"
 
 export const Header = ({ userInfo }) => {
   const { notify } = useContext(NotificationContext)
-  const { selectedAccount, connect } = useWallet()
-  const sdaiContract = useSdaiContract()
-  const quidContract = useQuidContract()
+
+  const { quid, sdai, account, connectToMetaMask, connected, connecting } =
+    useAppContext();
+
+  const [isLoading, setIsLoading] = useState("idle");
+
   const [balance, setBalance] = useState("")
 
+
+
+  // TODO
   useEffect(() => {
-    quidContract.on("Minted", () => {
-      sdaiContract?.balanceOf(selectedAccount).then(data => {
-        // setBalance(formatUnits(data, 8))
-        setBalance(formatUnits(data, 18))
-      })
-    })
-  }, [quidContract, selectedAccount, sdaiContract])
-
-  useEffect(() => {
-    const updateBalance = () =>
-      sdaiContract?.balanceOf(selectedAccount).then(data => {
-        // setBalance(formatUnits(data, 8))
-        setBalance(formatUnits(data, 18))
-      })
-    if (selectedAccount) {
-      updateBalance()
+    if (connected) {
+      // getNumber();  
     }
+  }, [connected]);
+  // TOOD do .on("Minted")
 
-    quidContract.on("Minted", updateBalance)
-  }, [sdaiContract, selectedAccount, quidContract])
 
-  const handleWalletConnect = async () => {
-    try {
-      if (!window.ethereum?.isMetaMask) {
-        notify({
-          severity: "error",
-          message: "Metamask is not installed!",
-          autoHideDuration: 5500
-        })
+  // TODO
+  // useEffect(() => {
+  //   quidContract.on("Minted", () => {
+  //     sdaiContract?.balanceOf(account).then(data => {
+  //       // setBalance(formatUnits(data, 8))
+  //       setBalance(formatUnits(data, 18))
+  //     })
+  //   })
+  // }, [quidContract, account, sdaiContract])
 
-        return
-      }
+  // useEffect(() => {
+  //   const updateBalance = () =>
+  //     sdaiContract?.balanceOf(account).then(data => {
+  //       // setBalance(formatUnits(data, 8))
+  //       setBalance(formatUnits(data, 18))
+  //     })
+  //   if (account) {
+  //     updateBalance()
+  //   }
 
-      await connect()
-      notify({
-        severity: "success",
-        message: "Your wallet successfully connected",
-        autoHideDuration: 5000
-      })
-    } catch (err) {
-      const error = err
+  //   quidContract.on("Minted", updateBalance)
+  // }, [sdaiContract, account, quidContract])
 
-      if (error.code === 4001) {
-        notify({ message: error.message, autoHideDuration: 6000 })
-      }
-    }
-  }
+  // notify({
+  //   severity: "success",
+  //   message: "Your wallet successfully connected",
+  //   autoHideDuration: 5000
+  // })
+
 
   const summary = (
     <div className={styles.summary}>
@@ -96,7 +90,7 @@ export const Header = ({ userInfo }) => {
 
   const balanceBlock = (
     <div className={styles.summaryEl}>
-      <div className={styles.summaryElTitle}>cNOTE balance</div>
+      <div className={styles.summaryElTitle}>sDAI balance</div>
       <div className={styles.summaryElValue}>
         ${numberWithCommas(parseInt(balance))}
       </div>
@@ -111,25 +105,17 @@ export const Header = ({ userInfo }) => {
       {userInfo && summary}
       <div className={styles.walletContainer}>
         {userInfo && balanceBlock}
-        {selectedAccount ? (
-          <div className={styles.wallet}>
-            <div className={styles.metamaskIcon}>
-              <img
-                width="18"
-                height="18"
-                src="/images/metamask.svg"
-                alt="metamask"
-              />
-            </div>
-            {shortedHash(selectedAccount)}
-            <Icon name="btn-bg" className={styles.walletBackground} />
-          </div>
-        ) : (
-          <button className={styles.wallet} onClick={handleWalletConnect}>
-            Connect Metamask
-            <Icon name="btn-bg" className={styles.walletBackground} />
-          </button>
-        )}
+        <div className={styles.wallet}>
+          {!connected && (
+            <button className={styles.wallet} onClick={connectToMetaMask}>
+              {connecting ? "Connecting..." : "Connect to MetaMask"}
+            </button>
+          )}
+          {connected && (
+            shortedHash(account)
+          )}
+          <Icon name="btn-bg" className={styles.walletBackground} />
+         </div>
       </div>
     </header>
   )

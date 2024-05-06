@@ -7,4 +7,8 @@ contract mock is ERC20 {
 
     constructor() ERC20("PhoenixLabs", "sDAI") { }
 
+    function mint(address who, uint amount) external {
+        _mint(who, amount);
+    }
+
 }

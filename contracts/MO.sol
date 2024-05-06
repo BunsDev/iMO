@@ -5,13 +5,14 @@ pragma solidity =0.8.8;
 import "hardhat/console.sol"; // TODO comment out
 import "./Dependencies/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract MO is ERC20 { 
+contract MO is ERC20, Ownable { 
     AggregatorV3Interface public chainlink; // or RedStone if deployment CANTO
     IERC20 public sdai; address public lot; // multi-purpose (lock/lotto/OpEx)
     // address constant public mevETH = 0x24Ae2dA0f361AA4BE46b48EB19C91e02c5e4f27E; 
     // address constant public SDAI = 0x83F20F44975D03b1b09e64809B757c47f942BEeA; // TODO MAINNET
-    address constant public SDAI = 0x04E52476d318CdF739C38BD41A922787D441900c; // cNOTE on CANTO
+    address constant public SDAI = 0x522902E55db6F870a80B21c69BC6b9903D1560f8; // testnet
     address constant public QUID = 0x42cc020Ef5e9681364ABB5aba26F39626F1874A4;
     mapping(address => Pod) public _maturing; // QD from last 2 !MO...
     uint constant public ONE = 1e18; uint constant public DIGITS = 18;
@@ -28,9 +29,9 @@ contract MO is ERC20 {
     // less than MetaMask bridge fee 0.875% 
     uint constant public MO_CUT = 54 * CENT; 
     uint constant public MO_FEE = 22 * CENT; 
-    uint constant public MIN_CR = 109090909090909090; 
-    // nein oh nein oh nein oh nein oh nein oh nein...
-    uint constant public MIN_APR =  9090909090909090;
+                                    
+    uint constant public MIN_CR = 110000000000000000; 
+    uint constant public MIN_APR = 11000000000000000;
     uint[27] public feeTargets; struct Medianiser { 
         uint apr; // most recent weighted median fee 
         uint[27] weights; // sum weights for each fee
@@ -72,7 +73,7 @@ contract MO is ERC20 {
         uint eth; // Marvel's (pet) Rock of Eternity
     }   mapping (address => Plunge) Plunges;
     Pod internal wind; Pool internal work; // internally 1 sDAI = 1 QD
-    constructor(/*address _lot, address _price*/) ERC20("QU!Dao", "QD") { 
+    constructor(/*address _price*/) ERC20("QU!Dao", "QD") { 
         // _MO[0].start = 1719444444; lot = _lot; // TODO uncomment
         _MO[0].start = block.timestamp; lot = _msgSender();
         feeTargets = [MIN_APR, 85000000000000000,  90000000000000000,
@@ -100,8 +101,8 @@ contract MO is ERC20 {
     /*                       HELPER FUNCTIONS                     */
     /*-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»*/
     
-    // TODO comment out after finish testing
-    function set_price(uint price) external { // set ETH price in USD
+    // TODO comment out after finish testing, and uncomment in constructor
+    function set_price(uint price) external onlyOwner { // set ETH price in USD
         _PRICE = price;
     }
     
@@ -563,14 +564,22 @@ contract MO is ERC20 {
     /*-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»*/
     // mint...flip...vote...put...borrow...fold...call...
     // "lookin' too hot...simmer down, or soon you'll get" 
-    function clocked(address[] memory plunges) external { 
-        uint price = _get_price(); 
+    function clocked(address[] memory plunges) external returns (uint fee){ 
+        uint price = _get_price();  
+        fee = balanceOf(_msgSender()); // frozen
+        // crystallisation is netting 
         for (uint i = 0; i < plunges.length; i++ ) {
             _fetch(plunges[i], price, true, _msgSender());
         } 
-    } 
-    
-    function flip(bool clutch) external { uint price = _get_price();
+        fee = balanceOf(_msgSender()) - fee; // total 
+    } // return damage as sum of fees earned from clocked
+
+    function set(address _lot) external onlyOwner { 
+        _lot = lot;
+        renounceOwnership();
+    } // this means Chainlink connected
+
+    function flip(bool clutch) external { uint price = _get_price(); // or engine
         Plunge memory plunge = _fetch(_msgSender(), price, true, _msgSender());
         if (clutch) { plunge.dues.deux = true; plunge.dues.clutch = true; } else {
             plunge.dues.deux = !plunge.dues.deux; plunge.dues.clutch = false;
@@ -594,11 +603,10 @@ contract MO is ERC20 {
         }   Plunges[_msgSender()] = plunge; 
     }
 
-    // truth is the highest vibration (not love)
     function vote(uint apr, bool short) external {
         uint delta = MIN_APR / 16; // half a percent 
         require(apr >= MIN_APR && apr <= 
-            (MIN_APR * 3 - delta * 6) && // 36 Chambers
+            (MIN_APR * 3 - delta * 6) && 
             apr % delta == 0, "MO::vote");
         uint old_vote; // a vote of confidence gives...credit 
         uint price = _get_price(); Plunge memory plunge = _fetch(

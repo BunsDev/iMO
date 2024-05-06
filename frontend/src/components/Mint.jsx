@@ -2,31 +2,33 @@
 import { useContext, useEffect, useState, useRef } from "react"
 import { formatUnits, parseUnits } from "@ethersproject/units"
 import { BigNumber } from "@ethersproject/bignumber"
+
 import cn from "classnames"
 import { Modal } from "./Modal"
 import { Icon } from "./Icon"
 import styles from "./Mint.module.scss"
 
 import { useDebounce } from "../utils/use-debounce"
-import { NotificationContext } from "../contexts/NotificationProvider"
 import { numberWithCommas } from "../utils/number-with-commas"
-import { useWallet, waitTransaction, 
-        useQuidContract, useSdaiContract } from "../contexts/use-wallet"
+
+import { NotificationContext } from "../contexts/NotificationProvider"
+import { useAppContext } from "../contexts/AppContext";
 
 const DELAY = 60 * 60 * 8 // some buffer for allowance
 
 export const Mint = () => {
+  const { quid, sdai, addressQD, account } =
+    useAppContext();
+
   const [mintValue, setMintValue] = useState("")
   const inputRef = useRef(null)
   const buttonRef = useRef(null)
   const { notify } = useContext(NotificationContext)
-  const quidContract = useQuidContract()
-  const sdaiContract = useSdaiContract()
-  const { selectedAccount } = useWallet()
+  
   const [sdaiValue, setSdaiValue] = useState(0)
   const [totalSupplyCap, setTotalSupplyCap] = useState(0)
   const [totalSupply, setTotalSupply] = useState("")
-  const [state, setState] = useState("none")
+  const [state, setState] = useState("idle")
   const [isSameBeneficiary, setIsSameBeneficiary] = useState(true)
   const [beneficiary, setBeneficiary] = useState("")
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -43,23 +45,21 @@ export const Mint = () => {
 
   const qdAmountToSdaiAmt = async (qdAmount, delay = 0) => {
     const currentTimestamp = (Date.now() / 1000 + delay).toFixed(0)
-    return await quidContract?.qd_amt_to_sdai_amt(
+    return await quid.methods.qd_amt_to_sdai_amt(
       qdAmount instanceof BigNumber
         ? qdAmount
         : parseUnits(qdAmount.split(".")[0], 18),
       currentTimestamp
-    )
+    ).call()
   }
-
   console.log({ mintValue, sdaiValue, totalSupplyCap, totalSupply });
 
   useDebounce(
     mintValue,
     async () => {
       if (parseInt(mintValue) > 0) {
-        const sdai = await qdAmountToSdaiAmt(mintValue, 18)
-        // setSdaiValue(parseFloat(formatUnits(sdai, 8)))
-        setSdaiValue(parseFloat(formatUnits(sdai, 18)))
+        const result = await qdAmountToSdaiAmt(mintValue, 18)
+        setSdaiValue(parseFloat(formatUnits(result, 18)))
       } else {
         setSdaiValue(0)
       }
@@ -71,8 +71,8 @@ export const Mint = () => {
     const currentTimestamp = (Date.now() / 1000).toFixed(0)
     const updateTotalSupply = () => {
       Promise.all([
-        quidContract.get_total_supply_cap(currentTimestamp),
-        quidContract.get_total_supply()
+        quid.methods.get_total_supply_cap(currentTimestamp).call(),
+        quid.methods.get_total_supply().call()
       ]).then(([totalSupplyCap, totalSupply]) => {
         const totalSupplyCapInt = parseInt(formatUnits(totalSupplyCap, 18))
         setTotalSupply(parseInt(formatUnits(totalSupply, 18)).toString())
@@ -80,14 +80,14 @@ export const Mint = () => {
       })
     }
 
-    if (quidContract) {
+    if (quid) {
       updateTotalSupply()
     }
 
     const timerId = setInterval(updateTotalSupply, 5000)
 
     return () => clearInterval(timerId)
-  }, [quidContract, selectedAccount])
+  }, [quid, account])
 
   const handleChangeValue = e => {
     const regex = /^\d*(\.\d*)?$|^$/
@@ -111,7 +111,7 @@ export const Mint = () => {
   }
 
   const handleSetMaxValue = async () => {
-    if (!selectedAccount) {
+    if (!account) {
       notify({
         message: "Please connect your wallet",
         severity: "error"
@@ -119,11 +119,9 @@ export const Mint = () => {
       return
     }
 
-    // const costOfOneQd = Number(formatUnits(await qdAmountToSdaiAmt("1"), 8))
     const costOfOneQd = Number(formatUnits(await qdAmountToSdaiAmt("1"), 18))
     const balance = Number(
-      // formatUnits(await sdaiContract.balanceOf(selectedAccount), 8)
-      formatUnits(await sdaiContract.balanceOf(selectedAccount), 18)
+      formatUnits(await sdai.methods.balanceOf(account).call(), 18)
     )
     const newValue =
       Number(totalSupplyCap) < balance ? totalSupplyCap : balance / costOfOneQd
@@ -138,7 +136,7 @@ export const Mint = () => {
   const handleSubmit = async e => {
     e.preventDefault()
     const beneficiaryAccount =
-      !isSameBeneficiary && beneficiary !== "" ? beneficiary : selectedAccount
+      !isSameBeneficiary && beneficiary !== "" ? beneficiary : account
 
     const hasAgreedToTerms = (await localStorage.getItem("hasAgreedToTerms")) === "true"
     
@@ -155,7 +153,7 @@ export const Mint = () => {
       return
     }
 
-    if (!selectedAccount) {
+    if (!account) {
       notify({
         severity: "error",
         message: "Please connect your wallet"
@@ -188,13 +186,13 @@ export const Mint = () => {
     }
 
     const balance = Number(
-        formatUnits(await sdaiContract.balanceOf(selectedAccount), 18)
+        formatUnits(await sdai.method.balanceOf(account).call(), 18)
     )
 
     if (+sdaiValue > balance) {
         notify({
             severity: "error",
-            message: "Cost shouldn't be more than your cNOTE balance"
+            message: "Cost shouldn't be more than your sDAI balance"
         })
         return
     }
@@ -204,39 +202,33 @@ export const Mint = () => {
       const qdAmount = parseUnits(mintValue, 18)
       var sdaiAmount = await qdAmountToSdaiAmt(qdAmount, DELAY)
 
-      const allowanceBigNumber = await sdaiContract.allowance(
-        selectedAccount,
-        quidContract.address
-      )
+      const allowanceBigNumber = await sdai.method.allowance(
+        account, addressQD
+      ).call()
 
       console.log(
         "Start minting:",
         "\nCurrent allowance: ",
-        // formatUnits(allowanceBigNumber, 8),
         formatUnits(allowanceBigNumber, 18),
         "\nNote amount: ",
-        // formatUnits(sdaiAmount, 8)
         formatUnits(sdaiAmount, 18)
       )
 
       // if (parseInt(formatUnits(allowanceBigNumber, 8)) !== 0) {
       if (parseInt(formatUnits(allowanceBigNumber, 18)) !== 0) {
-        setState("approving")
+        setState("decreaseAllowance")
 
-        const { hash } = await sdaiContract?.decreaseAllowance(
-          quidContract?.address,
-          allowanceBigNumber
-        )
-
-        await waitTransaction(hash)
+        await sdai.methods.decreaseAllowance(
+          addressQD, allowanceBigNumber
+        ).call()
       }
 
       setState("approving")
 
-      const { hash } = await sdaiContract?.approve(
-        quidContract?.address,
-        sdaiAmount
-      )
+      // const { hash } = 
+      await sdai.method.approve(
+        addressQD, sdaiAmount
+      ).call()
 
       notify({
         severity: "success",
@@ -244,7 +236,6 @@ export const Mint = () => {
         autoHideDuration: 4500
       })
 
-      await waitTransaction(hash)
 
       setState("minting")
 
@@ -253,23 +244,21 @@ export const Mint = () => {
         message: "Please check your wallet"
       })
 
-      const allowanceBeforeMinting = await sdaiContract.allowance(
-        selectedAccount,
-        quidContract.address
-      )
+      const allowanceBeforeMinting = await sdai.methods.allowance(
+        account, addressQD
+      ).call()
 
       console.log(
         "Start minting:",
         "\nQD amount: ",
         mintValue,
         "\nCurrent account: ",
-        selectedAccount,
+        account,
         "\nAllowance: ",
-        // formatUnits(allowanceBeforeMinting, 8)
         formatUnits(allowanceBeforeMinting, 18)
       )
 
-      await quidContract?.mint(qdAmount, beneficiaryAccount)
+      await quid.methods.mint(qdAmount, beneficiaryAccount).call()
 
       notify({
         severity: "success",
@@ -343,7 +332,7 @@ export const Mint = () => {
               Cost in $
               <strong>
                 {sdaiValue === 0
-                  ? "cNOTE Amount"
+                  ? "sDAI Amount"
                   : numberWithCommas(sdaiValue.toFixed())}
               </strong>
             </div>
@@ -401,7 +390,7 @@ export const Mint = () => {
               type="text"
               className={styles.beneficiaryInput}
               onChange={e => setBeneficiary(e.target.value)}
-              placeholder={selectedAccount ? String(selectedAccount) : ""}
+              placeholder={account ? String(account) : ""}
             />
             <label htmlFor="mint-input" className={styles.idSign}>
               beneficiary

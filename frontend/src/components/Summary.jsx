@@ -1,17 +1,18 @@
 
 import { useEffect, useState } from "react"
 import { formatUnits, parseUnits } from "@ethersproject/units"
-import { useSdaiContract, useQuidContract } from "../contexts/use-wallet"
+
+import { useAppContext } from "../contexts/AppContext";
 import { numberWithCommas } from "../utils/number-with-commas"
-import { address } from "../utils/constant"
 import styles from "./Summary.module.scss"
 
-const SECONDS_IN_DAY = 86400
 const currentTimestamp = (Date.now() / 1000).toFixed(0)
-
+const SECONDS_IN_DAY = 86400
 export const Summary = () => {
-  const contract = useQuidContract()
-  const sdaiContract = useSdaiContract()
+
+  const { quid, sdai, addressQD } =
+  useAppContext();
+ 
   const [
     smartContractStartTimestamp,
     setSmartContractStartTimestamp
@@ -22,30 +23,26 @@ export const Summary = () => {
   const [price, setPrice] = useState("")
 
   useEffect(() => {
-    contract?.LENT().then(data => {
+    quid.methods.LENT().call().then(data => {
       setMintPeriodDays(String(data.toNumber() / SECONDS_IN_DAY))
     })
 
-    contract?.sale_start().then(data => {
+    quid.methods.sale_start().call().then(data => {
       setSmartContractStartTimestamp(data.toString())
     })
 
     const updateInfo = () => {
       const qdAmount = parseUnits("1", 18)
-      contract?.qd_amt_to_sdai_amt(qdAmount, currentTimestamp).then(data => {
+      quid.methods.qd_amt_to_sdai_amt(qdAmount, currentTimestamp).call().then(data => {
         let n = Number(formatUnits(data, 18)) * 100 // TODO wtf
-        if (n > 100) {
-          n = 100
-        }
-        setPrice(String(n))
+        if (n > 100) { n = 100 } setPrice(String(n))
       })
 
-      contract?.get_total_supply().then(totalSupply => {
+      quid.methods.get_total_supply().call().then(totalSupply => {
         setTotalMinted(formatUnits(totalSupply, 18).split(".")[0])
       })
 
-      sdaiContract
-        ?.balanceOf(address)
+      sdai.methods.balanceOf(addressQD).call()
         .then(data => {
           setTotalDeposited(formatUnits(data, 18))
         })
@@ -56,7 +53,7 @@ export const Summary = () => {
     updateInfo()
 
     return () => clearInterval(timerId)
-  }, [contract, sdaiContract])
+  }, [quid, sdai])
 
   const daysLeft = smartContractStartTimestamp ? (
     Math.max(
@@ -70,7 +67,6 @@ export const Summary = () => {
   ) : (
     <>&nbsp;</>
   )
-
   return (
     <div className={styles.root}>
       <div className={styles.section}>
@@ -85,7 +81,7 @@ export const Summary = () => {
         </div>
       </div>
       <div className={styles.section}>
-        <div className={styles.title}>cNOTE Deposited</div>
+        <div className={styles.title}>sDAI Deposited</div>
         <div className={styles.value}>
           ${numberWithCommas(
             parseFloat(String(Number(totalDeposited))).toFixed()
