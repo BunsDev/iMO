@@ -7,20 +7,29 @@ async function getContract(name, addr) {
   return contract;
 }
 
-async function main() {
-  // const noteAddress = '0x04E52476d318CdF739C38BD41A922787D441900c'; // cNOTE
-  // const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  
-  // const note = await getContract('ERC20', noteAddress);
-  // const name = await note.name();
-  // console.log(name);
+async function main() { // rinkeby:
+  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
+  console.log('deploy mock');
+  let Mock = await ethers.getContractFactory("mock");
+  const mock = await Mock.deploy();
+  console.log(mock.getAddress())
 
   console.log('deploy MO');
   let MO = await ethers.getContractFactory("MO");
-  const mo = await MO.deploy();
-  console.log('MO deployed! ' + await mo.getAddress());
-}
+  const mo = await MO.deploy(mock.getAddress());
 
+  console.log('deploy Lot');
+  let Lot = await ethers.getContractFactory("MO");
+  
+  const lot = await Lot.deploy('0x6168499c0cffcacd319c818142124b7a15e857ab',
+  '0x01BE23585060835E02B77ef475b0Cc51aA1e0709', 
+  '0x2ed0feb3e7fd2022120aa84fab1945545a9f2ffc9076fd6156fa96eaff4c1311',
+  100000, 3, mo.getAddress())
+  
+  console.log('Lot deployed! ' + await lot.getAddress());
+}  
+  
+  
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
 main().catch((error) => {

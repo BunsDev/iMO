@@ -21,19 +21,26 @@ describe("Token contract", function () {
     it("Should assign the total supply of tokens to the owner", async function () {
         const { sDAI, MO, owner, addr1, addr2 } = await loadFixture(deployFixture);
     
-        const date = await MO.sale_start(); await sDAI.mint(addr1, 42);
+        const date = await MO.sale_start(); await sDAI.mint(addr1, 40000000000000);
         const balance = await sDAI.balanceOf(addr1); 
+
+        await MO.set_price(40000000000000);
+        const price = await MO.get_price();
         
-        expect(balance).to.equal(42);
+        
+        expect(price).to.equal(40000000000000);
 
-        const QD = await MO.mint(who, )
+        const QD = await MO.mint(who)
 
-        // TODO deploy Lot, then set lot in MO
-
-        // Transfer 50 tokens from owner to addr1
-        // await expect(
-        //     hardhatToken.transfer(addr1.address, 50)
-        // ).to.changeTokenBalances(hardhatToken, [owner, addr1], [-50, 50]);
+        await expect(
+            hardhatToken.transfer(addr1.address, 50)
+          ).to.changeTokenBalances(hardhatToken, [owner, addr1], [-50, 50]);
+    
+          // Transfer 50 tokens from addr1 to addr2
+          // We use .connect(signer) to send a transaction from another account
+          await expect(
+            hardhatToken.connect(addr1).transfer(addr2.address, 50)
+          ).to.changeTokenBalances(hardhatToken, [addr1, addr2], [-50, 50]);
   
     });
    

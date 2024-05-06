@@ -6,7 +6,6 @@ import "hardhat/console.sol"; // TODO comment out
 import "./Dependencies/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-
 contract MO is ERC20, Ownable { 
     AggregatorV3Interface public chainlink; // or RedStone if deployment CANTO
     IERC20 public sdai; address public lot; // multi-purpose (lock/lotto/OpEx)
@@ -14,6 +13,7 @@ contract MO is ERC20, Ownable {
     // address constant public SDAI = 0x83F20F44975D03b1b09e64809B757c47f942BEeA; // TODO MAINNET
     address constant public SDAI = 0x522902E55db6F870a80B21c69BC6b9903D1560f8; // testnet
     address constant public QUID = 0x42cc020Ef5e9681364ABB5aba26F39626F1874A4;
+    address constant public PRICE = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
     mapping(address => Pod) public _maturing; // QD from last 2 !MO...
     uint constant public ONE = 1e18; uint constant public DIGITS = 18;
     uint constant public MAX_PER_DAY = 7_777_777 * ONE; // supply cap
@@ -28,8 +28,7 @@ contract MO is ERC20, Ownable {
     // take 2-7%...compare this to...0.76%
     // less than MetaMask bridge fee 0.875% 
     uint constant public MO_CUT = 54 * CENT; 
-    uint constant public MO_FEE = 22 * CENT; 
-                                    
+    uint constant public MO_FEE = 22 * CENT;                 
     uint constant public MIN_CR = 110000000000000000; 
     uint constant public MIN_APR = 11000000000000000;
     uint[27] public feeTargets; struct Medianiser { 
@@ -46,7 +45,6 @@ contract MO is ERC20, Ownable {
         uint start; // date 
         uint locked; // sDAI
         uint minted; // QD
-        uint burned; // ^
         address[] owned;
     }  uint public SEMESTER;
     uint internal _PRICE; // TODO comment out when finish testing
@@ -73,7 +71,7 @@ contract MO is ERC20, Ownable {
         uint eth; // Marvel's (pet) Rock of Eternity
     }   mapping (address => Plunge) Plunges;
     Pod internal wind; Pool internal work; // internally 1 sDAI = 1 QD
-    constructor(/*address _price*/) ERC20("QU!Dao", "QD") { 
+    constructor(address _sdai /*address _price*/) ERC20("QU!Dao", "QD") { 
         // _MO[0].start = 1719444444; lot = _lot; // TODO uncomment
         _MO[0].start = block.timestamp; lot = _msgSender();
         feeTargets = [MIN_APR, 85000000000000000,  90000000000000000,
@@ -86,8 +84,8 @@ contract MO is ERC20, Ownable {
           185000000000000000, 190000000000000000, 195000000000000000,
           200000000000000000, 205000000000000000, 210000000000000000];
         // CANTO 0x6D882e6d7A04691FCBc5c3697E970597C68ADF39 redstone
-        // chainlink = AggregatorV3Interface(_price); // TODO uncomment
-        uint[27] memory blank; sdai = IERC20(SDAI);
+        chainlink = AggregatorV3Interface(PRICE);
+        uint[27] memory blank; sdai =  IERC20(_sdai); // IERC20(SDAI); TODO mainnet
         longMedian = Medianiser(MIN_APR, blank, 0, 0, 0);
         shortMedian = Medianiser(MIN_APR, blank, 0, 0, 0); 
     }
@@ -95,21 +93,21 @@ contract MO is ERC20, Ownable {
     // Events are emitted, so only when we emit profits
     event Long (address indexed owner, uint amt); 
     event Short (address indexed owner, uint amt);
-    event Voted (address indexed voter, uint vote); // only emit when increasing
-
+    event Voted (address indexed voter, uint vote);
     /*«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-*/
     /*                       HELPER FUNCTIONS                     */
     /*-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»*/
-    
+    function _min(uint _a, uint _b) internal pure returns (uint) {
+        return (_a < _b) ? _a : _b;
+    }
     // TODO comment out after finish testing, and uncomment in constructor
     function set_price(uint price) external onlyOwner { // set ETH price in USD
         _PRICE = price;
     }
-    
-    function _min(uint _a, uint _b) internal pure returns (uint) {
-        return (_a < _b) ? _a : _b;
+     // TODO comment out after finish testing, and uncomment in constructor
+    function get_price() external view returns (uint) { // set ETH price in USD
+        return _PRICE;
     }
-
     /** Quasi-ERC404 functionality (ERC 4A4 :)
      * Override the ERC20 functions to account 
      * for QD balances that are still maturing  
@@ -132,8 +130,7 @@ contract MO is ERC20, Ownable {
         return super.balanceOf(account) + _maturing[account].debit +  _maturing[account].credit;
         // mature QD ^^^^^^^^^ in the process of maturing as ^^^^^ or starting to mature ^^^^^^
     }
-
-    // Four helper functions in frontend
+    // Four helper functions in frontend (duplicated code from mint)
     function qd_amt_to_sdai_amt(uint qd_amt, uint block_timestamp) public view returns (uint amount) {
         uint in_days = ((block_timestamp - _MO[SEMESTER].start) / 1 days) + 1; 
         amount = (in_days * CENT + START_PRICE) * qd_amt / ONE;
@@ -155,7 +152,6 @@ contract MO is ERC20, Ownable {
     function liquidated(uint when) public view returns (address[] memory) { // used in Lot.sol
         return _MO[when].owned;
     }
-
     function _ratio(uint _multiplier, uint _numerator, uint _denominator) internal pure returns (uint ratio) {
         if (_denominator > 0) {
             ratio = _multiplier * _numerator / _denominator;
@@ -173,7 +169,6 @@ contract MO is ERC20, Ownable {
             return _ratio(_price, _collat, _debt); // debt is in QD
         } 
     }
-    
     // _send _it !
     function _it(address from, address to, uint256 value) internal returns (uint) {
         uint delta = _min(_maturing[from].credit, value);
@@ -204,7 +199,6 @@ contract MO is ERC20, Ownable {
             } // address(this) will never _send QD
         }   
     }
-
     /** 
      * Returns the latest price obtained from the Chainlink ETH:USD aggregator 
      * reference contract...https://docs.chain.link/docs/get-the-latest-price
@@ -222,7 +216,6 @@ contract MO is ERC20, Ownable {
         if (answerDigits > DIGITS) { price /= 10 ** (answerDigits - DIGITS); }
         else if (answerDigits < DIGITS) { price *= 10 ** (DIGITS - answerDigits); } 
     }
-
     /** To be responsive to DSR changes we have dynamic APR 
      *  using a points-weighted median algorithm for voting:
      *  not too dissimilar github.com/euler-xyz/median-oracle
@@ -273,7 +266,6 @@ contract MO is ERC20, Ownable {
         if (!short) { longMedian = data; } 
         else { shortMedian = data; } // fin
     }
-    
     // return Plunge after charging APR; if need be...liquidate (preventable)
     function _fetch(address addr, uint price, bool must_exist, address caller) 
         internal returns (Plunge memory plunge) { plunge = Plunges[addr]; 
@@ -308,7 +300,7 @@ contract MO is ERC20, Ownable {
                 if (plunge.dues.clutch) { clutch += fee; 
                     // 144x per day is (24 hours * 60 minutes) / 10 minutes
                     clutch = (MIN_APR / 1000) * _work.debit / ONE; // 1.3% per day
-                } 
+                } // call option to _work debit of sDAI value at 
             }   (_work, _eth, folded) = _charge(addr,
                  _eth, _work, price, time, clutch, true); 
             if (folded) { // clutch == 1 flips the debt
@@ -752,8 +744,9 @@ contract MO is ERC20, Ownable {
     }
 
     function borrow(uint amount, bool short) external payable { // amount is in QD 
-        require(block.timestamp >= _MO[0].start + LENT &&
-                _MO[0].minted >= TARGET, "MO::escrow: early"); // TODO instead of target check 77% backed
+        uint ratio = _MO[SEMESTER].locked * 100 / _MO[SEMESTER].minted; // % backing
+        require(block.timestamp >= _MO[0].start + LENT, "MO::borrow: early"); 
+        require(ratio > 76, "MO::borrow: too under-backed");
         uint price = _get_price(); uint debit; uint credit; 
         Plunge memory plunge = _fetch(_msgSender(), price, 
                                       false, _msgSender()); 

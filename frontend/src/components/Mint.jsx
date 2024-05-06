@@ -45,12 +45,7 @@ export const Mint = () => {
 
   const qdAmountToSdaiAmt = async (qdAmount, delay = 0) => {
     const currentTimestamp = (Date.now() / 1000 + delay).toFixed(0)
-    return await quid.methods.qd_amt_to_sdai_amt(
-      qdAmount instanceof BigNumber
-        ? qdAmount
-        : parseUnits(qdAmount.split(".")[0], 18),
-      currentTimestamp
-    ).call()
+    return await quid.methods.qd_amt_to_sdai_amt(qdAmount).call()
   }
   console.log({ mintValue, sdaiValue, totalSupplyCap, totalSupply });
 
