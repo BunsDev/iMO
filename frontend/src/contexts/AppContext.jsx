@@ -1,11 +1,11 @@
-import { createContext, useState, useContext, useEffect } from "react";
+import { createContext, useState, useContext, useCallback, useEffect } from "react";
 import { useSDK } from "@metamask/sdk-react";
 import Web3 from "web3";
 import { QUID, SDAI, addressQD, addressSDAI } from "../utils/constant";
 
 const contextState = {
   account: "",
-  connectToMetaMask: () => {},
+  connectToMetaMask: () => { },
   connected: false,
   connecting: false,
   provider: {},
@@ -19,14 +19,14 @@ export const AppContextProvider = ({ children }) => {
   const [account, setAccount] = useState("");
   const { sdk, connected, connecting, provider } = useSDK();
 
-  const connectToMetaMask = async () => {
+  const connectToMetaMask = useCallback(async () => {
     try {
       const accounts = await sdk?.connect();
       setAccount(accounts?.[0]);
-    } catch (err) {
-      console.warn(`failed to connect..`, err);
+    } catch (error) {
+      console.warn(`failed to connect..`, error);
     }
-  };
+  }, [sdk])
 
   const app = new Web3(provider);
   const quid = new app.eth.Contract(QUID, addressQD);
@@ -36,7 +36,7 @@ export const AppContextProvider = ({ children }) => {
     if (!account) {
       connectToMetaMask();
     }
-  }, [connected]);
+  }, [connectToMetaMask, account, connected]);
 
   return (
     <AppContext.Provider

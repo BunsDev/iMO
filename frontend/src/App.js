@@ -14,10 +14,8 @@ import { useAppContext } from "./contexts/AppContext";
 
 function App() {
   
-  const { quid, account, connected, connecting } =
+  const { quid, account } =
     useAppContext();
-
-  const [isLoading, setIsLoading] = useState("idle");
 
   const [userInfo, setUserInfo] = useState(null)
 
