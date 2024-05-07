@@ -21,43 +21,61 @@ export const Summary = () => {
 
   const updateInfo = useCallback(() => {
     try {
-      const qdAmount = parseUnits("1", 18)
-      quid.methods.qd_amt_to_sdai_amt(qdAmount, currentTimestamp).call()
-        .then(data => {
-          setBigNumber(Number(formatUnits(data, 18)) * 100)
+      if (quid && sdai && addressQD) {
+        const qdAmount = parseUnits("1", 18)
+        quid.methods.qd_amt_to_sdai_amt(qdAmount, currentTimestamp).call()
+          .then(data => {
+            setBigNumber(Number(formatUnits(data, 18)) * 100)
 
-          if(bigNumber > 100) { setBigNumber(100) } setPrice(String(bigNumber))
-        })
+            if (bigNumber > 100) { setBigNumber(100) } setPrice(String(bigNumber))
+          })
 
-      quid.methods.get_total_supply().call()
-        .then(totalSupply => {
-          setTotalMinted(formatUnits(totalSupply, 18).split(".")[0])
-        })
+        quid.methods.get_total_supply().call()
+          .then(totalSupply => {
+            setTotalMinted(formatUnits(totalSupply, 18).split(".")[0])
+          })
 
-      sdai.methods.balanceOf(addressQD).call()
-        .then(data => {
-          setTotalDeposited(formatUnits(data, 18))
-        })
+        sdai.methods.balanceOf(addressQD).call()
+          .then(data => {
+            setTotalDeposited(formatUnits(data, 18))
+          })
+      }
     } catch (error) {
       console.error("Some problem with updateInfo, Summary.js, l.22: ", error)
     }
   }, [addressQD, bigNumber, sdai, quid])
 
+  const getSales = useCallback(() => {
+    try {
+      if (quid && sdai && addressQD) {
+        quid.methods.LENT().call()
+          .then(data => {
+            setMintPeriodDays(String(data.toNumber() / SECONDS_IN_DAY))
+          })
+
+        quid.methods.sale_start().call()
+          .then(data => {
+            setSmartContractStartTimestamp(data.toString())
+          })
+      }
+    } catch (error) {
+      console.error("Some problem with updateInfo, Summary.js, l.22: ", error)
+    }
+  }, [addressQD, sdai, quid])
+
   useEffect(() => {
-    quid.methods.LENT().call().then(data => {
-      setMintPeriodDays(String(data.toNumber() / SECONDS_IN_DAY))
-    })
+    try{
+      getSales()
 
-    quid.methods.sale_start().call().then(data => {
-      setSmartContractStartTimestamp(data.toString())
-    })
+      const timerId = setInterval(updateInfo, 5000)
 
-    const timerId = setInterval(updateInfo, 5000)
+      updateInfo()
 
-    updateInfo()
-
-    return () => clearInterval(timerId)
-  }, [updateInfo, addressQD, quid, sdai])
+      return () => clearInterval(timerId)
+    }catch (error) {
+      console.error("Some problem with sale's start function: ", error)
+    }
+  }, [getSales, updateInfo])
 
   const daysLeft = smartContractStartTimestamp ? (
     Math.max(

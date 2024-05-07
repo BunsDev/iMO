@@ -26,11 +26,8 @@ function App() {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (account) { // connected is implied to be true
-        await quid.methods.get_info(account).call().then(setUserInfo)
-      } else {
-        setUserInfo(null)
-      }
+      if (account) await quid.methods.get_info(account).call().then(setUserInfo)
+      
     }
     // quidContract.on("Minted", fetchData) TODO!!!!
     fetchData() // TODO repeating too often, only do once, then do after Minted
