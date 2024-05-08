@@ -1,22 +1,16 @@
 import { Icon } from "./Icon"
 import styles from "./Header.module.scss"
-import { formatUnits } from "@ethersproject/units"
-import { useContext, useEffect, useState } from "react"
+import { useEffect} from "react"
 
 import { shortedHash } from "../utils/shorted-hash"
 import { numberWithCommas } from "../utils/number-with-commas"
 import { useAppContext } from "../contexts/AppContext";
-import { NotificationContext } from "../contexts/NotificationProvider"
 
 export const Header = ({ userInfo }) => {
-  const { notify } = useContext(NotificationContext)
-
-  const { quid, sdai, account, connectToMetaMask, connected, connecting } =
+  const { account, connectToMetaMask, connected, connecting } =
     useAppContext();
 
-  const [isLoading, setIsLoading] = useState("idle");
-
-  const [balance, setBalance] = useState("")
+  //const [balance, setBalance] = useState("")
 
 
 
@@ -92,7 +86,7 @@ export const Header = ({ userInfo }) => {
     <div className={styles.summaryEl}>
       <div className={styles.summaryElTitle}>sDAI balance</div>
       <div className={styles.summaryElValue}>
-        ${numberWithCommas(parseInt(balance))}
+        ${numberWithCommas(parseInt())}
       </div>
     </div>
   )
@@ -100,22 +94,26 @@ export const Header = ({ userInfo }) => {
   return (
     <header className={styles.root}>
       <div className={styles.logoContainer}>
-        <a className={styles.logo} href="/"/>
+        <a className={styles.logo} href="/" >
+          <span className="visually-hidden">Put here</span>
+        </a>
       </div>
       {userInfo && summary}
       <div className={styles.walletContainer}>
         {userInfo && balanceBlock}
         <div className={styles.wallet}>
           {!connected && (
-            <button className={styles.wallet} onClick={connectToMetaMask}>
+            <button className={styles.walletButton} onClick={connectToMetaMask}>
               {connecting ? "Connecting..." : "Connect to MetaMask"}
             </button>
           )}
           {connected && (
-            shortedHash(account)
+            <span className={styles.accountInfo}>
+              {shortedHash(account)}
+            </span>
           )}
           <Icon name="btn-bg" className={styles.walletBackground} />
-         </div>
+        </div>
       </div>
     </header>
   )

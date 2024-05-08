@@ -1,11 +1,11 @@
-import { createContext, useState, useContext, useEffect } from "react";
-import { useSDK } from "@metamask/sdk-react";
-import Web3 from "web3";
-import { QUID, SDAI, addressQD, addressSDAI } from "../utils/constant";
+import { createContext, useState, useContext, useCallback, useEffect } from "react"
+import { useSDK } from "@metamask/sdk-react"
+import Web3 from "web3"
+import { QUID, SDAI, addressQD, addressSDAI } from "../utils/constant"
 
 const contextState = {
   account: "",
-  connectToMetaMask: () => {},
+  connectToMetaMask: () => { },
   connected: false,
   connecting: false,
   provider: {},
@@ -13,30 +13,41 @@ const contextState = {
   web3: {},
 };
 
-const AppContext = createContext(contextState);
+const AppContext = createContext(contextState)
 
 export const AppContextProvider = ({ children }) => {
-  const [account, setAccount] = useState("");
-  const { sdk, connected, connecting, provider } = useSDK();
+  const [account, setAccount] = useState("")
+  const { sdk, connected, connecting, provider } = useSDK()
 
-  const connectToMetaMask = async () => {
+  const [quid, setQuid] = useState(null)
+  const [sdai, setSdai] = useState(null)
+
+  const connectToMetaMask = useCallback(async () => {
     try {
-      const accounts = await sdk?.connect();
-      setAccount(accounts?.[0]);
-    } catch (err) {
-      console.warn(`failed to connect..`, err);
+      const accounts = await sdk?.connect()
+      setAccount(accounts?.[0])
+    } catch (error) {
+      console.warn(`failed to connect..`, error)
     }
-  };
-
-  const app = new Web3(provider);
-  const quid = new app.eth.Contract(QUID, addressQD);
-  const sdai = new app.eth.Contract(SDAI, addressSDAI);
+  }, [sdk])
 
   useEffect(() => {
     if (!account) {
-      connectToMetaMask();
+      if (!account) {
+        connectToMetaMask()
+    
+        if (provider) {
+          const web3Instance = new Web3(provider)
+          const quidContract = new web3Instance.eth.Contract(QUID, addressQD)
+          const sdaiContract = new web3Instance.eth.Contract(SDAI, addressSDAI)
+
+
+          setQuid(quidContract)
+          setSdai(sdaiContract)
+        }
+      }
     }
-  }, [connected]);
+  }, [connectToMetaMask, account, provider])
 
   return (
     <AppContext.Provider
@@ -55,8 +66,9 @@ export const AppContextProvider = ({ children }) => {
     >
       {children}
     </AppContext.Provider>
-  );
-};
+  )
+}
 
-export const useAppContext = () => useContext(AppContext);
-export default AppContext;
+export const useAppContext = () => useContext(AppContext)
+
+export default AppContext

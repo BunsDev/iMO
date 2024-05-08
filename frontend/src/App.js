@@ -14,10 +14,8 @@ import { useAppContext } from "./contexts/AppContext";
 
 function App() {
   
-  const { quid, account, connected, connecting } =
+  const { quid, account } =
     useAppContext();
-
-  const [isLoading, setIsLoading] = useState("idle");
 
   const [userInfo, setUserInfo] = useState(null)
 
@@ -28,11 +26,8 @@ function App() {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (account) { // connected is implied to be true
-        await quid.methods.get_info(account).call().then(setUserInfo)
-      } else {
-        setUserInfo(null)
-      }
+      if (account) await quid.methods.get_info(account).call().then(setUserInfo)
+      
     }
     // quidContract.on("Minted", fetchData) TODO!!!!
     fetchData() // TODO repeating too often, only do once, then do after Minted
