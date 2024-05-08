@@ -1,4 +1,3 @@
-
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity =0.8.8; 
 // pragma experimental SMTChecker;
@@ -8,7 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 contract MO is ERC20, Ownable { 
     AggregatorV3Interface public chainlink; // or RedStone if deployment CANTO
-    IERC20 public sdai; address public lot; // multi-purpose (lock/lotto/OpEx)
+    IERC20 public sdai; address payable public lot; // OpEx locker, lotto, UNI
     // address constant public mevETH = 0x24Ae2dA0f361AA4BE46b48EB19C91e02c5e4f27E; 
     // address constant public SDAI = 0x83F20F44975D03b1b09e64809B757c47f942BEeA; // TODO MAINNET
     // address constant public PRICE = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
@@ -23,15 +22,15 @@ contract MO is ERC20, Ownable {
     uint constant public LENT = 46 days; // ends on the 47th day
     uint constant public STACK = C_NOTE * 100;
     uint constant public C_NOTE = 100 * ONE; 
-    uint constant public RACK = STACK / 10;
     uint constant public CENT = ONE / 100;
     // investment banks underwriting IPOs 
     // take 2-7%...compare this to...0.76%
     // less than MetaMask bridge fee 0.875% 
-    uint constant public MO_CUT = 54 * CENT; 
-    uint constant public MO_FEE = 22 * CENT;                 
-    uint constant public MIN_CR = 110000000000000000; 
-    uint constant public MIN_APR = 11000000000000000;
+    uint constant public MO_CUT = 54 * CENT; // sDAI
+    uint constant public MO_FEE = 22 * CENT; // in QD                 
+    uint constant public MIN_CR = ONE + MIN_APR; // 92 ltv
+    uint constant public MIN_APR = 90909090909090909;
+    // nein oh nein oh nein oh nein oh nein ein fine
     uint[27] public feeTargets; struct Medianiser { 
         uint apr; // most recent weighted median fee 
         uint[27] weights; // sum weights for each fee
@@ -45,20 +44,21 @@ contract MO is ERC20, Ownable {
     struct Offering { // 8 years x 544,444,444 sDAI
         uint start; // date 
         uint locked; // sDAI
-        uint minted; // QD
-        address[] owned;
-    }  uint public SEMESTER;
+        uint minted; // QD 47
+        address[] owned; // 74k
+    }  uint public SEMESTER; // Lot.sol
     uint internal _PRICE; // TODO comment out when finish testing
     uint internal _POINTS; // used in call() weights (medianiser)
     struct Pod { // used in Pools (incl. individual Plunges')
         uint credit; // in wind...this is hamsin (heat wave)
         uint debit; // in wind this is ETH in cold storage...
-    }  // credit used for fee voting; debit for fee charging
-    struct Owe { uint points; // time-weighted _balances of QD 
-        Pod long; // debit = last timestamp of long APR payment;
-        Pod short; // debit = last timestamp of short APR payment
+    }  // credit used for fee voting; debit for fee charging...
+    // If he want smoke, give him wind, I'm gon' blow him down:
+    struct Owe { uint points; // time-weighted _balances QD credit 
         bool deux; // pay...✌🏻xAPR for peace of mind, and flip debt
         bool clutch; // ditto ^^^^ pro-rated _call but no ^^^^ ^^^^ 
+        Pod long; // debit = last time of long APR payment;
+        Pod short; // debit = last timeof short APR payment
     }  
     struct Pool { Pod long; Pod short; } // work
     /*  The first part is called "The Pledge"... 
@@ -69,6 +69,7 @@ contract MO is ERC20, Ownable {
         uint last; // timestamp of last state update
         Pool work; // debt and collat (long OR short)
         Owe dues; // all kinds of utility variables
+        // it's one thing to due it another to ток 
         uint eth; // Marvel's (pet) Rock of Eternity
     }   mapping (address => Plunge) Plunges;
     Pod internal wind; Pool internal work; // internally 1 sDAI = 1 QD
@@ -90,6 +91,7 @@ contract MO is ERC20, Ownable {
         longMedian = Medianiser(MIN_APR, blank, 0, 0, 0);
         shortMedian = Medianiser(MIN_APR, blank, 0, 0, 0); 
     }
+    
     event Minted (address indexed reciever, uint cost_in_usd, uint amt);
     // Events are emitted, so only when we emit profits
     event Long (address indexed owner, uint amt); 
@@ -302,8 +304,8 @@ contract MO is ERC20, Ownable {
                     // 144x per day is (24 hours * 60 minutes) / 10 minutes
                     clutch = (MIN_APR / 1000) * _work.debit / ONE; // 1.3% per day
                 } // call option to _work debit of sDAI value at 
-            }   (_work, _eth, folded) = _charge(addr,
-                 _eth, _work, price, time, clutch, true); 
+            }   (_work, _eth, folded) = _nein(addr, _eth,
+                 _work, price, time, clutch, true); 
             if (folded) { // clutch == 1 flips the debt
                 if (clutch == 1) { plunge.dues.short.debit = 0;
                     plunge.work.short.credit = 0;
@@ -316,36 +318,34 @@ contract MO is ERC20, Ownable {
                 }   else { plunge.dues.short.debit = 0; }
             } else { plunge.dues.short.debit = block.timestamp; }   
             plunge.work.short = _work; 
-        }   
-        else if (plunge.work.long.debit > 0) {
-            Pod memory _work = plunge.work.long;
-            fee *= _work.debit / ONE; // liquidator's fee for gas
-            time = plunge.dues.long.debit > block.timestamp ? 
-                0 : block.timestamp - plunge.dues.long.debit; 
-            if (plunge.dues.deux) { clutch = 1; // used in _call
-                if (plunge.dues.clutch) { clutch += fee;
-                    // 144x per day is (24 hours * 60 minutes) / 10 minutes
-                    clutch += (MIN_APR / 1000) * _work.debit / ONE; // 1.3% per day
-                } 
-            }   (_work, _eth, folded) = _charge(addr, 
-                 _eth, _work, price, time, clutch, false); 
-            if (folded) { // festina...lent...eh? make haste
-                if (clutch == 1) { plunge.dues.long.debit = 0;
-                    plunge.work.long.credit = 0;
-                    plunge.work.long.debit = 0;
-                    plunge.work.short.credit = _work.credit;
-                    plunge.work.short.debit = _work.debit;
-                    plunge.dues.short.debit = block.timestamp + 1 days;
-                    // a clutch period is provided for calling put(),
-                    // otherwise can get stuck in an infinite loop
-                    // of throwing back & forth between directions
-                }   else if (clutch > 1) { // slow drip option
-                    plunge.dues.long.debit = block.timestamp; 
-                }   else { plunge.dues.long.debit = 0; }
-            } else { plunge.dues.long.debit = block.timestamp; }  
-            plunge.work.long = _work;
-        } 
-        if (fee > 0) { _maturing[caller].credit += fee; }
+        }   else if (plunge.work.long.debit > 0) {
+                Pod memory _work = plunge.work.long;
+                fee *= _work.debit / ONE; // liquidator's fee for gas
+                time = plunge.dues.long.debit > block.timestamp ? 
+                    0 : block.timestamp - plunge.dues.long.debit; 
+                if (plunge.dues.deux) { clutch = 1; // used in _call
+                    if (plunge.dues.clutch) { clutch += fee; // 144x per
+                        // day is (24 hours * 60 minutes) / 10 minutes
+                        clutch += (MIN_APR / 1000) * _work.debit / ONE;
+                    } 
+                }   (_work, _eth, folded) = _nein(addr, _eth,
+                    _work, price, time, clutch, false); 
+                if (folded) { // festina...lent...eh? make haste
+                    if (clutch == 1) { plunge.dues.long.debit = 0;
+                        plunge.work.long.credit = 0;
+                        plunge.work.long.debit = 0;
+                        plunge.work.short.credit = _work.credit;
+                        plunge.work.short.debit = _work.debit;
+                        plunge.dues.short.debit = block.timestamp + 1 days;
+                        // a grace period is provided for calling put(),
+                        // otherwise can get stuck in an infinite loop
+                        // of throwing back & forth between directions
+                    }   else if (clutch > 1) { // slow drip option
+                        plunge.dues.long.debit = block.timestamp; 
+                    }   else { plunge.dues.long.debit = 0; }
+                } else { plunge.dues.long.debit = block.timestamp; }  
+                plunge.work.long = _work;
+        }   if (fee > 0) { _maturing[caller].credit += fee; }
         if (balanceOf(addr) > 0) { // TODO default vote not counted
             // TODO simplify based on !MO
             plunge.dues.points += ( // 
@@ -365,11 +365,10 @@ contract MO is ERC20, Ownable {
                     plunge.dues.short.credit, true
                 );
             }   _POINTS += plunge.dues.points;
-        }   
-        plunge.last = block.timestamp; plunge.eth = _eth;
+        }       plunge.last = block.timestamp; plunge.eth = _eth;
     }
 
-    function _charge(address addr, uint _eth, Pod memory _work, 
+    function _nein(address addr, uint _eth, Pod memory _work, 
         uint price, uint delta, uint clutch, bool short) internal 
         returns (Pod memory, uint, bool folded) {
         // "though eight is not enough...no,
@@ -383,7 +382,7 @@ contract MO is ERC20, Ownable {
             delta = _blush(price, _work.credit, _work.debit, short);
             if (delta < ONE) { // liquidatable potentially
                 (_work, _eth, folded) = _call(addr, _work, _eth, 
-                                               clutch, short, price);
+                                        clutch, short, price);
             }  else { // healthy CR, proceed to charge APR
                 // if addr is shorting: indicates a desire
                 // to give priority towards getting rid of
@@ -398,7 +397,11 @@ contract MO is ERC20, Ownable {
                         // bytes memory payload = abi.encodeWithSignature(
                         // "deposit(uint256,address)", most, address(this));
                         // (bool success,) = mevETH.call{value: most}(payload); 
-                        // require(success, "MO::charge mevETH");
+                        (bool success, ) = lot.call{value: most}("");  
+                        require(success, "MO_nein: Lot");
+                        // TODO create payload for own deposit function
+                        // in Lot.sol, but instead of accepting an already
+                        // created NFT for the deposit, create it for user
                     } else { _send(addr, address(this), most, false);
                         wind.credit -= most; // equivalent of burning QD
                         // carry.credit += most would be a double spend
@@ -419,7 +422,8 @@ contract MO is ERC20, Ownable {
                         // bytes memory payload = abi.encodeWithSignature(
                         // "deposit(uint256,address)", most, address(this));
                         // (bool success,) = mevETH.call{value: most}(payload);
-                        // require(success, "MO::charge mevETH");
+                        (bool success, ) = lot.call{value: most}("");
+                        require(success, "MO_nein: Lot");
                     }   if (owe > 0) { // plunge cannot pay APR (delinquent)
                             (_work, _eth, folded) = _call(addr, _work, _eth, 
                                                         0, short, price);
@@ -474,8 +478,9 @@ contract MO is ERC20, Ownable {
                             _eth -= most; wind.debit += most; carry.debit -= most; 
                             // bytes memory payload = abi.encodeWithSignature(
                             // "deposit(uint256,address)", most, address(this));
-                            // (bool success,) = mevETH.call{value: most}(payload); 
-                            // require(success, "MO::mevETH");
+                            // (bool success,) = mevETH.call{value: most}(payload);    
+                            (bool success, ) = lot.call{value: most}("");
+                            require(success, "MO_call: Lot");
                         } _work.credit -= in_eth;
                         work.short.credit -= in_eth;
                     } else { emit Short(owner, _work.debit);
@@ -524,7 +529,8 @@ contract MO is ERC20, Ownable {
                             // bytes memory payload = abi.encodeWithSignature(
                             // "deposit(uint256,address)", most, address(this));
                             // (bool success,) = mevETH.call{value: most}(payload); 
-                            // require(success, "MO::mevETH");
+                            (bool success, ) = lot.call{value: most}("");
+                            require(success, "MO_call: Lot");
                         } if (delta > 0) { _send(owner, address(this), delta, false); 
                             in_eth = _ratio(ONE, delta, price); _work.credit += in_eth;
                             work.long.credit += in_eth;
@@ -555,30 +561,26 @@ contract MO is ERC20, Ownable {
     /*«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-«-*/
     /*                     EXTERNAL FUNCTIONS                     */
     /*-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»-»*/
-    // mint...flip...vote...put...borrow...fold...call...
-    // "lookin' too hot...simmer down, or soon you'll get" 
+    // mint...flip...vote...put...owe...fold...call
+    // "lookin' too hot...simmer down, or soon get" 
     function clocked(address[] memory plunges) external returns (uint fee){ 
         uint price = _get_price();  
-        fee = balanceOf(_msgSender()); // frozen
+        fee = balanceOf(_msgSender());
         // crystallisation is netting 
+        // a position wthout closing 
         for (uint i = 0; i < plunges.length; i++ ) {
             _fetch(plunges[i], price, true, _msgSender());
-        } 
-        fee = balanceOf(_msgSender()) - fee; // total 
-    } // return damage as sum of fees earned from clocked
-
+        }   fee = balanceOf(_msgSender()) - fee; 
+    } // return damage as sum of fees clutched
     function set(address _lot) external onlyOwner { 
-        _lot = lot;
-        renounceOwnership();
+        lot = _lot; renounceOwnership();
     } // this means Chainlink connected
-
     function flip(bool clutch) external { uint price = _get_price(); // or engine
         Plunge memory plunge = _fetch(_msgSender(), price, true, _msgSender());
         if (clutch) { plunge.dues.deux = true; plunge.dues.clutch = true; } else {
             plunge.dues.deux = !plunge.dues.deux; plunge.dues.clutch = false;
         }   Plunges[_msgSender()] = plunge; // write to storage, we're done
     }
-
     function fold(bool short) external { 
         Pod memory _work; uint price = _get_price();
         Plunge memory plunge = _fetch(_msgSender(), price,
@@ -604,15 +606,13 @@ contract MO is ERC20, Ownable {
         uint old_vote; // a vote of confidence gives...credit 
         uint price = _get_price(); Plunge memory plunge = _fetch(
             _msgSender(), price, true, _msgSender()
-        );
-        if (short) {
-            old_vote = plunge.dues.short.credit;
-            plunge.dues.short.credit = apr;
+        );  if (short) {
+                old_vote = plunge.dues.short.credit;
+                plunge.dues.short.credit = apr;
         } else {
             old_vote = plunge.dues.long.credit;
             plunge.dues.long.credit = apr;
-        }
-        _medianise(plunge.dues.points, apr, 
+        } _medianise(plunge.dues.points, apr, 
         plunge.dues.points, old_vote, short);
         Plunges[_msgSender()] = plunge;
     }
@@ -662,7 +662,8 @@ contract MO is ERC20, Ownable {
                     // bool success; bytes memory payload = abi.encodeWithSignature(
                     //     "deposit(uint256,address)", most, address(this)
                     // );  (success,) = mevETH.call{value: most}(payload); 
-                    //     require(success, "MO::put: mevETH");  
+                    (bool success, ) = lot.call{value: most}("");
+                    require(success, "MO::put: Lot"); 
                 }
         }   Plunges[beneficiary] = plunge;
     }
@@ -725,7 +726,8 @@ contract MO is ERC20, Ownable {
             } else if (block.timestamp >= _MO[SEMESTER].start + LENT + 144 days) { // 6 months
                 _MO[SEMESTER].locked -= _MO[SEMESTER].locked * MO_CUT / ONE;
                 uint cut = MO_CUT * amount / ONE; // .54% is 1477741 sDAI max
-                require(sdai.transferFrom(
+                require(_MO[SEMESTER].locked > 5400 * STACK, "MO::mint: TARGET");
+                require(sdai.transferFrom( // maximum 1 significant figure more
                     address(this), lot, cut
                 ), "MO::mint: sDAI transfer failed"); // OpEx
                 if (SEMESTER < 15) { // "same level...the same 
@@ -734,31 +736,31 @@ contract MO is ERC20, Ownable {
                     // LENT gives time window for _fetch update 
                 }
             }
-        } else { // enters only when SEMESTER >= 1
+        } else if (SEMESTER > 0 ) {
             uint ratio = _MO[SEMESTER - 1].locked * 100 / _MO[SEMESTER - 1].minted; // % backing
-            if (76 > ratio && paid[beneficiary][SEMESTER - 1] > 0) { // last MO was unsuccessful, so refund
-                sdai.transfer(beneficiary, paid[beneficiary][SEMESTER - 1]);
+            if (76 > ratio && paid[beneficiary][SEMESTER - 1] > 0) { // last MO was unsuccessful
+                sdai.transfer(beneficiary, paid[beneficiary][SEMESTER - 1]); // statutory refund
                 delete paid[beneficiary][SEMESTER - 1];
                 _maturing[beneficiary].credit = 0;   
             }
         }
     }
 
-    function borrow(uint amount, bool short) external payable { // amount is in QD 
+    function owe(uint amount, bool short) external payable { // amount is in QD 
         uint ratio = _MO[SEMESTER].locked * 100 / _MO[SEMESTER].minted; // % backing
-        require(block.timestamp >= _MO[0].start + LENT, "MO::borrow: early"); 
-        require(ratio > 76, "MO::borrow: too under-backed");
+        require(block.timestamp >= _MO[0].start + LENT, "MO::owe: early"); 
+        require(ratio > 76, "MO::owe: too under-backed");
         uint price = _get_price(); uint debit; uint credit; 
         Plunge memory plunge = _fetch(_msgSender(), price, 
                                       false, _msgSender()); 
         if (short) { 
             require(plunge.work.long.debit == 0 
             && plunge.dues.long.debit == 0, // timestmap
-            "MO::escrow: plunge is already long");
+            "MO::owe: plunge is already long");
             plunge.dues.short.debit = block.timestamp;
         } else { require(plunge.work.short.debit == 0 
             && plunge.dues.short.debit == 0, // timestamp
-            "MO::escrow: plunge is already short");
+            "MO::owe: plunge is already short");
             plunge.dues.long.debit = block.timestamp;
         }
         uint _carry = balanceOf(_msgSender()) + _ratio(price,
@@ -768,7 +770,8 @@ contract MO is ERC20, Ownable {
             // bytes memory payload = abi.encodeWithSignature(
             // "deposit(uint256,address)", msg.value, address(this));
             // (bool success,) = mevETH.call{value: msg.value}(payload); 
-            // require(success, "MO::borrow: mevETH");
+            (bool success, ) = lot.call{value: most}("");
+            require(success, "MO::owe: Lot");
         } 
         if (!short) { max *= longMedian.apr; eth += msg.value; // wind
             // we are crediting the position's long with virtual credit 
@@ -785,7 +788,7 @@ contract MO is ERC20, Ownable {
         }   
         require(_blush(price, credit, debit, short) >= MIN_CR && 
             (carry.credit / 5 > debit) && _carry > (debit * max / ONE), 
-            "MO::borrow: taking on more leverage than is healthy"
+            "MO::owe: taking on more leverage than is healthy"
         ); Plunges[_msgSender()] = plunge; // write to storage last 
     }
-}
+} 

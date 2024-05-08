@@ -1,6 +1,6 @@
 ## in My Opinion sDAI/cNOTE re-staking
 *please click all links...or you may miss MO🔨Lot of context*     
- borrow at [92 LTV](https://twitter.com/QuidMint/status/1788043869113708955)...with shorts *and* liquidation protection.
+ borrow at [92 LTV](https://twitter.com/QuidMint/status/1788043869113708955)...with shorts *and* liquidation protection...
 
 There's `deux` and 2 types of `dues`: synthetic `long` or `short`  
 are like *Itchy and Scratchy*...`credit` and `debit` (a la *CatDog*);  
@@ -9,21 +9,19 @@ this [transmission](https://en.wikipedia.org/wiki/Intercarrier_method) is coming
 through the Triforce: ~~hook~~ `wind`, ~~line~~ `carry`, and ~~sinker~~ `work` 
 
   
-We `mint`...`flip`...`vote`...`put`...`borrow`...`fold`...`call`...    
+`Plunge`s `mint`...`flip`...`vote`...`put`...`owe`...`fold`...`call`   
 "lookin' too hot? simmer down, or soon you'll get," `clocked`;  
 
-these are the entire Lot of externally callable functions in MO.sol...  
-**Diet Colla**~~boration~~ with [Clams](https://twitter.com/clammyclams/status/1781831323356733946) ~~Casino~~ [AV](https://youtu.be/1O25uUy90hU) and push a T([bill](https://twitter.com/OuchMedPA/status/1740514556244623427)); 1 sDAI  
-
-= $1 in ETH (principal-protected); simlar to zero coupon bonds &  
- [swappable](https://twitter.com/guil_lambert/status/1772423853316219051) `call` options in traditional markets r[ICO](https://twitter.com/QuidMint/status/1786533263139369265) (recurring).  
- QuidMint Foundation sees over (not over-sieze) !MO for...`work`    
-in a school of trade-offs, sweat equity,  [compensation](https://www.tabers.com/tabersonline/view/Tabers-Dictionary/730522/all/compensation) escalation: 
-
-"Yesterday's price is not today's price," in !MO. 1/3 of TVL pays APR   
+QuidMint Foundation sees over (not over-sieze) [swappable](https://twitter.com/guil_lambert/status/1772423853316219051) `call`    
+in the school of trade-offs, sweat equity,  [compensation](https://www.tabers.com/tabersonline/view/Tabers-Dictionary/730522/all/compensation) escalation,   
+"yesterday's price is not today's price," in !MO. 1/3 of TVL pays APR   
 out of pocket (adds ETH to `wind.debit`), or
 pay with QD gains to  
- burn `wind.credit`, the debt created in `mint` which fills `carry`
+ 
+ burn `wind.credit`, the debt created in `mint` which fills `carry`    
+ **Diet Colla**~~boration~~ with [Clams](https://twitter.com/clammyclams/status/1781831323356733946) ~~Casino~~ [AV](https://youtu.be/1O25uUy90hU) and push a T([bill](https://twitter.com/OuchMedPA/status/1740514556244623427)); 1 sDAI  
+= $1 in ETH (principal-protected); simlar to zero coupon bonds &  
+
 
 ### with a de*ferral* reserve (not federal)  
 

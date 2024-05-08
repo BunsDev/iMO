@@ -560,7 +560,7 @@ export const QUID = [
           type: 'bool'
         }
       ],
-      name: 'borrow',
+      name: 'owe',
       outputs: [],
       stateMutability: 'payable',
       type: 'function'
