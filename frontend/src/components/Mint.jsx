@@ -1,7 +1,6 @@
 
 import { useContext, useEffect, useState, useRef } from "react"
 import { formatUnits, parseUnits } from "@ethersproject/units"
-import { BigNumber } from "@ethersproject/bignumber"
 
 import cn from "classnames"
 import { Modal } from "./Modal"
@@ -39,12 +38,13 @@ export const Mint = () => {
 
   const handleAgreeTerms = async () => {
     setIsModalOpen(false)
-    await localStorage.setItem("hasAgreedToTerms", "true")
+    localStorage.setItem("hasAgreedToTerms", "true")
     buttonRef?.current?.click()
   }
 
   const qdAmountToSdaiAmt = async (qdAmount, delay = 0) => {
-    const currentTimestamp = (Date.now() / 1000 + delay).toFixed(0)
+    //const currentTimestamp = (Date.now() / 1000 + delay).toFixed(0)
+
     return await quid.methods.qd_amt_to_sdai_amt(qdAmount).call()
   }
   console.log({ mintValue, sdaiValue, totalSupplyCap, totalSupply });
