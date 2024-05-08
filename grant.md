@@ -73,9 +73,7 @@ latest implementation is just over 800 lines. The majority of the work for this 
 | 4. | Basic Metrics |  Provide a side by side comparison of key metrics: aggregated for all users, and from the perspective of the authenticated user (who’s currently logged in, e.g. individual risk-adjusted returns); see most recently liquidated (sorted by time or size); top `owe` by P&L. |
 | 5. | Simulation [Metrics](https://orus.info/) | Future projections for the output of the `call` function, variable inputs being: the extent to which `work` is leveraged relative to `carry` at the time of function `_call`; % of  profitable `fold` over last SEMESTER.  |
 
-
 ### Milestone 2:
-
   
 Potentially, all the sDAI that gets locked in PCV can be deployed as single-sided liquidity in a pool with  
  sDAI and ETH. We may extend our medianiser to vote (for % of sDAI to lock in other [AMMs](https://twitter.com/futurenomics/status/1766187064444309984)) or in UNI,  
@@ -92,5 +90,4 @@ and seeing basic stats for current MO e.g. P&L...etc).
 | 3. | [Twitter spaces](https://t.ly/B7pin) | Demonstrate the extent of readiness of the frontend by interacting with all protocol functions (minting is the only thing that may be done for the first 46 days after deloyment of MO.sol). |
 | 4. | Multi-collat | CCIP will enable re-using the same QD tokens across deployments of the core protocol (MO) on multiple EVMs (each having their own domain-specific plugins, such as cNOTE on CANTO). |
 | 5. |  Profile Preferences | Advancing on frontend progress from milestone 1, users should have the ability to pull insights into their  should include push notifications based on more data feeds (to better inform trading decisions). Over-bought / over-sold signaling involves [handful of TA indicators](https://github.com/QuidLabs/bnbot/blob/main/Bot.py#L366). |
-
 
