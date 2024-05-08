@@ -1,7 +1,7 @@
 
 import { useEffect, useState, useCallback } from "react"
 import { formatUnits, parseUnits } from "@ethersproject/units"
-
+import { BigNumber } from "@ethersproject/bignumber"
 import { useAppContext } from "../contexts/AppContext";
 import { numberWithCommas } from "../utils/number-with-commas"
 import styles from "./Summary.module.scss"
@@ -22,20 +22,24 @@ export const Summary = () => {
   const updateInfo = useCallback(() => {
     try {
       if (quid && sdai && addressQD) {
-        const qdAmount = parseUnits("1", 18)
-        quid.methods.qd_amt_to_sdai_amt(qdAmount, currentTimestamp).call()
-          .then(data => {
-            setBigNumber(Number(formatUnits(data, 18)) * 100)
+        const qdAmount = parseUnits("1", 18).toBigInt()
 
-            if (bigNumber > 100) { setBigNumber(100) } setPrice(String(bigNumber))
+        quid.methods.qd_amt_to_sdai_amt(qdAmount, currentTimestamp)
+          .call()
+          .then(data => {
+            setBigNumber(BigNumber.from(Number(formatUnits(data, 18)) * 100))
+
+            if (bigNumber > 100) { setBigNumber(BigNumber.from(100)) } setPrice(String(bigNumber))
           })
 
-        quid.methods.get_total_supply().call()
+        quid.methods.get_total_supply()
+          .call()
           .then(totalSupply => {
             setTotalMinted(formatUnits(totalSupply, 18).split(".")[0])
           })
 
-        sdai.methods.balanceOf(addressQD).call()
+        sdai.methods.balanceOf(addressQD)
+          .call()
           .then(data => {
             setTotalDeposited(formatUnits(data, 18))
           })
@@ -48,12 +52,14 @@ export const Summary = () => {
   const getSales = useCallback(() => {
     try {
       if (quid && sdai && addressQD) {
-        quid.methods.LENT().call()
+        quid.methods.LENT()
+          .call()
           .then(data => {
             setMintPeriodDays(String(data.toNumber() / SECONDS_IN_DAY))
           })
 
-        quid.methods.sale_start().call()
+        quid.methods.sale_start()
+          .call()
           .then(data => {
             setSmartContractStartTimestamp(data.toString())
           })
