@@ -11,9 +11,10 @@ contract MO is ERC20, Ownable {
     IERC20 public sdai; address public lot; // multi-purpose (lock/lotto/OpEx)
     // address constant public mevETH = 0x24Ae2dA0f361AA4BE46b48EB19C91e02c5e4f27E; 
     // address constant public SDAI = 0x83F20F44975D03b1b09e64809B757c47f942BEeA; // TODO MAINNET
-    address constant public SDAI = 0x522902E55db6F870a80B21c69BC6b9903D1560f8; // testnet
+    // address constant public PRICE = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
     address constant public QUID = 0x42cc020Ef5e9681364ABB5aba26F39626F1874A4;
-    address constant public PRICE = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
+    address constant public SDAI = 0x522902E55db6F870a80B21c69BC6b9903D1560f8; // Rinkeby
+    address constant public PRICE = 0x0; // TODO Rinkeby Aggregator
     mapping(address => Pod) public _maturing; // QD from last 2 !MO...
     uint constant public ONE = 1e18; uint constant public DIGITS = 18;
     uint constant public MAX_PER_DAY = 7_777_777 * ONE; // supply cap

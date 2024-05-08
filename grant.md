@@ -35,8 +35,8 @@ keep..." on [commodifying](https://twitter.com/QuidMint/status/17880417642820200
 a [Capital Deepening](https://www.wallstreetmojo.com/capital-deepening/) token(QD) deriving value from sDAI. Leveraged ETH exposure demand  
 is the underlying growth driver
  to Ethereum price hedging with maximal capital efficiency...  
-
-ETH public keys are 42 characters; Arbitrum's chainId starts with 42; sDAI's public key ends with 42🐝, `quid.eth`'s starts with 42, bridging liquidity, benefitting the entire Arbitrum ecosystem as a result...
+ETH public keys are 42 characters; Arbitrum's chainId starts with 42; sDAI's public key ends  
+with 42🐝, `quid.eth`'s starts with 42, bridging liquidity, benefitting the Arbitrum ecosystem.
 
 
 ### its team members:
@@ -79,9 +79,9 @@ latest implementation is just over 800 lines. The majority of the work for this 
 | 1. | `call` button | ETH may be freely deposited and withdrawn, meanwhile used to boost pledges. QD redemption (for sDAI) has rules based on when the minted.  |
 | 2. | Vertical fader | All the way down by default, there should be one input slider for the magnitude of either long leverage, or short (and a toggle to switch between the two. Touching the toggle automatically triggers 2xAPR.|
 | 3a. | Cross-fader for balance | This slider will represent how much of the user’s total QD is deposited in `work`, and the % in `carry` (by default 100% balance left in `carry`). |
-| 3b. | Cross-faders for voting | Shorts and longs are treated as separate risk budgets, so there is one APR target for each (combining them could be a worthy experiment, definitely better UX, though not necessarily optimal from an analytical standpoint). Median APR (for long or short) is 8-21%...3x [surge pricing](https://twitter.com/hexonaut/status/1746617244002517144) |
+| 3b. | Cross-faders for voting | Shorts and longs are treated as separate risk budgets, so there is one APR target for each (combining them could be a worthy experiment, definitely better UX, though not necessarily optimal from an analytical standpoint). [Median](https://github.com/QuidLabs/iMO/blob/main/contracts/MO.sol#L35) APR (for long or short) is 8-21%...up to 3x [surge pricing](https://twitter.com/hexonaut/status/1746617244002517144). |
 | 4. | Basic Metrics |  Provide a side by side comparison of key metrics: aggregated for all users, and from the perspective of the authenticated user (who’s currently logged in, e.g. individual risk-adjusted returns); see most recently liquidated (sorted by time or size); top borrowers by P&L. |
-| 5. | Simulation [Metrics](https://orus.info/) | Future projections for the output of the `call` function, variable inputs being: the extent to which `work` is leveraged relative to `carry` at the time of calling the function; % of  profitable `fold` over last SEMESTER.  |
+| 5. | Simulation [Metrics](https://orus.info/) | Future projections for the output of the `call` function, variable inputs being: the extent to which `work` is leveraged relative to `carry` at the time of function `_call`; % of  profitable `fold` over last SEMESTER.  |
 
 
 ### Milestone 2:
@@ -96,11 +96,11 @@ and seeing basic stats for current MO e.g. P&L...etc).
 
 | Number | Deliverable | Specification |
 | -----: | ----------- | ------------- |
-| **0.** | License GPLv3 | Copyleft (same as previous milestone’s…of the public, by the public, for the public). We provide both code comments and instructions for running the protocol as well as sanity checking the operability. |
-| 1. | NFT [marketplaces](http://polyone.io) + Fiat [off-ramps](https://www.flashy.cash/) + deployment | Enable payment with QD (for preferential pricing of NFTs such as ERC404 or REIT baskets) as a well as other bonuses. Providing real-world utility for our token (beyond crypto trading) is further possible through trusted partners for bridging into cash and wire. |
-| 2. | Event Watcher (a.k.a. Catcher in the ~~rye~~ [rights](https://en.wikipedia.org/wiki/Perfection_(law))) | Publish code that reads the blockchain for opportunities to obtain perfection rights, so anyone can run `clocked`. Later, this code could be potentially integrated with ZigZag off-chain order matcher for purchasing liqudiated collateral, valued by `clutch`ed (depleting 2% per day) `_work.debit` updates every 10min. |
-| 3. | [Twitter spaces](https://t.ly/B7pin) | Demonstrate the extent of readiness of the frontend by interacting with all protocol functions (minting is the only thing that may be done for the first 46 days after deloyment). |
-| 4. | Multi-collat | CCIP will enable re-using the same QD tokens across deployments of the core protocol (MO) on multiple EVMs (each having their own domain-specific plugins, such as cNOTE on CANTO as the local  alternative for sDAI, as well as RedStone instead of Chainlink). |
-| 5. |  Profile Preferences | Advancing on our frontend progress from milestone 1, users should have the ability to pull insights into their  should include push notifications based on more data feeds (to better inform trading decisions). Over-bought / over-sold signaling involves handful of TA indicators (e.g. RSI, MACD, SMA, BBands, and astrological). |
+| **0.** | License GPLv3 | Copyleft (same as previous milestone’s…of the public, by the public, for the public). We provide both code comments and instructions for running the protocol, and sanity checking the runtime. |
+| 1. | NFT [marketplaces](http://polyone.io) + Fiat [off-ramps](https://www.flashy.cash/) + deployment | Enable payment with QD (for preferential pricing of NFTs such as ERC404 or REIT baskets) as a well as other bonuses. Providing real-world utility for our token (beyond crypto trading) is further possible through trusted partners for bridging into cash-based markets and bank accounts. |
+| 2. | Event Watcher (a.k.a. Catcher in the ~~rye~~ [rights](https://en.wikipedia.org/wiki/Perfection_(law))) | Publish code that reads the blockchain for opportunities to obtain perfection rights, so anyone can run `clocked`. Later, this code could be potentially integrated with ZigZag off-chain order matcher for purchasing liqudiated collateral, valued by `clutch`ed (depleting 2% per day). |
+| 3. | [Twitter spaces](https://t.ly/B7pin) | Demonstrate the extent of readiness of the frontend by interacting with all protocol functions (minting is the only thing that may be done for the first 46 days after deloyment of MO.sol). |
+| 4. | Multi-collat | CCIP will enable re-using the same QD tokens across deployments of the core protocol (MO) on multiple EVMs (each having their own domain-specific plugins, such as cNOTE on CANTO). |
+| 5. |  Profile Preferences | Advancing on our frontend progress from milestone 1, users should have the ability to pull insights into their  should include push notifications based on more data feeds (to better inform trading decisions). Over-bought / over-sold signaling involves [handful of TA indicators](https://github.com/QuidLabs/bnbot/blob/main/Bot.py#L366). |
 
 
