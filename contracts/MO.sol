@@ -668,9 +668,8 @@ contract MO is ERC20, Ownable {
         }   Plunges[beneficiary] = plunge;
     }
 
-    // "collect calls to the tip sayin' how ya changed" 
-    function call(uint amt, bool qd) external { // ~ Pac
-        uint most;
+    // youtube.com/clip/UgkxYV4BC9dqinu4O6bFZAS6mcj7R0m-BQbl
+    function call(uint amt, bool qd) external { uint most;
         Plunge memory plunge = _fetch(_msgSender(), 
                   _get_price(), true, _msgSender());
         if (!qd) { most = _min(plunge.eth, amt);
