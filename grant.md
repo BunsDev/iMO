@@ -5,10 +5,10 @@ for Liquidity Management and *"Derivatives"*
 
 
 **Proposer**: QuidMint Foundation  
-**Requested divison**: [76](https://twitter.com/FinSniper22/status/1760613225131819188) 000 ARB  
+**Requested divison**: 76 000 ARB  
 **Payment Address**: `quid.eth`  
 which collects 0.76% x 16 [MO](https://github.com/QuidLabs/iMO/blob/main/contracts/MO.sol#L45)  
-pegs seed valuation  at $16M  
+pegs seed valuation at $16M  
 
  
 Quid Labs' public key ends  
@@ -32,19 +32,7 @@ to keep" on [commodifying](https://twitter.com/QuidMint/status/17880417642820200
 ### Project Overview:
 
 [Derivatives](https://twitter.com/lex_node/status/1740509787690086847) derive their value from an underlying asset. Our certicificate of deposite (CD) is  
-a [Capital Deepening](https://www.wallstreetmojo.com/capital-deepening/) token(QD) deriving value from sDAI. Leveraged ETH exposure demand  
-is the underlying growth driver
- to Ethereum price hedging with maximal capital efficiency...  
-ETH public keys are 42 characters; Arbitrum's chainId starts with 42; sDAI's public key ends  
-with 42🐝, `quid.eth`'s starts with 42, bridging liquidity, benefitting the Arbitrum ecosystem.
-
-
-### its team members:
-
-Before Euromaidan, Ukraine had one of the world's first central bank-tethered digital currencies,  
- issued by a company whose EIN was 36**42**51**42** (without the use of DLT). Having interned there  
-as a paralegal before learning C through http://42.fr helped build the EOS [predecessor]() to Liquity,  
-then worked for Bancor, audited THOR and bZx (CertiK).  
+a [Capital Deepening](https://www.wallstreetmojo.com/capital-deepening/) token (QD) deriving value from 
 
 
 ### Use of funds, milestones, and goals (KPIs):
@@ -63,6 +51,8 @@ as reach goal (minimum [54M](https://twitter.com/WethWood/status/178638916729277
   used to with [CDPs](https://twitter.com/zellic_io/status/1688666477552193536), implement wholesale  
   incentivisastion program, that benefits 
 - Partnerships: Milestone 2 and onwards
+
+
 
 
 ### Milestone 1:
@@ -96,11 +86,11 @@ and seeing basic stats for current MO e.g. P&L...etc).
 
 | Number | Deliverable | Specification |
 | -----: | ----------- | ------------- |
-| **0.** | License GPLv3 | Copyleft (same as previous milestone’s…of the public, by the public, for the public). We provide both code comments and instructions for running the protocol, and sanity checking the runtime. |
-| 1. | NFT [marketplaces](http://polyone.io) + Fiat [off-ramps](https://www.flashy.cash/) + deployment | Enable payment with QD (for preferential pricing of NFTs such as ERC404 or REIT baskets) as a well as other bonuses. Providing real-world utility for our token (beyond crypto trading) is further possible through trusted partners for bridging into cash-based markets and bank accounts. |
+| **0.** | License GPLv3 | Copyleft (same as previous milestone’s…of the public, by the public, for the public). We provide both code comments and instructions for running the code, and sanity checking runtimes. |
+| 1. | NFT [marketplaces](http://polyone.io) + Fiat [off-ramps](https://www.flashy.cash/) + deployment | Enable payment with QD (for preferential pricing of NFTs such as ERC404 or REIT baskets) as a well as other bonuses. Providing real-world utility for our token (beyond crypto trading) is further possible through trusted partners for bridging into cash markets and fiat. |
 | 2. | Event Watcher (a.k.a. Catcher in the ~~rye~~ [rights](https://en.wikipedia.org/wiki/Perfection_(law))) | Publish code that reads the blockchain for opportunities to obtain perfection rights, so anyone can run `clocked`. Later, this code could be potentially integrated with ZigZag off-chain order matcher for purchasing liqudiated collateral, valued by `clutch`ed (depleting 2% per day). |
 | 3. | [Twitter spaces](https://t.ly/B7pin) | Demonstrate the extent of readiness of the frontend by interacting with all protocol functions (minting is the only thing that may be done for the first 46 days after deloyment of MO.sol). |
 | 4. | Multi-collat | CCIP will enable re-using the same QD tokens across deployments of the core protocol (MO) on multiple EVMs (each having their own domain-specific plugins, such as cNOTE on CANTO). |
-| 5. |  Profile Preferences | Advancing on our frontend progress from milestone 1, users should have the ability to pull insights into their  should include push notifications based on more data feeds (to better inform trading decisions). Over-bought / over-sold signaling involves [handful of TA indicators](https://github.com/QuidLabs/bnbot/blob/main/Bot.py#L366). |
+| 5. |  Profile Preferences | Advancing on frontend progress from milestone 1, users should have the ability to pull insights into their  should include push notifications based on more data feeds (to better inform trading decisions). Over-bought / over-sold signaling involves [handful of TA indicators](https://github.com/QuidLabs/bnbot/blob/main/Bot.py#L366). |
 
 
