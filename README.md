@@ -1,7 +1,7 @@
 ## in My Opinion sDAI/cNOTE re-staking
 *please click all links...or you may miss MO🔨Lot of context*...  
 why borrow for 1% from MKR at 66.66 LTV if you can [pay 11](https://twitter.com/hexonaut/status/1787476416935973160)%    
-and borrow at 92 LTV...with shorts *and* liquidation protection.
+and borrow [at 92 LTV](https://twitter.com/QuidMint/status/1788043869113708955)...with shorts *and* liquidation protection.
 
 There's `deux` and 2 types of `dues`: synthetic `long` or `short`  
 are like *Itchy and Scratchy*...`credit` and `debit` (a la *CatDog*);  
@@ -54,3 +54,4 @@ pro-rated price, provided continuous 2x payment.
 The yield embedded in discounts for QD is used   
 partially for paying APR...while profitable trades  
 (`fold` in active management) also capture gains  
+

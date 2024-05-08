@@ -1,11 +1,11 @@
 ## UNISWAP-ARBITRUM GRANT PROGRAM (UAGP)
 
 **Request for Proposal (RFP)**: New Protocols   
-for Liquidity [Management](https://twitter.com/futurenomics/status/1766187064444309984) and *"Derivatives"*
+for Liquidity Management and *"Derivatives"*
 
 
 **Proposer**: QuidMint Foundation  
-**Requested Funding**: 76 000 ARB  
+**Requested divison**: [76](https://twitter.com/FinSniper22/status/1760613225131819188) 000 ARB  
 **Payment Address**: `quid.eth`  
 which collects 0.76% x 16 [MO]()  
 pegs seed valuation  at $16M  
@@ -14,9 +14,8 @@ pegs seed valuation  at $16M
 Quid Labs' public key ends with 4A4, so what we did...   
 was build simplified ERC404: took out the zero (coupon)
 
-lambo may be transferred to some new `driver`  
 "Secret to  survivin' is knowin' what to throw 🏀  
-and knowin' what to keep..." on [commodifying]()
+and knowin' what to keep..." on [commodifying](https://twitter.com/QuidMint/status/1788041764282020033)
 
   - **Maintenance:** 42000 USD
     - Solidity [audit](https://www.zellic.io/) + general counsel [retainer](https://twitter.com/lex_node/status/1760701615424630848): 30000 USD
@@ -56,7 +55,7 @@ as reach goal (minimum [54M](https://twitter.com/WethWood/status/178638916729277
 - Contract Interaction: Facilitate at least  
   1000 `Plunge` positions, which, instead  
   of importing liquidity step-wise as we're     
-  used to with CDPs, employ a wholesale  
+  used to with CDPs, implement wholesale  
   incentivisastion program, that benefits 
 - Partnerships: Milestone 2 and onwards
 
@@ -69,7 +68,7 @@ just over 800 lines. The majority of the work for this milestone is devoted to t
 
 Tether to give QD a way to earn outside of being used in QU!D protocol. Potentially, all the sDAI that gets locked in PCV can  
 also be deployed as single-sided liquidity in a pool with sDAI and ETH. We may extend our medianiser to vote between UNI  
-and other liquidity pools (for % of sDAI to lock in AMMs against ETH), but this is seen as V2 feature (given enough interest),  
+and other liquidity pools (for % of sDAI to lock in [AMMs](https://twitter.com/futurenomics/status/1766187064444309984) against ETH), but this is seen as V2 feature (given enough interest),  
 
 
 Also as part of the 1st milestone, `yo.quid.io` will be the first external operator (QU!D Ltd in BVI) running `frontend`  
@@ -79,7 +78,7 @@ and seeing some basic stats: e.g. P&L...etc).
 | Number | Deliverable | Specification |
 | -----: | ----------- | ------------- |
 | **0a.** | License | GPLv3 Copyleft is the  technique of granting certain freedoms over copies of copyrighted works with the requirement that the same rights be preserved in *derivative* works (hint)... |
-| 1. | Withdrawal (`call`) buttons | ETH may be freely deposited and withdrawn, meanwhile used to boost pledges. QD redemption (for sDAI) has rules based on when the QD was minted.  |
+| 1. | `call` button | ETH may be freely deposited and withdrawn, meanwhile used to boost pledges. QD redemption (for sDAI) has rules based on when the QD was minted.  |
 | 2. | Vertical fader | All the way down by default, there should be one input slider for the magnitude of either long leverage, or short (and a toggle to switch between the two. Touching the toggle once automatically triggers 2xAPR, and this must be manually disabled).|
 | 3a. | Cross-fader for balance | This slider will represent how much of the user’s total QD is deposited in `work`, and how much is in `carry` (by default the whole balance is left…in `carry`). |
 | 3b. | Cross-faders for voting | Shorts and longs are treated as separate risk budgets, so there is one APR target for each (combining them could be a worthy experiment, definitely better UX, though not necessarily optimal from an analytical standpoint). Median APR (for long or short) is 8-21%...voting provides a scale factor for roughly up to 3x surge pricing. |
@@ -95,9 +94,9 @@ and seeing some basic stats: e.g. P&L...etc).
 | **0a.** | License GPLv3 | Copyleft (same as previous milestone’s…of the public, by the public, for the public). |
 | **0b.** | Documentation |  We provide both code comments and instructions for running the protocol as well as sanity checking the operability with some test transactions. |
 | 1. | NFT marketplaces + Fiat [off-ramps](https://www.flashy.cash/) + deployment | Exclusive NFT [marketplaces](http://polyone.io) will enable payment with QD (for preferential pricing of NFTs) as a well as other bonuses. Providing real-world utility for our token (beyond crypto trading) is further possible through trusted partners for bridging into the domain of bank accounts and cash. |
-| 2. | Event bus (Watcher) | Publish code that reads the blockchain for liquidation opportunities, so anyone can run it. Later, this code could be potentially integrated with ZigZag exchange's off-chain order matcher for purchasing liqudiated position's collateral, valued by `_work.debit` and the price updated every 10 minutes, pay 2% for liquidation. sell options to that collateral through other markets with an orderbook default swap treasury. |
+| 2. | Event Watcher (a.k.a. Catcher in the ~~rye~~ [rights](https://en.wikipedia.org/wiki/Perfection_(law))) | Publish code that reads the blockchain for opportunities to obtain perfection rights, so anyone can run `clocked`. Later, this code could be potentially integrated with ZigZag off-chain order matcher for purchasing liqudiated collateral, valued by `clutch`ed (slowly depleting, 2% per day) `_work.debit` with price updated every 10 minutes. |
 | 3. | Kickoff [Twitter spaces](https://t.ly/B7pin) | Demonstrate the extent of readiness of the frontend by interacting with all protocol functions (minting is the only thing that may be done for the first 46 days after deloyment). |
-| 4. | Protocol integrations (multi-collateral) | CCIP will enable re-using the same QD tokens across deployments of the core protocol (MO) on multiple EVMs (each having their own domain-specific plugins, such as cNOTE on CANTO as the local  alternative for sDAI, as well as RedStone instead of Chainlink). |
+| 4. | Protocol integrations (multi-collat) | CCIP will enable re-using the same QD tokens across deployments of the core protocol (MO) on multiple EVMs (each having their own domain-specific plugins, such as cNOTE on CANTO as the local  alternative for sDAI, as well as RedStone instead of Chainlink). |
 | 5. |  UX personalisation (preferences profile) | Advancing on the frontend results from milestone 1, users should have the ability to pull insights into their  should include push notifications based on more data feeds (to better inform trading decisions). Over-bought / over-sold signaling can involve a handful of technical analysis indicators (e.g. RSI, MACD, SMA, BBands). Other kind of indicators (globally significant astrological insights) are also a pontential vector of exploration. |
 
 
