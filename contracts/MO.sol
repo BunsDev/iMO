@@ -13,7 +13,7 @@ contract MO is ERC20, Ownable {
     // address constant public SDAI = 0x83F20F44975D03b1b09e64809B757c47f942BEeA; // TODO MAINNET
     // address constant public PRICE = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
     address constant public QUID = 0x42cc020Ef5e9681364ABB5aba26F39626F1874A4;
-    address constant public SDAI = 0x522902E55db6F870a80B21c69BC6b9903D1560f8; // Rinkeby
+    address constant public SDAI = 0x522902E55db6F870a80B21c69BC6b9903D1560f8; // Sepolia
     address constant public PRICE = 0x0; // TODO Rinkeby Aggregator
     mapping(address => Pod) public _maturing; // QD from last 2 !MO...
     uint constant public ONE = 1e18; uint constant public DIGITS = 18;

@@ -69,12 +69,12 @@ contract Lot is Ownable,
     uint constant public SALARY = 608358 * 1e18;
     uint constant public LOTTO = 73888 * 1e18;
 
-    address constant F8N_0 = 0x3B3ee1931Dc30C1957379FAc9aba94D1C48a5405;
-    address constant F8N_1 = 0x0299cb33919ddA82c72864f7Ed7314a3205Fb8c4;
-    address constant QUID = 0x42cc020Ef5e9681364ABB5aba26F39626F1874A4;
-    address constant NFPM = 0xC36442b4a4522E871399CD717aBDD847Ab11FE88;
-    address constant FOLD = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    address constant SDAI = 0x83F20F44975D03b1b09e64809B757c47f942BEeA;
+    address constant F8N_0 = 0x3B3ee1931Dc30C1957379FAc9aba94D1C48a5405; // can only test 
+    address constant F8N_1 = 0x0299cb33919ddA82c72864f7Ed7314a3205Fb8c4; // on mainnet :)
+    address constant QUID = 0x42cc020Ef5e9681364ABB5aba26F39626F1874A4; // TODO get from Gen
+    address constant NFPM = 0xC36442b4a4522E871399CD717aBDD847Ab11FE88; // TODO rinkeby
+    address constant FOLD = 0xd084944d3c05CD115C09d072B9F44bA3E0E45921; // mainnet
+    address constant SDAI = 0x83F20F44975D03b1b09e64809B757c47f942BEeA; // // TODO get from Gen
 
     event SetReward(uint reward);
     event SetMinLock(uint duration);
