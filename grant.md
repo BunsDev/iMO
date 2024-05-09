@@ -7,7 +7,7 @@ for Liquidity Management and *"Derivatives"*
 **Proposer**: QuidMint Foundation  
 **Requested divison**: 76 000 ARB  
 **Payment Address**: `quid.eth`  
-which collects 0.76% x 16 [iMO](https://github.com/QuidLabs/iMO/blob/main/contracts/MO.sol#L45)  
+which collects 0.76% x 16 [iMO](https://github.com/QuidLabs/iMO/blob/main/contracts/MOulinette.sol#L49)  
 pegs seed valuation at $16M  
 
  
@@ -31,8 +31,8 @@ to keep" on [commodifying](https://twitter.com/QuidMint/status/17880417642820200
 
 ### Project Overview:
 
-[Derivatives](https://twitter.com/lex_node/status/1740509787690086847) derive their value from an underlying asset. Our certicificate of deposite (CD) is  
-a [Capital Deepening](https://www.wallstreetmojo.com/capital-deepening/) token (QD) deriving value from 
+[Derivatives](https://twitter.com/lex_node/status/1740509787690086847) derive their value from an underlying asset. Our ~~certicificate of deposit~~...   
+[capital deepening](https://www.wallstreetmojo.com/capital-deepening/) token (QD) derives its value from the collateral used to call `mint`
 
 
 ### Use of funds, milestones, and goals (KPIs):
@@ -66,12 +66,12 @@ latest implementation is just over 800 lines. The majority of the work for this 
 | Number | Deliverable | Specification |
 | -----: | ----------- | ------------- |
 | **0a.** | License | GPLv3 Copyleft is the technique of granting freedoms over copies  with  the requirement that the same rights be preserved in *derivative* works. |
-| 1. | `call` button | ETH may be freely deposited and withdrawn, meanwhile used to boost pledges. QD redemption (for sDAI) has rules based on when the minted.  |
-| 2. | Vertical fader | All the way down by default, there should be one input slider for the magnitude of either long leverage, or short (and a toggle to switch between the two. Touching the toggle automatically triggers 2xAPR.|
+| 1. | `call` button | ETH which was deposited into `carry` may be freely  withdrawn. QD redemption (for sDAI) has rules based on when QD was minted.  |
+| 2. | Vertical fader | All the way down by default, there should be one input slider for the magnitude of either long leverage (or short), and a toggle to switch between the two (touching the toggle automatically triggers 2xAPR).|
 | 3a. | Cross-fader for balance | This slider will represent how much of the user’s total QD is deposited in `work`, and the % in `carry` (by default 100% balance left in `carry`). |
 | 3b. | Cross-faders for voting | Shorts and longs are treated as separate risk budgets, so there is one APR target for each (combining them could be a worthy experiment, definitely better UX, though not necessarily optimal from an analytical standpoint). [Median](https://github.com/QuidLabs/iMO/blob/main/contracts/MO.sol#L35) APR (for long or short) is 8-21%...up to 3x [surge pricing](https://twitter.com/hexonaut/status/1746617244002517144). |
-| 4. | Basic Metrics |  Provide a side by side comparison of key metrics: aggregated for all users, and from the perspective of the authenticated user (who’s currently logged in, e.g. individual risk-adjusted returns); see most recently liquidated (sorted by time or size); top `owe` by P&L. |
-| 5. | Simulation [Metrics](https://orus.info/) | Future projections for the output of the `call` function, variable inputs being: the extent to which `work` is leveraged relative to `carry` at the time of function `_call`; % of  profitable `fold` over last SEMESTER.  |
+| 4. | Basic Metrics |  Provide a side by side comparison of key metrics: aggregated for all users, and from the perspective of the authenticated user (who’s currently logged in); see most recently liquidated (sorted by time or size); top borrowers by P&L. |
+| 5. | Simulation [Metrics](https://orus.info/) | Future projections for the output of the `call` function, variable inputs being: the extent to which `work` is leveraged relative to `carry` over time; % of  profitable `fold` over the last SEMESTER.  |
 
 ### Milestone 2:
   

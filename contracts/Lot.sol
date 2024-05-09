@@ -24,7 +24,7 @@ interface LinkTokenInterface is IERC20 {
     function increaseApproval(address spender, uint256 subtractedValue) external;
     function transferAndCall(address to, uint256 value, bytes calldata data) external returns (bool success);
 }
-interface INonfungiblePositionManager is IERC721 {
+interface INonfungiblePositionManager is IERC721 { // reward QD<>USDC or QD<>WETH liquidity deposits
     function positions(uint256 tokenId) external
     view returns (uint96 nonce,address operator,
         address token0, address token1, uint24 fee,
@@ -57,9 +57,9 @@ contract Lot is Ownable,
     uint randomness; // 🎲
     MOulinette MO; 
 
-    mapping(uint => uint) public totalsQD; // week # -> liquidity
-    uint public liquidityQD; // in UniV3 liquidity units
-    uint public maxQD; // in the same units
+    mapping(uint => uint) public totalsUSDC; // week # -> liquidity
+    uint public liquidityUSDC; // in UniV3 liquidity units
+    uint public maxUSDC; // in the same units
 
     mapping(uint => uint) public totalsETH; // week # -> liquidity
     uint public liquidityETH; // for the ETH<>QD pool
@@ -68,15 +68,18 @@ contract Lot is Ownable,
     uint constant public SALARY = 608358 * 1e18;
     uint constant public LOTTO = 73888 * 1e18;
 
+    address constant QUID = 0x42cc020Ef5e9681364ABB5aba26F39626F1874A4;
     address constant F8N_0 = 0x3B3ee1931Dc30C1957379FAc9aba94D1C48a5405; // can only test 
     address constant F8N_1 = 0x0299cb33919ddA82c72864f7Ed7314a3205Fb8c4; // on mainnet :)
-    address constant QUID = 0x42cc020Ef5e9681364ABB5aba26F39626F1874A4; // TODO get from MO
-    address constant NFPM = 0xC36442b4a4522E871399CD717aBDD847Ab11FE88; // TODO rinkeby
-    address constant SDAI = 0x83F20F44975D03b1b09e64809B757c47f942BEeA; // // TODO get from MO
+    address constant NFPM = 0xC36442b4a4522E871399CD717aBDD847Ab11FE88;
+    address constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+    address constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; 
+    address constant SDAI = 0x83F20F44975D03b1b09e64809B757c47f942BEeA;
 
+    
     event SetReward(uint reward);
     event SetMinLock(uint duration);
-    event SetMaxQD(uint maxTotal);
+    event SetMaxUSDC(uint maxTotal);
     event SetMaxTotalETH(uint maxTotal);
     event Deposit(uint tokenId, address owner);
     event RequestedRandomness(uint256 requestId);
@@ -100,8 +103,8 @@ contract Lot is Ownable,
         if (totalsETH[current_week] == 0 && liquidityETH > 0) {
             totalsETH[current_week] = liquidityETH;
         } // if the vault was emptied then we don't need to roll over past liquidity
-        if (totalsQD[current_week] == 0 && liquidityQD > 0) {
-            totalsQD[current_week] = liquidityQD;
+        if (totalsUSDC[current_week] == 0 && liquidityUSDC > 0) {
+            totalsUSDC[current_week] = liquidityUSDC;
         }
     }
 
@@ -131,9 +134,9 @@ contract Lot is Ownable,
      * The purpose is to increase the amount gradually, so as to not dilute reward
      * unnecessarily much in beginning phase.
      */
-    function setMaxQD(uint _newmaxQD) external onlyOwner {
-        maxQD = _newmaxQD;
-        emit SetMaxQD(_newmaxQD);
+    function setmMxUSDC(uint _newmaxUSDC) external onlyOwner {
+        maxUSDC = _newmaxUSDC;
+        emit SetMaxUSDC(_newmaxUSDC);
     }
 
     /**
@@ -158,9 +161,9 @@ contract Lot is Ownable,
         reward = 1_000_000_000_000; // 0.000001 
         minLock = MO.LENT(); keyHash = _hash;
         maxTotalETH = type(uint256).max - 1;
-        maxQD = type(uint256).max - 1;
+        maxUSDC = type(uint256).max - 1;
         LINK = LinkTokenInterface(_link); 
-        sdai = IERC20(SDAI);
+        sdai = IERC20(SDAI); 
         deployed = block.timestamp; MO = MOulinette(_mo);
         COORDINATOR = VRFCoordinatorV2Interface(_vrf);    
         COORDINATOR.addConsumer(subscriptionId, address(this));
@@ -249,10 +252,10 @@ contract Lot is Ownable,
         // usually this means that the owner of the position already closed it
         require(liquidity > 0, "Uni::deposit: cannot deposit empty amount");
         // TODO address not WETH
-        if (token0 == ETH) { totalsETH[ _roll()] += liquidity; liquidityETH += liquidity;
+        if (token0 == WETH) { totalsETH[ _roll()] += liquidity; liquidityETH += liquidity;
             require(liquidityETH <= maxTotalETH, "Uni::deposit: totalLiquidity exceed max");
-        } else if (token0 == address(MO)) { totalsQD[ _roll()] += liquidity; liquidityQD += liquidity;
-            require(liquidityQD <= maxQD, "Uni::deposit: totalLiquidity exceed max");
+        } else if (token0 == USDC) { totalsUSDC[ _roll()] += liquidity; liquidityUSDC += liquidity;
+            require(liquidityUSDC <= maxUSDC, "Uni::deposit: totalLiquidity exceed max");
         } else { require(false, "Uni::deposit: improper token id"); }
         depositTimestamps[msg.sender][tokenId] = block.timestamp;
         // transfer ownership of LP share to this contract
@@ -278,7 +281,7 @@ contract Lot is Ownable,
         uint delta = so_far - (week_iterator * 168);
         uint earn = (delta * reward) / 168; 
         uint current_week = _roll();
-        if (token0 == ETH) { // TODO not WETH
+        if (token0 == WETH) { // TODO not WETH
             while (week_iterator < current_week) {
                 uint thisWeek = totalsETH[week_iterator];
                 if (thisWeek > 0) { // check lest div by 0
@@ -293,9 +296,9 @@ contract Lot is Ownable,
             earn = (delta * reward) / 168; // we're in the middle of a current week
             total += (earn * liquidity) / liquidityETH;
             liquidityETH -= liquidity;
-        } else if (token0 == address(MO)) {
+        } else if (token0 == USDC) {
             while (week_iterator < current_week) {
-                uint thisWeek = totalsQD[week_iterator];
+                uint thisWeek = totalsUSDC[week_iterator];
                 if (thisWeek > 0) { // need to check lest div by 0
                     // staker's share of rewards for given week...
                     total += (earn * liquidity) / thisWeek;
@@ -305,10 +308,14 @@ contract Lot is Ownable,
             delta = so_far - (current_week * 168);
             // the last reward will be a fraction of a whole week's worth...
             earn = (delta * reward) / 168; // in the middle of current week
-            total += (earn * liquidity) / liquidityQD;
-            liquidityQD -= liquidity;
+            total += (earn * liquidity) / liquidityUSDC;
+            liquidityUSDC -= liquidity;
         }   delete depositTimestamps[msg.sender][tokenId]; 
-        require(ETH.transfer(msg.sender, total), "Lock::withdraw: transfer failed");
+        if (total > address(this).balance) {
+            payable(msg.sender).transfer(address(this).balance);
+        } else {
+            payable(msg.sender).transfer(total);
+        }
         nonfungiblePositionManager.transferFrom(address(this), msg.sender, tokenId);
         emit Withdrawal(tokenId, msg.sender, total);
     }

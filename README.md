@@ -1,5 +1,5 @@
 ## in My Opinion sDAI/cNOTE re-staking
-*please click all links...or you may miss MO🔨Lot of context*     
+   
  borrow at [92 LTV](https://twitter.com/QuidMint/status/1788043869113708955)...with shorts *and* liquidation protection...
 
 There's `deux` and 2 types of `dues`: synthetic `long` or `short`  
@@ -19,11 +19,9 @@ out of pocket (adds ETH to `wind.debit`), or
 pay with QD gains to  
  
  burn `wind.credit`, the debt created in `mint` which fills `carry`    
- **Diet Colla**~~boration~~ with [Clams](https://twitter.com/clammyclams/status/1781831323356733946) ~~Casino~~ [AV](https://youtu.be/1O25uUy90hU) and push a T([bill](https://twitter.com/OuchMedPA/status/1740514556244623427)); 1 sDAI  
-= $1 in ETH (principal-protected); simlar to zero coupon bonds &  
+ 
 
-
-### with a de*ferral* reserve (not federal)  
+### De*ferral* reserve (not federal)  
 
 Parable of the Chinese farmer (a la John 13:7)...   
 "you never count your money, while you're sittin'  

@@ -10,10 +10,9 @@ contract MOulinette is ERC20, Ownable {
     IERC20 public sdai; address payable public lot; // OpEx locker, lotto, UNI
     // address constant public mevETH = 0x24Ae2dA0f361AA4BE46b48EB19C91e02c5e4f27E; 
     // address constant public SDAI = 0x83F20F44975D03b1b09e64809B757c47f942BEeA; // TODO MAINNET
-    // address constant public PRICE = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
+    address constant public PRICE = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419; // TODO Rinkeby Aggregator
     address constant public QUID = 0x42cc020Ef5e9681364ABB5aba26F39626F1874A4;
     address constant public SDAI = 0x522902E55db6F870a80B21c69BC6b9903D1560f8; // Sepolia
-    address constant public PRICE = 0x0; // TODO Rinkeby Aggregator
     mapping(address => Pod) public _maturing; // QD from last 2 !MO...
     uint constant public ONE = 1e18; uint constant public DIGITS = 18;
     uint constant public MAX_PER_DAY = 7_777_777 * ONE; // supply cap
@@ -75,7 +74,7 @@ contract MOulinette is ERC20, Ownable {
     Pod internal wind; Pool internal work; // internally 1 sDAI = 1 QD
     constructor(address _sdai /*address _price*/) ERC20("QU!Dao", "QD") { 
         // _MO[0].start = 1719444444; lot = _lot; // TODO uncomment
-        _MO[0].start = block.timestamp; lot = _msgSender();
+        _MO[0].start = block.timestamp; lot = payable(_msgSender());
         feeTargets = [MIN_APR, 85000000000000000,  90000000000000000,
            95000000000000000, 100000000000000000, 105000000000000000,
           110000000000000000, 115000000000000000, 120000000000000000,
@@ -376,8 +375,8 @@ contract MOulinette is ERC20, Ownable {
         // now your whole [plunge] is dust" ~ Hit 'em High
         if (delta >= 10 minutes) { // 52704 x 10 mins per year
             uint apr = short ? shortMedian.apr : longMedian.apr; 
-            delta /= 10 minutes; uint owe = (clutch > 0) ? 2 : 1; 
-            owe *= (apr * _work.debit * delta) / (52704 * ONE);
+            delta /= 10 minutes; uint dues = (clutch > 0) ? 2 : 1; 
+            dues *= (apr * _work.debit * delta) / (52704 * ONE);
             // need to reuse the delta variable (or stack too deep)
             delta = _blush(price, _work.credit, _work.debit, short);
             if (delta < ONE) { // liquidatable potentially
@@ -388,9 +387,9 @@ contract MOulinette is ERC20, Ownable {
                 // to give priority towards getting rid of
                 // ETH first, before spending available QD
                 clutch = _ratio(price, _eth, ONE); // reuse var lest stack too deep
-                uint most = short ? _min(clutch, owe) : _min(balanceOf(addr), owe);
-                if (owe > 0 && most > 0) { 
-                    if (short) { owe -= most;
+                uint most = short ? _min(clutch, dues) : _min(balanceOf(addr), dues);
+                if (dues > 0 && most > 0) { 
+                    if (short) { dues -= most;
                         most = _ratio(ONE, most, price);
                         _eth -= most; carry.debit -= most;
                         wind.debit += most;  
@@ -405,17 +404,17 @@ contract MOulinette is ERC20, Ownable {
                     } else { _send(addr, address(this), most, false);
                         wind.credit -= most; // equivalent of burning QD
                         // carry.credit += most would be a double spend
-                        owe -= most;
+                        dues -= most;
                     }
-                } if (owe > 0) { 
+                } if (dues > 0) { 
                     // do it backwards from original calculation
-                    most = short ? _min(balanceOf(addr), owe) : _min(clutch, owe);
+                    most = short ? _min(balanceOf(addr), dues) : _min(clutch, dues);
                     // if the last if block was a long, clutch was untouched
                     if (short && most > 0) { 
                         _send(addr, address(this), most, false);
-                        wind.credit -= most; owe -= most;
+                        wind.credit -= most; dues -= most;
                     }   
-                    else if (!short && most > 0) { owe -= most;
+                    else if (!short && most > 0) { dues -= most;
                         most = _ratio(ONE, most, price);
                         _eth -= most; carry.debit -= most;
                         wind.debit += most; 
@@ -424,7 +423,7 @@ contract MOulinette is ERC20, Ownable {
                         // (bool success,) = mevETH.call{value: most}(payload);
                         (bool success, ) = lot.call{value: most}("");
                         require(success, "MO_nein: Lot");
-                    }   if (owe > 0) { // plunge cannot pay APR (delinquent)
+                    }   if (dues > 0) { // plunge cannot pay APR (delinquent)
                             (_work, _eth, folded) = _call(addr, _work, _eth, 
                                                         0, short, price);
                             // zero passed in for clutch ^
@@ -572,7 +571,7 @@ contract MOulinette is ERC20, Ownable {
             _fetch(plunges[i], price, true, _msgSender());
         }   fee = balanceOf(_msgSender()) - fee; 
     } // return damage as sum of fees clutched
-    function set(address _lot) external onlyOwner { 
+    function set(address payable _lot) external onlyOwner { 
         lot = _lot; renounceOwnership();
     } // this means Chainlink connected
     function flip(bool clutch) external { uint price = _get_price(); // or engine
@@ -769,7 +768,7 @@ contract MOulinette is ERC20, Ownable {
             // bytes memory payload = abi.encodeWithSignature(
             // "deposit(uint256,address)", msg.value, address(this));
             // (bool success,) = mevETH.call{value: msg.value}(payload); 
-            (bool success, ) = lot.call{value: most}("");
+            (bool success, ) = lot.call{value: msg.value}("");
             require(success, "MO::owe: Lot");
         } 
         if (!short) { max *= longMedian.apr; eth += msg.value; // wind
