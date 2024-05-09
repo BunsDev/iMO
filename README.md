@@ -7,7 +7,6 @@ are like *Itchy and Scratchy*...`credit` and `debit` (a la *CatDog*);
 
 this [transmission](https://en.wikipedia.org/wiki/Intercarrier_method) is coming to [mix](https://youtu.be/ndQM3kVb06I) under-collat with over-collat  
 through the Triforce: ~~hook~~ `wind`, ~~line~~ `carry`, and ~~sinker~~ `work` 
-
   
 `Plunge`s `mint`...`flip`...`vote`...`put`...`owe`...`fold`...`call`   
 "lookin' too hot? simmer down, or soon you'll get," `clocked`;  
@@ -17,8 +16,7 @@ in the school of trade-offs, sweat equity,  [compensation](https://www.tabers.co
 "yesterday's price is not today's price," in !MO. 1/3 of TVL pays APR   
 out of pocket (adds ETH to `wind.debit`), or
 pay with QD gains to  
- 
- burn `wind.credit`, the debt created in `mint` which fills `carry`    
+burn `wind.credit`, the debt created in `mint` which fills `carry`    
  
 
 ### De*ferral* reserve (not federal)  

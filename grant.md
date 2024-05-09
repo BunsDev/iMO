@@ -5,7 +5,7 @@ for Liquidity Management and *"Derivatives"*
 
 
 **Proposer**: QuidMint Foundation  
-**Requested divison**: 76 000 ARB  
+**Requested Amount**: 76 000 ARB  
 **Payment Address**: `quid.eth`  
 which collects 0.76% x 16 [iMO](https://github.com/QuidLabs/iMO/blob/main/contracts/MOulinette.sol#L49)  
 pegs seed valuation at $16M  
@@ -20,7 +20,7 @@ to throw 🏀 & knowin' what
 to keep" on [commodifying](https://twitter.com/QuidMint/status/1788041764282020033):
 
   - **Maintenance:** 42000 USD
-    - Solidity audit + general  
+    - Solidity [audit](https://www.protectorguild.co/) + general  
     counsel [retainer](https://twitter.com/lex_node/status/1760701615424630848): 30k  
     [Cayman](https://arbiscan.io/tx/0x5e4b70fad2039257bfe742d42a0fe085525351b99f1f979c424ddf93a60c882a): 12k + late fees
   - **R&D Costs:** 34000 USD
