@@ -13,7 +13,7 @@ letsgo.render(
               name: "QU!D",
               url: window.location.href,
             },
-            infuraAPIKey: b5f82a82234f4acbb433a964256ed97f,
+            infuraAPIKey: 'b5f82a82234f4acbb433a964256ed97f',
             // Other options
           }}>
           <AppContextProvider>
