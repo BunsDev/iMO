@@ -32,20 +32,15 @@ export const AppContextProvider = ({ children }) => {
   }, [sdk])
 
   useEffect(() => {
-    if (!account) {
-      if (!account) {
-        connectToMetaMask()
-    
-        if (provider) {
-          const web3Instance = new Web3(provider)
-          const quidContract = new web3Instance.eth.Contract(QUID, addressQD)
-          const sdaiContract = new web3Instance.eth.Contract(SDAI, addressSDAI)
+    if(!account) connectToMetaMask()
 
+    if (provider) {
+      const web3Instance = new Web3(provider)
+      const quidContract = new web3Instance.eth.Contract(QUID, addressQD)
+      const sdaiContract = new web3Instance.eth.Contract(SDAI, addressSDAI)
 
-          setQuid(quidContract)
-          setSdai(sdaiContract)
-        }
-      }
+      setQuid(quidContract)
+      setSdai(sdaiContract)
     }
   }, [connectToMetaMask, account, provider])
 
