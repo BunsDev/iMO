@@ -2,7 +2,7 @@
 
 pragma solidity =0.8.8;
 
-import "./MO.sol";
+import "./MOulinette.sol";
 import "hardhat/console.sol"; // TODO comment out
 import "./Dependencies/VRFConsumerBaseV2.sol";
 import "./Dependencies/VRFCoordinatorV2Interface.sol";
@@ -55,7 +55,7 @@ contract Lot is Ownable,
     uint16 requestConfirmations;
     uint public requestId; 
     uint randomness; // 🎲
-    MO Gen; // heap...
+    MOulinette MO; 
 
     mapping(uint => uint) public totalsQD; // week # -> liquidity
     uint public liquidityQD; // in UniV3 liquidity units
@@ -70,9 +70,9 @@ contract Lot is Ownable,
 
     address constant F8N_0 = 0x3B3ee1931Dc30C1957379FAc9aba94D1C48a5405; // can only test 
     address constant F8N_1 = 0x0299cb33919ddA82c72864f7Ed7314a3205Fb8c4; // on mainnet :)
-    address constant QUID = 0x42cc020Ef5e9681364ABB5aba26F39626F1874A4; // TODO get from Gen
+    address constant QUID = 0x42cc020Ef5e9681364ABB5aba26F39626F1874A4; // TODO get from MO
     address constant NFPM = 0xC36442b4a4522E871399CD717aBDD847Ab11FE88; // TODO rinkeby
-    address constant SDAI = 0x83F20F44975D03b1b09e64809B757c47f942BEeA; // // TODO get from Gen
+    address constant SDAI = 0x83F20F44975D03b1b09e64809B757c47f942BEeA; // // TODO get from MO
 
     event SetReward(uint reward);
     event SetMinLock(uint duration);
@@ -152,16 +152,16 @@ contract Lot is Ownable,
     // pay for a request in wei. It functions as an ID 
     // of the offchain VRF job that runs in onReceived.
     constructor(address _vrf, address _link, bytes32 _hash, 
-                uint32 _limit, uint16 _confirm, address JO) 
+                uint32 _limit, uint16 _confirm, address _mo) 
                 VRFConsumerBaseV2(_vrf) { owed = QUID; // TOD0xdasha...
                 callbackGasLimit = _limit; requestConfirmations = _confirm;
         reward = 1_000_000_000_000; // 0.000001 
-        minLock = Gen.LENT(); keyHash = _hash;
+        minLock = MO.LENT(); keyHash = _hash;
         maxTotalETH = type(uint256).max - 1;
         maxQD = type(uint256).max - 1;
         LINK = LinkTokenInterface(_link); 
         sdai = IERC20(SDAI);
-        deployed = block.timestamp; Gen = MO(JO);
+        deployed = block.timestamp; MO = MOulinette(_mo);
         COORDINATOR = VRFCoordinatorV2Interface(_vrf);    
         COORDINATOR.addConsumer(subscriptionId, address(this));
         subscriptionId = COORDINATOR.createSubscription(); // pubsub...
@@ -184,12 +184,12 @@ contract Lot is Ownable,
         address from, // previous owner's
         uint256 tokenId, bytes calldata data
     ) external override returns (bytes4) { bool refund = false;
-        require(Gen.SEMESTER() > last_lotto_trigger, "early"); 
+        require(MO.SEMESTER() > last_lotto_trigger, "early"); 
         uint shirt = ICollection(F8N_1).latestTokenId(); 
         address parked = ICollection(F8N_0).ownerOf(LAMBO);
         address racked = ICollection(F8N_1).ownerOf(shirt);
         if (tokenId == LAMBO && parked == address(this)) {
-            require(Gen.transfer(from, SALARY), "Lot::QD");
+            require(MO.transfer(from, SALARY), "Lot::QD");
             require(sdai.transfer(from, SALARY), "Lot::sDAI");
             // since this only gets called twice a year
             // 1477741 - (608358 x 2) stays in contract
@@ -199,7 +199,7 @@ contract Lot is Ownable,
         }   else if (tokenId == shirt && racked == address(this)) {
                 require(parked == address(this), "chronology");
                 require(from == owed, "Lot::wrong winner");
-                last_lotto_trigger = Gen.SEMESTER();
+                last_lotto_trigger = MO.SEMESTER();
                 ICollection(F8N_0).transferFrom(
                     address(this), driver, LAMBO);  
                 require(sdai.transfer(owed, LOTTO), "sDAI"); 
@@ -219,8 +219,8 @@ contract Lot is Ownable,
         && _msgSender() == driver, "chronology");
         require(sdai.transfer(driver, //
         sdai.balanceOf(address(this))), "Lot::swap sDAI");
-        require(Gen.transfer(driver, //
-        Gen.balanceOf(address(this))), "Lot::swap QD"); 
+        require(MO.transfer(driver, //
+        MO.balanceOf(address(this))), "Lot::swap QD"); 
         driver = to; // "unless a kernel of wheat falls
         // to the ground and dies, it remains a single
         // seed. But if it dies, it produces many seeds"
@@ -228,14 +228,14 @@ contract Lot is Ownable,
     
     function fulfillRandomWords(uint _requestId, 
         uint[] memory randomWords) internal override { 
-        uint when = Gen.SEMESTER() - 1; // retro-active...
+        uint when = MO.SEMESTER() - 1; // retro-active...
         randomness = randomWords[0]; // retrobonus catcher...
         uint shirt = ICollection(F8N_1).latestTokenId(); // 2
         address racked = ICollection(F8N_1).ownerOf(shirt);
         require(randomness > 0 && _requestId > 0 // secret
         && _requestId == requestId && // are we who we are
         address(this) == racked, "Lot::randomWords"); 
-        address[] memory owned = Gen.liquidated(when);
+        address[] memory owned = MO.liquidated(when);
         uint indexOfWinner = randomness % owned.length;
         owed = owned[indexOfWinner]; // quip captured
         ICollection(F8N_1).transferFrom( // 
@@ -245,13 +245,13 @@ contract Lot is Ownable,
    
     function deposit(uint tokenId) external { 
         (address token0, address token1, uint128 liquidity) = _getInfo(tokenId);
-        require(token1 == address(Gen), "Uni::deposit: improper token id"); 
+        require(token1 == address(MO), "Uni::deposit: improper token id"); 
         // usually this means that the owner of the position already closed it
         require(liquidity > 0, "Uni::deposit: cannot deposit empty amount");
         // TODO address not WETH
         if (token0 == ETH) { totalsETH[ _roll()] += liquidity; liquidityETH += liquidity;
             require(liquidityETH <= maxTotalETH, "Uni::deposit: totalLiquidity exceed max");
-        } else if (token0 == address(Gen)) { totalsQD[ _roll()] += liquidity; liquidityQD += liquidity;
+        } else if (token0 == address(MO)) { totalsQD[ _roll()] += liquidity; liquidityQD += liquidity;
             require(liquidityQD <= maxQD, "Uni::deposit: totalLiquidity exceed max");
         } else { require(false, "Uni::deposit: improper token id"); }
         depositTimestamps[msg.sender][tokenId] = block.timestamp;
@@ -293,7 +293,7 @@ contract Lot is Ownable,
             earn = (delta * reward) / 168; // we're in the middle of a current week
             total += (earn * liquidity) / liquidityETH;
             liquidityETH -= liquidity;
-        } else if (token0 == address(Gen)) {
+        } else if (token0 == address(MO)) {
             while (week_iterator < current_week) {
                 uint thisWeek = totalsQD[week_iterator];
                 if (thisWeek > 0) { // need to check lest div by 0

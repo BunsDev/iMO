@@ -15,11 +15,11 @@ async function main() { // rinkeby:
   console.log(mock.getAddress())
 
   console.log('deploy MO');
-  let MO = await ethers.getContractFactory("MO");
+  let MO = await ethers.getContractFactory("MOulinette");
   const mo = await MO.deploy(mock.getAddress());
 
   console.log('deploy Lot');
-  let Lot = await ethers.getContractFactory("MO");
+  let Lot = await ethers.getContractFactory("Lot");
   
   const lot = await Lot.deploy('0x6168499c0cffcacd319c818142124b7a15e857ab',
   '0x01BE23585060835E02B77ef475b0Cc51aA1e0709', 

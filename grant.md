@@ -7,7 +7,7 @@ for Liquidity Management and *"Derivatives"*
 **Proposer**: QuidMint Foundation  
 **Requested divison**: 76 000 ARB  
 **Payment Address**: `quid.eth`  
-which collects 0.76% x 16 [MO](https://github.com/QuidLabs/iMO/blob/main/contracts/MO.sol#L45)  
+which collects 0.76% x 16 [iMO](https://github.com/QuidLabs/iMO/blob/main/contracts/MO.sol#L45)  
 pegs seed valuation at $16M  
 
  

@@ -5,7 +5,7 @@ import "hardhat/console.sol"; // TODO comment out
 import "./Dependencies/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-contract MO is ERC20, Ownable { 
+contract MOulinette is ERC20, Ownable { 
     AggregatorV3Interface public chainlink; // or RedStone if deployment CANTO
     IERC20 public sdai; address payable public lot; // OpEx locker, lotto, UNI
     // address constant public mevETH = 0x24Ae2dA0f361AA4BE46b48EB19C91e02c5e4f27E; 
@@ -46,7 +46,7 @@ contract MO is ERC20, Ownable {
         uint locked; // sDAI
         uint minted; // QD 47
         address[] owned; // 74k
-    }  uint public SEMESTER; // Lot.sol
+    }  uint public SEMESTER; // interMittent Offering (a.k.a iMO)
     uint internal _PRICE; // TODO comment out when finish testing
     uint internal _POINTS; // used in call() weights (medianiser)
     struct Pod { // used in Pools (incl. individual Plunges')
