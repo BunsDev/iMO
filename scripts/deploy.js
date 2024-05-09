@@ -9,15 +9,16 @@ async function getContract(name, addr) {
 
 async function main() { // rinkeby:
   const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  // console.log('deploy mock');
-  // let Mock = await ethers.getContractFactory("mock");
-  // const mock = await Mock.deploy();
-  // console.log(mock.getAddress())
+  console.log('deploy mock');
+  let Mock = await ethers.getContractFactory("mock");
+  const mock = await Mock.deploy();
+  const token = await mock.getAddress()
+  console.log('token deployed at', token)
 
   console.log('deploy MO');
   let MO = await ethers.getContractFactory("MOulinette");
   // const mo = await MO.deploy(mock.getAddress());
-  const mo = await MO.deploy('0x522902E55db6F870a80B21c69BC6b9903D1560f8')
+  const mo = await MO.deploy(token)
   
   console.log(await mo.getAddress())
  
