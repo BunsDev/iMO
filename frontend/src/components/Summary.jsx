@@ -55,7 +55,8 @@ export const Summary = () => {
         quid.methods.LENT()
           .call()
           .then(data => {
-            setMintPeriodDays(String(data.toNumber() / SECONDS_IN_DAY))
+            console.log(data)
+            setMintPeriodDays(String(Number(data) / SECONDS_IN_DAY))
           })
 
         quid.methods.sale_start()

@@ -24,10 +24,10 @@ export const Header = ({ userInfo }) => {
       console.warn("USER INFO: ", userInfo)
       
       if(userInfo){
-        if (isNaN(userInfo.costInUsd)) setUsd(userInfo.costInUsd.toFixed())
+        if (typeof userInfo.costInUsd === "number") setUsd(userInfo.costInUsd.toFixed())
           else setAmount(0)
   
-        if (isNaN(userInfo.qdAmount)) setAmount(userInfo.qdAmount.toFixed())
+        if (typeof qdAmount === "number") setAmount(userInfo.qdAmount.toFixed())
           else setAmount(0)
       }
     }
