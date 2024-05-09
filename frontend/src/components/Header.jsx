@@ -1,6 +1,6 @@
 import { Icon } from "./Icon"
 import styles from "./Header.module.scss"
-import { useEffect} from "react"
+import { useEffect, useState} from "react"
 
 import { shortedHash } from "../utils/shorted-hash"
 import { numberWithCommas } from "../utils/number-with-commas"
@@ -10,6 +10,9 @@ export const Header = ({ userInfo }) => {
   const { account, connectToMetaMask, connected, connecting } =
     useAppContext();
 
+  const [actualAmount, setAmount] = useState(0)
+  const [actualUsd, setUsd] = useState(0)
+
   //const [balance, setBalance] = useState("")
 
 
@@ -18,8 +21,17 @@ export const Header = ({ userInfo }) => {
   useEffect(() => {
     if (connected) {
       // getNumber();  
+      console.warn("USER INFO: ", userInfo)
+      
+      if(userInfo){
+        if (isNaN(userInfo.costInUsd)) setUsd(userInfo.costInUsd.toFixed())
+          else setAmount(0)
+  
+        if (isNaN(userInfo.qdAmount)) setAmount(userInfo.qdAmount.toFixed())
+          else setAmount(0)
+      }
     }
-  }, [connected]);
+  }, [setAmount, setUsd, connected, userInfo]);
   // TOOD do .on("Minted")
 
 
@@ -58,13 +70,13 @@ export const Header = ({ userInfo }) => {
       <div className={styles.summaryEl}>
         <div className={styles.summaryElTitle}>Deposited</div>
         <div className={styles.summaryElValue}>
-          ${numberWithCommas(userInfo?.costInUsd.toFixed() || "0")}
+          ${numberWithCommas(actualUsd)}
         </div>
       </div>
       <div className={styles.summaryEl}>
         <div className={styles.summaryElTitle}>My Future QD</div>
         <div className={styles.summaryElValue}>
-          {numberWithCommas(userInfo?.qdAmount.toFixed() || "0")}
+          {numberWithCommas(actualAmount)}
         </div>
       </div>
       <div className={styles.summaryEl}>
@@ -74,7 +86,7 @@ export const Header = ({ userInfo }) => {
             userInfo?.costInUsd &&
             numberWithCommas(
               `$${(
-                Number(userInfo.qdAmount) - Number(userInfo.costInUsd)
+                Number(actualAmount) - Number(actualUsd)
               ).toFixed()}`,
             )}
         </div>

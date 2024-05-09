@@ -26,7 +26,12 @@ function App() {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (account) await quid.methods.get_info(account).call().then(setUserInfo)
+      if (account) await quid.methods.get_info(account)
+        .call()
+        .then(info => {
+          setUserInfo(info)
+          console.log("THERE IS INFO: ", info)
+        })
       
     }
     // quidContract.on("Minted", fetchData) TODO!!!!
