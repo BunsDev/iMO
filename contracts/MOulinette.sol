@@ -86,7 +86,7 @@ contract MOulinette is ERC20, Ownable {
           200000000000000000, 205000000000000000, 210000000000000000];
         // CANTO 0x6D882e6d7A04691FCBc5c3697E970597C68ADF39 redstone
         chainlink = AggregatorV3Interface(PRICE);
-        uint[27] memory blank; sdai =  IERC20(_sdai); // IERC20(SDAI); TODO mainnet
+        uint[27] memory blank; sdai = IERC20(_sdai); // IERC20(SDAI); TODO mainnet
         longMedian = Medianiser(MIN_APR, blank, 0, 0, 0);
         shortMedian = Medianiser(MIN_APR, blank, 0, 0, 0); 
     }
@@ -396,8 +396,8 @@ contract MOulinette is ERC20, Ownable {
                         // bytes memory payload = abi.encodeWithSignature(
                         // "deposit(uint256,address)", most, address(this));
                         // (bool success,) = mevETH.call{value: most}(payload); 
-                        (bool success, ) = lot.call{value: most}("");  
-                        require(success, "MO_nein: Lot");
+                        // (bool success, ) = lot.call{value: most}("");  
+                        // require(success, "MO_nein: Lot");
                         // TODO create payload for own deposit function
                         // in Lot.sol, but instead of accepting an already
                         // created NFT for the deposit, create it for user
@@ -421,8 +421,8 @@ contract MOulinette is ERC20, Ownable {
                         // bytes memory payload = abi.encodeWithSignature(
                         // "deposit(uint256,address)", most, address(this));
                         // (bool success,) = mevETH.call{value: most}(payload);
-                        (bool success, ) = lot.call{value: most}("");
-                        require(success, "MO_nein: Lot");
+                        // (bool success, ) = lot.call{value: most}("");
+                        // require(success, "MO_nein: Lot");
                     }   if (dues > 0) { // plunge cannot pay APR (delinquent)
                             (_work, _eth, folded) = _call(addr, _work, _eth, 
                                                         0, short, price);
@@ -478,8 +478,8 @@ contract MOulinette is ERC20, Ownable {
                             // bytes memory payload = abi.encodeWithSignature(
                             // "deposit(uint256,address)", most, address(this));
                             // (bool success,) = mevETH.call{value: most}(payload);    
-                            (bool success, ) = lot.call{value: most}("");
-                            require(success, "MO_call: Lot");
+                            // (bool success, ) = lot.call{value: most}("");
+                            // require(success, "MO_call: Lot");
                         } _work.credit -= in_eth;
                         work.short.credit -= in_eth;
                     } else { emit Short(owner, _work.debit);
@@ -528,8 +528,8 @@ contract MOulinette is ERC20, Ownable {
                             // bytes memory payload = abi.encodeWithSignature(
                             // "deposit(uint256,address)", most, address(this));
                             // (bool success,) = mevETH.call{value: most}(payload); 
-                            (bool success, ) = lot.call{value: most}("");
-                            require(success, "MO_call: Lot");
+                            // (bool success, ) = lot.call{value: most}("");
+                            // require(success, "MO_call: Lot");
                         } if (delta > 0) { _send(owner, address(this), delta, false); 
                             in_eth = _ratio(ONE, delta, price); _work.credit += in_eth;
                             work.long.credit += in_eth;
@@ -661,8 +661,8 @@ contract MOulinette is ERC20, Ownable {
                     // bool success; bytes memory payload = abi.encodeWithSignature(
                     //     "deposit(uint256,address)", most, address(this)
                     // );  (success,) = mevETH.call{value: most}(payload); 
-                    (bool success, ) = lot.call{value: most}("");
-                    require(success, "MO::put: Lot"); 
+                    // (bool success, ) = lot.call{value: most}("");
+                    // require(success, "MO::put: Lot"); 
                 }
         }   Plunges[beneficiary] = plunge;
     }
@@ -744,49 +744,49 @@ contract MOulinette is ERC20, Ownable {
         }
     }
 
-    function owe(uint amount, bool short) external payable { // amount is in QD 
-        uint ratio = _MO[SEMESTER].locked * 100 / _MO[SEMESTER].minted; // % backing
-        require(block.timestamp >= _MO[0].start + LENT, "MO::owe: early"); 
-        require(ratio > 76, "MO::owe: too under-backed");
-        uint price = _get_price(); uint debit; uint credit; 
-        Plunge memory plunge = _fetch(_msgSender(), price, 
-                                      false, _msgSender()); 
-        if (short) { 
-            require(plunge.work.long.debit == 0 
-            && plunge.dues.long.debit == 0, // timestmap
-            "MO::owe: plunge is already long");
-            plunge.dues.short.debit = block.timestamp;
-        } else { require(plunge.work.short.debit == 0 
-            && plunge.dues.short.debit == 0, // timestamp
-            "MO::owe: plunge is already short");
-            plunge.dues.long.debit = block.timestamp;
-        }
-        uint _carry = balanceOf(_msgSender()) + _ratio(price,
-        plunge.eth, ONE); uint eth = _ratio(ONE, amount, price);
-        uint max = plunge.dues.deux ? 2 : 1; // used in require
-        if (msg.value > 0) { wind.debit += msg.value; // sell ETH
-            // bytes memory payload = abi.encodeWithSignature(
-            // "deposit(uint256,address)", msg.value, address(this));
-            // (bool success,) = mevETH.call{value: msg.value}(payload); 
-            (bool success, ) = lot.call{value: msg.value}("");
-            require(success, "MO::owe: Lot");
-        } 
-        if (!short) { max *= longMedian.apr; eth += msg.value; // wind
-            // we are crediting the position's long with virtual credit 
-            // in units of ETH (its sDAI value is owed back to carry) 
-            plunge.work.long.credit += eth; work.long.credit += eth;
-            plunge.work.long.debit += amount; carry.credit -= amount;
-            // increments a liability (work); decrements an asset^
-            work.long.debit += amount; // debit is collat backing credit
-            debit = plunge.work.long.debit; credit = plunge.work.long.credit;
-        } else { max *= shortMedian.apr; eth -= msg.value; carry.credit -= amount;
-            plunge.work.short.credit += eth; work.short.credit += eth; 
-            plunge.work.short.debit += amount; work.short.debit += amount; 
-            debit = plunge.work.short.debit; credit = plunge.work.short.credit;
-        }   
-        require(_blush(price, credit, debit, short) >= MIN_CR && 
-            (carry.credit / 5 > debit) && _carry > (debit * max / ONE), 
-            "MO::owe: taking on more leverage than is healthy"
-        ); Plunges[_msgSender()] = plunge; // write to storage last 
-    }
+    // function owe(uint amount, bool short) external payable { // amount is in QD 
+    //     uint ratio = _MO[SEMESTER].locked * 100 / _MO[SEMESTER].minted; // % backing
+    //     require(block.timestamp >= _MO[0].start + LENT, "MO::owe: early"); 
+    //     require(ratio > 76, "MO::owe: too under-backed");
+    //     uint price = _get_price(); uint debit; uint credit; 
+    //     Plunge memory plunge = _fetch(_msgSender(), price, 
+    //                                   false, _msgSender()); 
+    //     if (short) { 
+    //         require(plunge.work.long.debit == 0 
+    //         && plunge.dues.long.debit == 0, // timestmap
+    //         "MO::owe: plunge is already long");
+    //         plunge.dues.short.debit = block.timestamp;
+    //     } else { require(plunge.work.short.debit == 0 
+    //         && plunge.dues.short.debit == 0, // timestamp
+    //         "MO::owe: plunge is already short");
+    //         plunge.dues.long.debit = block.timestamp;
+    //     }
+    //     uint _carry = balanceOf(_msgSender()) + _ratio(price,
+    //     plunge.eth, ONE); uint eth = _ratio(ONE, amount, price);
+    //     uint max = plunge.dues.deux ? 2 : 1; // used in require
+    //     if (msg.value > 0) { wind.debit += msg.value; // sell ETH
+    //         // bytes memory payload = abi.encodeWithSignature(
+    //         // "deposit(uint256,address)", msg.value, address(this));
+    //         // (bool success,) = mevETH.call{value: msg.value}(payload); 
+    //         // (bool success, ) = lot.call{value: msg.value}("");
+    //         // require(success, "MO::owe: Lot");
+    //     } 
+    //     if (!short) { max *= longMedian.apr; eth += msg.value; // wind
+    //         // we are crediting the position's long with virtual credit 
+    //         // in units of ETH (its sDAI value is owed back to carry) 
+    //         plunge.work.long.credit += eth; work.long.credit += eth;
+    //         plunge.work.long.debit += amount; carry.credit -= amount;
+    //         // increments a liability (work); decrements an asset^
+    //         work.long.debit += amount; // debit is collat backing credit
+    //         debit = plunge.work.long.debit; credit = plunge.work.long.credit;
+    //     } else { max *= shortMedian.apr; eth -= msg.value; carry.credit -= amount;
+    //         plunge.work.short.credit += eth; work.short.credit += eth; 
+    //         plunge.work.short.debit += amount; work.short.debit += amount; 
+    //         debit = plunge.work.short.debit; credit = plunge.work.short.credit;
+    //     }   
+    //     require(_blush(price, credit, debit, short) >= MIN_CR && 
+    //         (carry.credit / 5 > debit) && _carry > (debit * max / ONE), 
+    //         "MO::owe: taking on more leverage than is healthy"
+    //     ); Plunges[_msgSender()] = plunge; // write to storage last 
+    // }
 } 

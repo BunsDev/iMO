@@ -1,6 +1,6 @@
 
 // TODO replace address
-export const addressQD = '0x81f45dF664D794bd02fa5E4bAc2E867687be765c';
+export const addressQD = '0x9891Af65f9EA89EeF17Cc1B66DaD256E6bE150D8';
 export const addressSDAI = '0x522902E55db6F870a80B21c69BC6b9903D1560f8';
 
 // TODO replace constructor

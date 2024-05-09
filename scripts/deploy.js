@@ -9,24 +9,27 @@ async function getContract(name, addr) {
 
 async function main() { // rinkeby:
   const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  console.log('deploy mock');
-  let Mock = await ethers.getContractFactory("mock");
-  const mock = await Mock.deploy();
-  console.log(mock.getAddress())
+  // console.log('deploy mock');
+  // let Mock = await ethers.getContractFactory("mock");
+  // const mock = await Mock.deploy();
+  // console.log(mock.getAddress())
 
   console.log('deploy MO');
   let MO = await ethers.getContractFactory("MOulinette");
-  const mo = await MO.deploy(mock.getAddress());
-
-  console.log('deploy Lot');
-  let Lot = await ethers.getContractFactory("Lot");
+  // const mo = await MO.deploy(mock.getAddress());
+  const mo = await MO.deploy('0x522902E55db6F870a80B21c69BC6b9903D1560f8')
   
-  const lot = await Lot.deploy('0x6168499c0cffcacd319c818142124b7a15e857ab',
-  '0x01BE23585060835E02B77ef475b0Cc51aA1e0709', 
-  '0x2ed0feb3e7fd2022120aa84fab1945545a9f2ffc9076fd6156fa96eaff4c1311',
-  100000, 3, mo.getAddress())
+  console.log(await mo.getAddress())
+ 
+  // console.log('deploy Lot');
+  // let Lot = await ethers.getContractFactory("Lot");
   
-  console.log('Lot deployed! ' + await lot.getAddress());
+  // const lot = await Lot.deploy('0x6168499c0cffcacd319c818142124b7a15e857ab',
+  // '0x01BE23585060835E02B77ef475b0Cc51aA1e0709', 
+  // '0x2ed0feb3e7fd2022120aa84fab1945545a9f2ffc9076fd6156fa96eaff4c1311',
+  // 100000, 3, mo.getAddress())
+  
+  // console.log('Lot deployed! ' + await lot.getAddress());
 }  
   
   
