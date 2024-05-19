@@ -14,7 +14,7 @@ through...Triforce? Force times distance is `work` (leverage), so
   
 `Plunge`s `mint`...`flip`...`vote`...`put`...`owe`...`fold`...`call`   
 "lookin' too hot? simmer down, or soon you'll get," `clocked`;  
-though liquidations are optional (only for the less risk-averse).
+though liquidations are [optional](https://www.youtube.com/watch?v=1O25uUy90hU) (only for the less risk-averse).
 
 
 QuidMint Foundation sees over (not over-sieze) [swappable](https://twitter.com/guil_lambert/status/1772423853316219051) options   
