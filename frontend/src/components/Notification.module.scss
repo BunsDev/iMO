@@ -1,0 +1,77 @@
+
+.root {
+  overflow: hidden;
+  width: 270px;
+  min-height: 45px;
+  border-radius: 8px;
+  padding: 0px 15px;
+  display: flex;
+  align-items: center;
+  animation: fadeInTop 1s both;
+
+  background-color: transparent;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  border: none;
+
+  cursor: pointer;
+
+  &:hover > .background {
+    opacity: 0.4;
+  }
+}
+
+.background {
+  display: block;
+  color: #54b420;
+  opacity: 0.1;
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  pointer-events: none;
+  width: 125%;
+  height: 160%;
+  transition: opacity 0.2s;
+  transform: translate(-50%, -50%);
+}
+
+.message {
+  font-family: "Outfit";
+  font-size: 16px;
+  color: inherit;
+}
+
+.error {
+  color: #d32f2f;
+}
+
+.info {
+  color: #fff;
+}
+
+.success {
+  color: #388e3c;
+}
+
+@keyframes fadeInRight {
+  0% {
+    opacity: 0;
+    transform: translateX(80%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInTop {
+  0% {
+    opacity: 0;
+    transform: translateY(-80%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

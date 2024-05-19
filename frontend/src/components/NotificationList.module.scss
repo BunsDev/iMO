@@ -1,0 +1,12 @@
+.root {
+    position: fixed;
+    top: 150px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10000;
+  }
+  
+  .item {
+    margin-bottom: 20px;
+  }
+  
