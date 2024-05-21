@@ -6,15 +6,15 @@ for Liquidity Management and *"Derivatives"*
 **Proposer**: QuidMint Foundation  
 on behalf of Quid Labs (R&D)...
 
-**Requested ARB**: 76 000   
-**Payment Address**: `quid.eth`  
+**Requested funds**: 76 000 ARB  
+**Payment address**: `quid.eth`  
 
 Quid Labs' public key ends  
 with 4A4, so we built [gilts](https://www.youtube.com/clip/UgkxUlE5S5Ogc0ipmxJ2eFR_KNourTd28q1i) as  
 a sort of simplified ERC404:   
 
 replaced 0 with A..."the secret  
-to  survivin'...is knowin' what to   
+to survivin'...is knowin' what to   
 throw away, and knowin' what    
 to keep..." on [commodifying](https://twitter.com/QuidMint/status/1788041764282020033)...
 
@@ -46,12 +46,11 @@ It takes 1 year for minted QD tokens to mature, after this they're redeemable (`
  Q2
 (same minted within Q4)  
   544M sDAI locked for 2024...  
-as reach goal (minimum [54M](https://twitter.com/WethWood/status/1786389167292772697))
   
 - Contract Interaction: facilitate at least  
   1000 `Plunge` positions, which use a   
   wholesale strategy instead of importing  
-  liquidity the [way]((https://twitter.com/zellic_io/status/1688666477552193536)) we're used to (step-wise) 
+  liquidity the step-wise [way]((https://twitter.com/zellic_io/status/1688666477552193536)) we're used to 
 - Partnerships: Milestone 2 and onwards
 
 ### Milestone 1:

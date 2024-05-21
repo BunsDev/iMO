@@ -22,7 +22,7 @@ interface LinkTokenInterface is IERC20 {
     function increaseApproval(address spender, uint256 subtractedValue) external;
     function transferAndCall(address to, uint256 value, bytes calldata data) external returns (bool success);
 }
-interface INonfungiblePositionManager is IERC721 { // reward QD<>USDC or QD<>WETH liquidity deposits
+interface INonfungiblePositionManager is IERC721 { // reward QD<>USDT or QD<>WETH liquidity deposits
     function positions(uint256 tokenId) external
     view returns (uint96 nonce,address operator,
         address token0, address token1, uint24 fee,
@@ -56,9 +56,9 @@ contract Marenate is Ownable,
     uint public requestId; 
     uint randomness; // 🎲
     Moulinette MO; // MO = Modus Operandi 
-    mapping(uint => uint) public totalsUSDC; // week # -> liquidity
-    uint public liquidityUSDC; // in UniV3 liquidity units
-    uint public maxUSDC; // in the same units
+    mapping(uint => uint) public totalsUSDT; // week # -> liquidity
+    uint public liquidityUSDT; // in UniV3 liquidity units
+    uint public maxUSDT; // in the same units
 
     mapping(uint => uint) public totalsETH; // week # -> liquidity
     uint public liquidityETH; // for the ETH<>QD pool
@@ -73,7 +73,7 @@ contract Marenate is Ownable,
     address constant public F8N_0 = 0x3B3ee1931Dc30C1957379FAc9aba94D1C48a5405; // can only test 
     address constant public F8N_1 = 0x0299cb33919ddA82c72864f7Ed7314a3205Fb8c4; // on mainnet :)
     address constant public NFPM = 0xC36442b4a4522E871399CD717aBDD847Ab11FE88;
-    address constant public USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+    address constant public USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
     address constant public WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; 
     address constant public SDAI = 0x83F20F44975D03b1b09e64809B757c47f942BEeA;
 
@@ -88,7 +88,7 @@ contract Marenate is Ownable,
   
     event SetReward(uint reward);
     event SetMinLock(uint duration);
-    event SetMaxUSDC(uint maxTotal);
+    event SetMaxUSDT(uint maxTotal);
     event SetMaxTotalETH(uint maxTotal);
     event Deposit(uint tokenId, address owner);
     event RequestedRandomness(uint256 requestId);
@@ -135,8 +135,8 @@ contract Marenate is Ownable,
         if (totalsETH[current_week] == 0 && liquidityETH > 0) {
             totalsETH[current_week] = liquidityETH;
         } // if the vault was emptied then we don't need to roll over past liquidity
-        if (totalsUSDC[current_week] == 0 && liquidityUSDC > 0) {
-            totalsUSDC[current_week] = liquidityUSDC;
+        if (totalsUSDT[current_week] == 0 && liquidityUSDT > 0) {
+            totalsUSDT[current_week] = liquidityUSDT;
         }
     }
 
@@ -170,9 +170,9 @@ contract Marenate is Ownable,
      * The purpose is to increase the amount gradually, so as to not dilute reward
      * unnecessarily much in beginning phase.
      */
-    function setmMxUSDC(uint _newmaxUSDC) external onlyOwner {
-        maxUSDC = _newmaxUSDC;
-        emit SetMaxUSDC(_newmaxUSDC);
+    function setmMxUSDT(uint _newmaxUSDT) external onlyOwner {
+        maxUSDT = _newmaxUSDT;
+        emit SetMaxUSDT(_newmaxUSDT);
     }
 
     /**
@@ -198,7 +198,7 @@ contract Marenate is Ownable,
         reward = 1_000_000_000_000; // 0.000001 
         minLock = MO.LENT(); keyHash = _hash;
         maxTotalETH = type(uint256).max - 1;
-        maxUSDC = type(uint256).max - 1;
+        maxUSDT = type(uint256).max - 1;
         LINK = LinkTokenInterface(_link); 
         requestConfirmations = _confirm;
         sdai = IERC20(SDAI); callbackGasLimit = _limit; 
@@ -356,8 +356,8 @@ contract Marenate is Ownable,
         // TODO address not WETH
         if (token0 == WETH) { totalsETH[ _roll()] += liquidity; liquidityETH += liquidity;
             require(liquidityETH <= maxTotalETH, "MA::deposit: totalLiquidity exceed max");
-        } else if (token0 == USDC) { totalsUSDC[ _roll()] += liquidity; liquidityUSDC += liquidity;
-            require(liquidityUSDC <= maxUSDC, "MA::deposit: totalLiquidity exceed max");
+        } else if (token0 == USDT) { totalsUSDT[ _roll()] += liquidity; liquidityUSDT += liquidity;
+            require(liquidityUSDT <= maxUSDT, "MA::deposit: totalLiquidity exceed max");
         } else { require(false, "MA::deposit: improper token id"); }
         depositTimestamps[msg.sender][tokenId] = block.timestamp;
         // transfer ownership of LP share to this contract
@@ -398,9 +398,9 @@ contract Marenate is Ownable,
             earn = (delta * reward) / 168; // we're in the middle of a current week
             total += (earn * liquidity) / liquidityETH;
             liquidityETH -= liquidity;
-        } else if (token0 == USDC) {
+        } else if (token0 == USDT) {
             while (week_iterator < current_week) {
-                uint thisWeek = totalsUSDC[week_iterator];
+                uint thisWeek = totalsUSDT[week_iterator];
                 if (thisWeek > 0) { // need to check lest div by 0
                     // staker's share of rewards for given week...
                     total += (earn * liquidity) / thisWeek;
@@ -410,8 +410,8 @@ contract Marenate is Ownable,
             delta = so_far - (current_week * 168);
             // the last reward will be a fraction of a whole week's worth...
             earn = (delta * reward) / 168; // in the middle of current week
-            total += (earn * liquidity) / liquidityUSDC;
-            liquidityUSDC -= liquidity;
+            total += (earn * liquidity) / liquidityUSDT;
+            liquidityUSDT -= liquidity;
         }   delete depositTimestamps[msg.sender][tokenId]; 
         if (total > address(this).balance) {
             payable(msg.sender).transfer(address(this).balance);

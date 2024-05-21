@@ -12,8 +12,8 @@ interface IMarenate {
     uint old_stake, uint old_vote, bool short) external; 
 }
 
-contract Moulinette is ERC20, Ownable { // en.wiktionary.org/wiki/moulinette
-    IERC20 public sdai; IMarenate MA; // ...🪄
+contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/moulinette
+    IERC20 public sdai; IMarenate MA; // "I like ma short cake shorter" ~ Tune Chi
     address constant public SDAI = 0x83F20F44975D03b1b09e64809B757c47f942BEeA; 
     address constant public QUID = 0x42cc020Ef5e9681364ABB5aba26F39626F1874A4;
     mapping(address => Pod) public _maturing; uint constant public ONE = 1e18; 
@@ -24,10 +24,10 @@ contract Moulinette is ERC20, Ownable { // en.wiktionary.org/wiki/moulinette
     uint constant public STACK = C_NOTE * 100;
     uint constant public C_NOTE = 100 * ONE; 
     uint constant public CENT = ONE / 100;
-    uint constant public SCHOOL = 45 * CENT / 10; // sDAI
+    uint constant public IVERSON = 76; // 76ers basketball
     uint constant public MO_CUT = 54 * CENT / 10; // ditto
     uint constant public MO_FEE = 22 * CENT / 10; // in QD
-    uint constant public MIN_CR = ONE + MIN_APR; // 92 ltv
+    uint constant public MIN_CR = ONE + 3 * MIN_APR; // 92 ltv
     uint constant public MIN_APR = 90000000000000000;
     Offering[16] public _MO; // one !MO per 6 months
     mapping(address => uint[16]) paid; // in sDAI...
@@ -36,33 +36,34 @@ contract Moulinette is ERC20, Ownable { // en.wiktionary.org/wiki/moulinette
         uint locked; // sDAI
         uint minted; // QD
         address[] owned;
-    }  uint public SEMESTER; // interMittent Offering (a.k.a iMO)
+    }  uint public SEMESTER; // interMittent Offering (a.k.a !MO)
     uint internal _PRICE; // TODO comment out when finish testing
-    uint internal _POINTS; // used in call() weights (medianiser)
-    struct Pod { // used in Pools (incl. individual Plunges')
-        uint credit; // in wind...this is hamsin (heat wave)
-        uint debit; // in wind this is ETH in cold storage...
+    uint internal _POINTS; // used in weights (medianiser); call() 
+    struct Pod { // used in Pools (incl. individual Plunges')...
+        uint credit; // in wind...this is hamsin (heat wave)...
+        // "sometimes all I think about's you" ~ Glass Animals
+        uint debit; // in wind this is ETH frozen in Marenate
     }  // credit used for fee voting; debit for fee charging...
-    // If he want smoke, give him wind, I'm gon' blow him down:
+    // "If he want smoke, give him [wind], I'm gon' blow him down"
     struct Owe { uint points; // time-weighted _balances QD credit 
         bool deux; // pay...✌🏻xAPR for peace of mind, and flip debt
         bool clutch; // ditto ^^^^ pro-rated _unwind, no ^^^^ ^^^^ 
         Pod long; // debit = last time of long APR payment;
         Pod short; // debit = last timeof short APR payment
     }  
-    struct Pool { Pod long; Pod short; }
+    struct Piscine { Pod long; Pod short; }
     /* The 1st part is called "The Pledge"... 
     an imagineer shows you something ordinary:
     inspect it to see if it's indeed "normal" */
     Pod public carry; // chop wind, carry liquidity 
     struct Plunge { // pledge to plunge into work...
         uint last; // timestamp of last state update
-        Pool work; // debt and collat (long OR short)
+        Piscine work; // leverage (long OR short)...
         Owe dues; // all kinds of utility variables
         uint eth; // Marvel's (pet) Rock of Eternity
     }   mapping (address => Plunge) Plunges; 
     // TODO last price and last timestamp 
-    Pod public wind; Pool public work; // internally 1 sDAI = 1 QD
+    Pod public wind; Piscine public work; // internally 1 sDAI = 1 QD
     constructor(address _sdai) ERC20("QU!Dao", "QD") { 
         sdai = IERC20(_sdai); // IERC20(SDAI); // TODO mainnet
         // _MO[0].start = 1719444444; 
@@ -196,7 +197,7 @@ contract Moulinette is ERC20, Ownable { // en.wiktionary.org/wiki/moulinette
         if (block.timestamp < _MO[SEMESTER].start) { // enters only when SEMESTER >= 1
             uint ratio = _MO[SEMESTER - 1].locked * 100 / _MO[SEMESTER - 1].minted; 
             if (SEMESTER % 2 == 1) { 
-                if (ratio >= 77) {
+                if (ratio >= IVERSON) {
                     _maturing[addr].debit += _maturing[addr].credit;
                 }   _maturing[addr].credit = 0;
             } else if (_maturing[addr].debit > 0) { // SEMESTER % 2 == 0 
@@ -385,7 +386,7 @@ contract Moulinette is ERC20, Ownable { // en.wiktionary.org/wiki/moulinette
                         work.short.credit -= in_eth;
                     } else { emit Short(owner, _work.debit);
                         carry.credit += _work.debit; 
-                        if (_work.debit > 50 * STACK) { 
+                        if (_work.debit > IVERSON * STACK) { 
                             _MO[SEMESTER].owned.push(owner); // for Marenate.sol
                         }   work.short.debit -= _work.debit;
                             work.short.credit -= _work.credit;
@@ -436,7 +437,7 @@ contract Moulinette is ERC20, Ownable { // en.wiktionary.org/wiki/moulinette
                     } // "Don't get no better than this, you catch my drift?"
                     else { emit Long(owner, _work.debit);
                         carry.credit += _work.debit; 
-                        if (_work.debit > 50 * STACK) { 
+                        if (_work.debit > IVERSON * STACK) { 
                             _MO[SEMESTER].owned.push(owner); // for Marenate.sol
                         }   work.long.debit -= _work.debit;
                             work.long.credit -= _work.credit;
@@ -522,8 +523,6 @@ contract Moulinette is ERC20, Ownable { // en.wiktionary.org/wiki/moulinette
         external payable { uint price = _get_price(); uint most;
         Plunge memory plunge = _fetch(beneficiary, price,
                                       false, _msgSender());
-        console.log("SENDER...%s", _msgSender());
-        console.log("ADDRESS THIS...%s", address(this));
         carry.debit += msg.value;
         if (!_eth) { _send(_msgSender(), address(this), amount, false);
             uint eth = _ratio(ONE, amount, price);
@@ -636,7 +635,7 @@ contract Moulinette is ERC20, Ownable { // en.wiktionary.org/wiki/moulinette
             }
         } else if (SEMESTER > 0) { // the first refund can only happen 6 months after first iMO
             uint ratio = _MO[SEMESTER - 1].locked * 100 / _MO[SEMESTER - 1].minted; // % backing
-            if (76 > ratio && paid[_msgSender()][SEMESTER - 1] > 0) { // last MO was unsuccessful
+            if (IVERSON > ratio && paid[_msgSender()][SEMESTER - 1] > 0) { // last MO unsuccessful
                 uint cut = paid[_msgSender()][SEMESTER - 1] * MO_CUT / ONE; 
                 uint refund = paid[_msgSender()][SEMESTER - 1] - cut;
                 sdai.transfer(_msgSender(), refund); // statutory refund
@@ -650,7 +649,7 @@ contract Moulinette is ERC20, Ownable { // en.wiktionary.org/wiki/moulinette
     function owe(uint amount, bool short) external payable { // amount is in QD 
         uint ratio = _MO[SEMESTER].locked * 100 / _MO[SEMESTER].minted; // % backing
         require(block.timestamp >= _MO[0].start + LENT, "MO::owe: early"); 
-        require(ratio > 76, "MO::owe: under-backed");
+        require(ratio > IVERSON, "MO::owe: under-backed");
         uint price = _get_price(); uint debit; uint credit; 
         Plunge memory plunge = _fetch(_msgSender(), price, 
                                       false, _msgSender()); 
@@ -685,7 +684,7 @@ contract Moulinette is ERC20, Ownable { // en.wiktionary.org/wiki/moulinette
             plunge.work.short.debit += amount; work.short.debit += amount; 
             debit = plunge.work.short.debit; credit = plunge.work.short.credit;
         }   
-        require(_ratio(price, credit, debit) >= 2*MIN_CR && 
+        require(_ratio(price, credit, debit) >= (MIN_CR + 3*MIN_APR) && 
             (carry.credit / 5 > debit) && _carry > (debit * max / ONE), 
             "MO::owe: over-leveraged"
         ); Plunges[_msgSender()] = plunge; // write to storage last 
