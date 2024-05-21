@@ -37,8 +37,8 @@ in this crypto school of trade-offs, sweat equity, [compensation](https://www.ta
  the tokenomics need to plug a 25% hole in TVL to be fully backed...
  
 QD is only minted for 46 days (of lent), twice a year, for 8 years;  
-.73% of sDAI forms an "ecosystem fund" for pre-seed infusion  
-into platforms using QD in their tokenomics (pro quo 7.3% of the  
+.54% of sDAI forms our "ecosystem fund" for pre-seed infusion  
+into platforms using QD in their tokenomics (pro quo 5.4% of the  
 platforms' future receivables goes back into TVL for backing QD).  
 
 `Plunge`s pay more if they want to make money more often,  
@@ -70,7 +70,7 @@ represented by 👕, is passed back and forth
 between `winner`s as the medium for  payouts...
 
 `deux` (2x [APR]((https://x.com/hexonaut/status/1789072324614050035))) is a way to automatically flip `work`,  
-think of it as the famous Allen Iverson cross-overs...   
+think of it as the famous Allen `IVERSON` cross-overs...   
 from long to short or [vice versa](https://www.instagram.com/p/CnPsieFKzRQ/) at the moment that  
 it would have otherwise been liquidated,
 or `clutch`  

@@ -25,7 +25,7 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
     uint constant public C_NOTE = 100 * ONE; 
     uint constant public CENT = ONE / 100;
     uint constant public IVERSON = 76; // 76ers basketball
-    uint constant public MO_CUT = 54 * CENT / 10; // ditto
+    uint constant public MO_CUT = 99 * CENT / 10; // in sDAI
     uint constant public MO_FEE = 22 * CENT / 10; // in QD
     uint constant public MIN_CR = ONE + 3 * MIN_APR; // 92 ltv
     uint constant public MIN_APR = 90000000000000000;

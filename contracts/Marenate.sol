@@ -298,9 +298,7 @@ contract Marenate is Ownable,
         address racked = ICollection(F8N_1).ownerOf(shirt);
         if (tokenId == LAMBO && parked == address(this)) {
             require(sdai.transfer(from, LOTTO), "MA::sDAI");
-            // since this only gets called twice a year
-            // 1477741 - (608358 x 2) stays in contract
-            driver = from; // cede may change the driver
+            driver = from; // cede may change the LAMBO driver...
         }   else if (tokenId == shirt && racked == address(this)) {
                 require(parked == address(this), "chronology");
                 require(from == owed, "MA::wrong winner");
