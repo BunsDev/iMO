@@ -37,7 +37,7 @@ in this crypto school of trade-offs, sweat equity, [compensation](https://www.ta
  the tokenomics need to plug a 25% hole in TVL to be fully backed...
  
 QD is only minted for 46 days (of lent), twice a year, for 8 years;  
-.73% of sDAI forms an "ecosystem fund" for pre-seed infudsion  
+.73% of sDAI forms an "ecosystem fund" for pre-seed infusion  
 into platforms using QD in their tokenomics (pro quo 7.3% of the  
 platforms' future receivables goes back into TVL for backing QD).  
 
@@ -75,7 +75,7 @@ from long to short or [vice versa](https://www.instagram.com/p/CnPsieFKzRQ/) at 
 it would have otherwise been liquidated,
 or `clutch`  
 
-as a way to spread the liquidation over tim (pro-rated  
+as a way to spread the liquidation over time (pro-rated  
 price), giving the position a chance to recover as long  
 as you keep paying the premium (up to [3x](https://x.com/santiagoroel/status/1791114254117998865) surge price)
 
@@ -85,7 +85,7 @@ partially for paying APR...while profitable trades...
 away from *j'ai la flemme*  (passively managed QD)...  
 3 Tibetan humors: `carry` is 🩸, `wind` is *hielo* bile;  
 
-Another way to [see](https://youtube.com/clip/UgkxXxCLFiMg7N55Aj2SjkpA87TeBJao6EWY?si=4v3xY1nYgtJovNmx) it: salt of the 🌍, [ball ⚡️](https://youtube.com/clip/UgkxTJhmTNvuccOEkvQ9NwRrJG_kh3hhofK-?si=qlXeZ24vCvjNmnnb), and...  
+another way to [see](https://youtube.com/clip/UgkxXxCLFiMg7N55Aj2SjkpA87TeBJao6EWY?si=4v3xY1nYgtJovNmx) it: salt of the 🌍, [ball ⚡️](https://youtube.com/clip/UgkxTJhmTNvuccOEkvQ9NwRrJG_kh3hhofK-?si=qlXeZ24vCvjNmnnb), and...  
 Mercury bank seems to have a great `work` record.
 
 ### The Big Question (answered in a future repo)

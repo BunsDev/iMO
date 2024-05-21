@@ -684,7 +684,7 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
             plunge.work.short.debit += amount; work.short.debit += amount; 
             debit = plunge.work.short.debit; credit = plunge.work.short.credit;
         }   
-        require(_ratio(price, credit, debit) >= (MIN_CR + 3*MIN_APR) && 
+        require(_ratio(price, credit, debit) >= (MIN_CR + 3 * MIN_APR) && 
             (carry.credit / 5 > debit) && _carry > (debit * max / ONE), 
             "MO::owe: over-leveraged"
         ); Plunges[_msgSender()] = plunge; // write to storage last 
