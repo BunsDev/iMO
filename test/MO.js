@@ -3,7 +3,7 @@ const {
 } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
 const BN = require('bn.js'); const { expect } = require("chai");
 
-describe("Token contract", function () {
+describe("Moulinette contract", function () {
     async function deployFixture() { // plain, and empty deployment
         const currentTime = (Date.now() / 1000).toFixed(0)
 
@@ -152,8 +152,7 @@ describe("Token contract", function () {
         console.log('in_carry_before', in_carry_before)
 
         await MO.connect(addr2).owe(amt, false, { value: amt }) // go long
-        
-        
+    
 
         var ethAfter = await ethers.provider.getBalance(addr2)
         var delta = ethBefore - ethAfter

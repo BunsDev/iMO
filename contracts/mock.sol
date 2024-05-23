@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract mock is ERC20 { 
 
-    constructor() ERC20("PhoenixLabs", "sDAI") { }
+    constructor() ERC20("DecentralBank", "sFRAX") { }
 
     function mint(uint amount) external {
         _mint(_msgSender(), amount);

@@ -22,7 +22,7 @@ interface LinkTokenInterface is IERC20 {
     function increaseApproval(address spender, uint256 subtractedValue) external;
     function transferAndCall(address to, uint256 value, bytes calldata data) external returns (bool success);
 }
-interface INonfungiblePositionManager is IERC721 { // reward QD<>USDT or QD<>WETH liquidity deposits
+interface INonfungiblePositionManager is IERC721 { // reward QD<>USDC or QD<>WETH liquidity deposits
     function positions(uint256 tokenId) external
     view returns (uint96 nonce,address operator,
         address token0, address token1, uint24 fee,
@@ -39,8 +39,8 @@ contract Marenate is Ownable,
     // for tracking time deltas...
     uint public last_lotto_trigger;
     uint public immutable deployed;
-    
-    IERC20 public immutable sdai; 
+    IERC20 public immutable sFRAX; 
+    IERC20 public immutable sDAI; 
     
     uint public minLock; 
     uint public reward;
@@ -56,9 +56,9 @@ contract Marenate is Ownable,
     uint public requestId; 
     uint randomness; // 🎲
     Moulinette MO; // MO = Modus Operandi 
-    mapping(uint => uint) public totalsUSDT; // week # -> liquidity
-    uint public liquidityUSDT; // in UniV3 liquidity units
-    uint public maxUSDT; // in the same units
+    mapping(uint => uint) public totalsUSDC; // week # -> liquidity
+    uint public liquidityUSDC; // in UniV3 liquidity units
+    uint public maxUSDC; // in the same units
 
     mapping(uint => uint) public totalsETH; // week # -> liquidity
     uint public liquidityETH; // for the ETH<>QD pool
@@ -73,13 +73,13 @@ contract Marenate is Ownable,
     address constant public F8N_0 = 0x3B3ee1931Dc30C1957379FAc9aba94D1C48a5405; // can only test 
     address constant public F8N_1 = 0x0299cb33919ddA82c72864f7Ed7314a3205Fb8c4; // on mainnet :)
     address constant public NFPM = 0xC36442b4a4522E871399CD717aBDD847Ab11FE88;
-    address constant public USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
+    address constant public USDC = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
     address constant public WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; 
-    address constant public SDAI = 0x83F20F44975D03b1b09e64809B757c47f942BEeA;
+    
 
-    uint[37] internal feeTargets; struct Medianiser { 
+    uint[38] internal feeTargets; struct Medianiser { 
         uint apr; // most recent weighted median fee 
-        uint[37] weights; // sum weights for each fee
+        uint[38] weights; // sum weights for each fee
         uint total; // _POINTS > sum of ALL weights... 
         uint sum_w_k; // sum(weights[0..k]) sum of sums
         uint k; // approximate index of median (+/- 1)
@@ -88,7 +88,7 @@ contract Marenate is Ownable,
   
     event SetReward(uint reward);
     event SetMinLock(uint duration);
-    event SetMaxUSDT(uint maxTotal);
+    event SetMaxUSDC(uint maxTotal);
     event SetMaxTotalETH(uint maxTotal);
     event Deposit(uint tokenId, address owner);
     event RequestedRandomness(uint256 requestId);
@@ -135,8 +135,8 @@ contract Marenate is Ownable,
         if (totalsETH[current_week] == 0 && liquidityETH > 0) {
             totalsETH[current_week] = liquidityETH;
         } // if the vault was emptied then we don't need to roll over past liquidity
-        if (totalsUSDT[current_week] == 0 && liquidityUSDT > 0) {
-            totalsUSDT[current_week] = liquidityUSDT;
+        if (totalsUSDC[current_week] == 0 && liquidityUSDC > 0) {
+            totalsUSDC[current_week] = liquidityUSDC;
         }
     }
 
@@ -170,9 +170,9 @@ contract Marenate is Ownable,
      * The purpose is to increase the amount gradually, so as to not dilute reward
      * unnecessarily much in beginning phase.
      */
-    function setmMxUSDT(uint _newmaxUSDT) external onlyOwner {
-        maxUSDT = _newmaxUSDT;
-        emit SetMaxUSDT(_newmaxUSDT);
+    function setmMxUSDC(uint _newmaxUSDC) external onlyOwner {
+        maxUSDC = _newmaxUSDC;
+        emit SetMaxUSDC(_newmaxUSDC);
     }
 
     /**
@@ -198,28 +198,29 @@ contract Marenate is Ownable,
         reward = 1_000_000_000_000; // 0.000001 
         minLock = MO.LENT(); keyHash = _hash;
         maxTotalETH = type(uint256).max - 1;
-        maxUSDT = type(uint256).max - 1;
+        maxUSDC = type(uint256).max - 1;
         LINK = LinkTokenInterface(_link); 
         requestConfirmations = _confirm;
-        sdai = IERC20(SDAI); callbackGasLimit = _limit; 
+        callbackGasLimit = _limit; 
         deployed = block.timestamp; owed = msg.sender;
         COORDINATOR = VRFCoordinatorV2Interface(_vrf);    
         COORDINATOR.addConsumer(subscriptionId, address(this));
         subscriptionId = COORDINATOR.createSubscription(); // pubsub...
+        sDAI = IERC20(MO.SDAI()); sFRAX = IERC20(MO.SFRAX());
         nonfungiblePositionManager = INonfungiblePositionManager(NFPM);
-        feeTargets = [MIN_APR, 95000000000000000, 100000000000000000,
-          105000000000000000, 110000000000000000, 115000000000000000, 
-          120000000000000000, 125000000000000000, 130000000000000000, 
-          135000000000000000, 140000000000000000, 145000000000000000, 
-          150000000000000000, 155000000000000000, 160000000000000000, 
-          165000000000000000, 170000000000000000, 175000000000000000, 
-          180000000000000000, 185000000000000000, 190000000000000000, 
-          195000000000000000, 200000000000000000, 205000000000000000, 
-          210000000000000000, 215000000000000000, 220000000000000000,
-          225000000000000000, 230000000000000000, 235000000000000000,
-          240000000000000000, 245000000000000000, 250000000000000000,
-          255000000000000000, 260000000000000000, 265000000000000000,
-          270000000000000000]; uint[37] memory blank; // weights (all 0)
+        feeTargets = [MIN_APR, 85000000000000000, 900000000000000000,
+          100000000000000000, 105000000000000000, 110000000000000000, 
+          115000000000000000, 120000000000000000, 125000000000000000, 
+          130000000000000000, 135000000000000000, 140000000000000000, 
+          145000000000000000, 150000000000000000, 155000000000000000, 
+          160000000000000000, 165000000000000000, 170000000000000000, 
+          175000000000000000, 180000000000000000, 185000000000000000, 
+          190000000000000000, 195000000000000000, 200000000000000000, 
+          205000000000000000, 210000000000000000, 215000000000000000, 
+          220000000000000000, 225000000000000000, 230000000000000000, 
+          235000000000000000, 240000000000000000, 245000000000000000, 
+          250000000000000000, 255000000000000000, 260000000000000000, 
+          265000000000000000, 270000000000000000]; uint[38] memory blank;
         longMedian = Medianiser(MIN_APR, blank, 0, 0, 0);
         shortMedian = Medianiser(MIN_APR, blank, 0, 0, 0); 
     }
@@ -297,8 +298,7 @@ contract Marenate is Ownable,
         address parked = ICollection(F8N_0).ownerOf(LAMBO);
         address racked = ICollection(F8N_1).ownerOf(shirt);
         if (tokenId == LAMBO && parked == address(this)) {
-            require(sdai.transfer(from, LOTTO), "MA::sDAI");
-            driver = from; // cede may change the LAMBO driver...
+            driver = from; payout(driver, LOTTO);
         }   else if (tokenId == shirt && racked == address(this)) {
                 require(parked == address(this), "chronology");
                 require(from == owed, "MA::wrong winner");
@@ -317,12 +317,32 @@ contract Marenate is Ownable,
         else { return 0; }
     }
 
+    function payout(address to, uint amount) internal {
+        uint sfrax = sFRAX.balanceOf(address(this));
+        uint sdai = sDAI.balanceOf(address(this));
+        uint total = sfrax + sdai;
+        uint actual = _min(total, amount);
+        if (sfrax > sdai) {
+            sfrax = _min(sfrax, actual);
+            uint delta = actual - sfrax;
+            require(sFRAX.transfer(to, sfrax), "MA::sFRAX");
+            require(sDAI.transfer(to, delta), "MA::sDAI");
+        } else {
+            sdai = _min(sdai, actual);
+            uint delta = actual - sdai;
+            require(sDAI.transfer(to, sdai), "MA::sDAI");
+            require(sFRAX.transfer(to, delta), "MA::sFRAX");
+        }
+    }
+
     function cede(address to) external { // cede authority
         address parked = ICollection(F8N_0).ownerOf(LAMBO);
         require(parked == address(this) //
         && _msgSender() == driver, "chronology");
-        require(sdai.transfer(driver, //
-        sdai.balanceOf(address(this))), "MA::cede sDAI");
+        require(sFRAX.transfer(driver, //
+        sFRAX.balanceOf(address(this))), "MA::cede sFRAX");
+        require(sDAI.transfer(driver, //
+        sFRAX.balanceOf(address(this))), "MA::cede sFRAX");
         require(MO.transfer(driver, // 
         MO.balanceOf(address(this))), "MA::cede QD"); 
         driver = to; // "unless a KERNEL of wheat falls
@@ -354,8 +374,8 @@ contract Marenate is Ownable,
         // TODO address not WETH
         if (token0 == WETH) { totalsETH[ _roll()] += liquidity; liquidityETH += liquidity;
             require(liquidityETH <= maxTotalETH, "MA::deposit: totalLiquidity exceed max");
-        } else if (token0 == USDT) { totalsUSDT[ _roll()] += liquidity; liquidityUSDT += liquidity;
-            require(liquidityUSDT <= maxUSDT, "MA::deposit: totalLiquidity exceed max");
+        } else if (token0 == USDC) { totalsUSDC[ _roll()] += liquidity; liquidityUSDC += liquidity;
+            require(liquidityUSDC <= maxUSDC, "MA::deposit: totalLiquidity exceed max");
         } else { require(false, "MA::deposit: improper token id"); }
         depositTimestamps[msg.sender][tokenId] = block.timestamp;
         // transfer ownership of LP share to this contract
@@ -396,9 +416,9 @@ contract Marenate is Ownable,
             earn = (delta * reward) / 168; // we're in the middle of a current week
             total += (earn * liquidity) / liquidityETH;
             liquidityETH -= liquidity;
-        } else if (token0 == USDT) {
+        } else if (token0 == USDC) {
             while (week_iterator < current_week) {
-                uint thisWeek = totalsUSDT[week_iterator];
+                uint thisWeek = totalsUSDC[week_iterator];
                 if (thisWeek > 0) { // need to check lest div by 0
                     // staker's share of rewards for given week...
                     total += (earn * liquidity) / thisWeek;
@@ -408,8 +428,8 @@ contract Marenate is Ownable,
             delta = so_far - (current_week * 168);
             // the last reward will be a fraction of a whole week's worth...
             earn = (delta * reward) / 168; // in the middle of current week
-            total += (earn * liquidity) / liquidityUSDT;
-            liquidityUSDT -= liquidity;
+            total += (earn * liquidity) / liquidityUSDC;
+            liquidityUSDC -= liquidity;
         }   delete depositTimestamps[msg.sender][tokenId]; 
         if (total > address(this).balance) {
             payable(msg.sender).transfer(address(this).balance);

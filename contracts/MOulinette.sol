@@ -13,27 +13,29 @@ interface IMarenate {
 }
 
 contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/moulinette
-    IERC20 public sdai; IMarenate MA; // "I like ma short cake shorter" ~ Tune Chi
-    address constant public SDAI = 0x83F20F44975D03b1b09e64809B757c47f942BEeA; 
+    IERC20 public sFRAX; IMarenate MA; // "I like ma short cake shorter" ~ Tune Chi
+    address constant public SFRAX = 0xA663B02CF0a4b149d2aD41910CB81e23e1c41c32; 
+    address constant public SDAI = 0x83F20F44975D03b1b09e64809B757c47f942BEeA;
+    // 0xe3b3FE7bcA19cA77Ad877A5Bebab186bEcfAD906 for Arbitrum if we get grant
     address constant public QUID = 0x42cc020Ef5e9681364ABB5aba26F39626F1874A4;
-    mapping(address => Pod) public _maturing; uint constant public ONE = 1e18; 
-    uint constant public MAX_PER_DAY = 7_777_777 * ONE; // supply cap
+    mapping(address => Pod) public _maturing; uint constant public WAD = 1e18; 
+    uint constant public MAX_PER_DAY = 7_777_777 * WAD; // supply cap
     uint constant public TARGET = 35700 * STACK; // !MO mint target
-    uint constant public START_PRICE = 53 * CENT; // .54 actually
+    uint constant public START_PRICE = 53 * PENNY; // .54 actually
     uint constant public LENT = 46 days; // ends on the 47th day
     uint constant public STACK = C_NOTE * 100;
-    uint constant public C_NOTE = 100 * ONE; 
-    uint constant public CENT = ONE / 100;
-    uint constant public IVERSON = 76; // 76ers basketball
-    uint constant public MO_CUT = 99 * CENT / 10; // in sDAI
-    uint constant public MO_FEE = 22 * CENT / 10; // in QD
-    uint constant public MIN_CR = ONE + 3 * MIN_APR; // 92 ltv
-    uint constant public MIN_APR = 90000000000000000;
+    uint constant public C_NOTE = 100 * WAD; 
+    uint constant public PENNY = WAD / 100;
+    uint constant public IVERSON = 76; // 76ers...
+    uint constant public MO_CUT = 99 * PENNY / 10; // in sFRAX
+    uint constant public MO_FEE = 22 * PENNY / 10; // in QD
+    uint constant public MIN_CR = WAD + 3 * MIN_APR; 
+    uint constant public MIN_APR = 80000000000000000;
     Offering[16] public _MO; // one !MO per 6 months
-    mapping(address => uint[16]) paid; // in sDAI...
-    struct Offering { // 8 years x 544,444,444 sDAI
+    mapping(address => uint[16]) paid; // in sFRAX...
+    struct Offering { // 8 years x 54,444,444 sFRAX
         uint start; // date 
-        uint locked; // sDAI
+        uint locked; // sFRAX
         uint minted; // QD
         address[] owned;
     }  uint public SEMESTER; // interMittent Offering (a.k.a !MO)
@@ -63,9 +65,8 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
         uint eth; // Marvel's (pet) Rock of Eternity
     }   mapping (address => Plunge) Plunges; 
     // TODO last price and last timestamp 
-    Pod public wind; Piscine public work; // internally 1 sDAI = 1 QD
-    constructor(address _sdai) ERC20("QU!Dao", "QD") { 
-        sdai = IERC20(_sdai); // IERC20(SDAI); // TODO mainnet
+    Pod public wind; Piscine public work; // internally 1 sFRAX = 1 QD
+    constructor() ERC20("QU!Dao", "QD") { 
         // _MO[0].start = 1719444444; 
         _MO[0].start = block.timestamp; 
     }
@@ -91,6 +92,10 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
         return _PRICE;
     }
    
+    function _valid_token(address token) internal {
+        require(token == SFRAX || token == SDAI, "MO::bad address");
+    }
+
     /** Quasi-ERC404 functionality (ERC 4A4 :)
      * Override the ERC20 functions to account 
      * for QD balances that are still maturing  
@@ -119,9 +124,9 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
     }
     
     // Five helper functions used by frontend (duplicated code)
-    function qd_amt_to_sdai_amt(uint qd_amt, uint block_timestamp) public view returns (uint amount) {
+    function qd_amt_to_dollar_amt(uint qd_amt, uint block_timestamp) public view returns (uint amount) {
         uint in_days = ((block_timestamp - _MO[SEMESTER].start) / 1 days) + 1; 
-        amount = (in_days * CENT + START_PRICE) * qd_amt / ONE;
+        amount = (in_days * PENNY + START_PRICE) * qd_amt / WAD;
     }
     function get_total_supply_cap(uint block_timestamp) public view returns (uint total_supply_cap) {
         uint in_days = ((block_timestamp - _MO[SEMESTER].start) / 1 days) + 1; 
@@ -213,15 +218,15 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
         uint _eth = plunge.eth; // carry.debit
         if (plunge.work.short.debit > 0) { 
             Pod memory _work = plunge.work.short; 
-            fee *= _work.debit / ONE;
+            fee *= _work.debit / WAD;
             time = plunge.dues.short.debit > block.timestamp ? 
                 0 : block.timestamp - plunge.dues.short.debit; 
             if (plunge.dues.deux) { clutch = 1; // used in _unwind
                 if (plunge.dues.clutch) { clutch += fee; 
                     // 144x per day is (24 hours * 60 minutes) / 10 minutes
-                    clutch = (MIN_APR / 1000) * _work.debit / ONE; // 1.3% per day
-                } // call option to _work debit of sDAI value at 
-            }   (_work, _eth, folded) = _nein(addr, _eth,
+                    clutch = (MIN_APR / 1000) * _work.debit / WAD; // 1.3% per day
+                } // call option to _work debit of sFRAX value at 
+            }   (_work, _eth, folded) = _charge(addr, _eth,
                  _work, price, time, clutch, true); 
             if (folded) { // clutch == 1 flips the debt
                 if (clutch == 1) { plunge.dues.short.debit = 0;
@@ -237,15 +242,15 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
             plunge.work.short = _work; 
         }   else if (plunge.work.long.debit > 0) {
                 Pod memory _work = plunge.work.long;
-                fee *= _work.debit / ONE; // liquidator's fee for gas
+                fee *= _work.debit / WAD; // liquidator's fee for gas
                 time = plunge.dues.long.debit > block.timestamp ? 
                     0 : block.timestamp - plunge.dues.long.debit; 
                 if (plunge.dues.deux) { clutch = 1; // used in _unwind
                     if (plunge.dues.clutch) { clutch += fee; // 144x per
                         // day is (24 hours * 60 minutes) / 10 minutes
-                        clutch += (MIN_APR / 1000) * _work.debit / ONE;
+                        clutch += (MIN_APR / 1000) * _work.debit / WAD;
                     } 
-                }   (_work, _eth, folded) = _nein(addr, _eth,
+                }   (_work, _eth, folded) = _charge(addr, _eth,
                     _work, price, time, clutch, false); 
                 if (folded) { // festina...lent...eh? make haste
                     if (clutch == 1) { plunge.dues.long.debit = 0;
@@ -267,7 +272,7 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
             // TODO simplify based on !MO
             plunge.dues.points += ( // 
                 ((block.timestamp - plunge.last) / 1 hours) 
-                * balanceOf(addr) / ONE
+                * balanceOf(addr) / WAD
             ); 
             // carry.credit; // is subtracted from 
             // rebalance fee targets (governance)
@@ -285,7 +290,7 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
         }       plunge.last = block.timestamp; plunge.eth = _eth;
     }
 
-    function _nein(address addr, uint _eth, Pod memory _work, 
+    function _charge(address addr, uint _eth, Pod memory _work, 
         uint price, uint delta, uint clutch, bool short) internal 
         returns (Pod memory, uint, bool folded) {
         // "though eight is not enough...no,
@@ -295,21 +300,21 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
             uint apr = MIN_APR; // MA.getMedian(short); // TODO uncomment
             delta /= 10 minutes; uint dues = (clutch > 0) ? 2 : 1;
             // TODO charge apr for the pledge.eth as well  
-            dues *= (apr * _work.debit * delta) / (52704 * ONE);
+            dues *= (apr * _work.debit * delta) / (52704 * WAD);
             // need to reuse the delta variable (or stack too deep)
             delta = _ratio(price, _work.credit, _work.debit);
-            if (delta < ONE) { // liquidatable potentially
+            if (delta < WAD) { // liquidatable potentially
                 (_work, _eth, folded) = _unwind(addr, _work, _eth, 
                                         clutch, short, price);
             }  else { // healthy CR, proceed to charge APR
                 // if addr is shorting: indicates a desire
                 // to give priority towards getting rid of
                 // ETH first, before spending available QD
-                clutch = _ratio(price, _eth, ONE); // reuse var lest stack too deep
+                clutch = _ratio(price, _eth, WAD); // reuse var lest stack too deep
                 uint most = short ? _min(clutch, dues) : _min(balanceOf(addr), dues);
                 if (dues > 0 && most > 0) { 
                     if (short) { dues -= most;
-                        most = _ratio(ONE, most, price);
+                        most = _ratio(WAD, most, price);
                         _eth -= most; carry.debit -= most;
                         wind.debit += most; // address(MA).call{value: most}(""); // TODO uncomment
                     } else { _send(addr, address(this), most, false);
@@ -326,7 +331,7 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
                         wind.credit -= most; dues -= most;
                     }   
                     else if (!short && most > 0) { dues -= most;
-                        most = _ratio(ONE, most, price);
+                        most = _ratio(WAD, most, price);
                         _eth -= most; carry.debit -= most;
                         wind.debit += most; // address(MA).call{value: most}(""); // TODO uncomment
                     }   if (dues > 0) { // plunge cannot pay APR (delinquent)
@@ -351,7 +356,7 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
     function _unwind(address owner, Pod memory _work, uint _eth, 
                    uint clutch, bool short, uint price) internal 
                    returns (Pod memory, uint, bool folded) { 
-        uint in_QD = _ratio(price, _work.credit, ONE); // to $
+        uint in_QD = _ratio(price, _work.credit, WAD); // to $
         require(in_QD > 0, "_unwind"); folded = true; uint in_eth;
         if (short) { // plunge into pool (caught the wind on low) 
             if (_work.debit > in_QD) { // value of credit fell
@@ -359,27 +364,28 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
                 carry.credit += _work.debit; // has been debited
                 _work.debit -= in_QD; // remainder is profit...
                 wind.credit += _work.debit; // associated debt 
-                _maturing[owner].credit += _work.debit; // TODO charge APR
+                _maturing[owner].credit += _work.debit; // TODO uncomment 
+                // _maturing[owner].credit += _work.debit - (_work.debit * MA.getMedian(false) / WAD); 
                 // _maturing credit takes 1 year to get
-                // into _balances (redeemable for sDAI)
+                // into _balances (redeemable for sFRAX)
                 work.short.credit -= _work.credit;
                 _work.debit = 0; _work.credit = 0;  
             } // in_QD is worth more than _work.debit, price went up... 
             else { // "lightnin' strikes and the court lights get dim"
                 if (clutch == 0) { // try to prevent from liquidating...
-                    uint delta = (in_QD * MIN_CR) / ONE - _work.debit;
-                    uint salve = balanceOf(owner) + _ratio(price, _eth, ONE); 
+                    uint delta = (in_QD * MIN_CR) / WAD - _work.debit;
+                    uint salve = balanceOf(owner) + _ratio(price, _eth, WAD); 
                     if (delta > salve) { delta = in_QD - _work.debit; } 
                     // "It's like inch by inch and step by step...i'm closin'
                     // in on your position and [reconstruction] is my mission"
                     if (salve >= delta) { folded = false; // salvageable...
                         // decrement QD first because ETH is rising
-                        in_eth = _ratio(ONE, delta, price);
+                        in_eth = _ratio(WAD, delta, price);
                         uint most = _min(balanceOf(owner), delta);
                         if (most > 0) { delta -= most;
                             _send(owner, address(this), most, false);
                             // TODO double check re carry.credit or wind.credit
-                        } if (delta > 0) { most = _ratio(ONE, delta, price);
+                        } if (delta > 0) { most = _ratio(WAD, delta, price);
                             _eth -= most; wind.debit += most; carry.debit -= most;    
                             // address(MA).call{value: most}(""); // TODO uncomment
                         } _work.credit -= in_eth;
@@ -398,7 +404,7 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
                         work.short.debit -= _work.debit;
                         work.long.debit += _work.debit;
                 } else { // partial return to carry
-                    _work.debit -= clutch; in_eth = _ratio(ONE, clutch, price);
+                    _work.debit -= clutch; in_eth = _ratio(WAD, clutch, price);
                     _work.credit -= in_eth; work.short.credit -= in_eth; 
                     work.short.debit -= clutch; carry.credit += clutch;
                 } 
@@ -414,24 +420,24 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
                 _work.debit = 0; _work.credit = 0;                 
             }   else {
                 if (clutch == 0) {
-                    uint delta = (_work.debit * MIN_CR) / ONE - in_QD;
-                    uint salve = balanceOf(owner) + _ratio(price, _eth, ONE); 
+                    uint delta = (_work.debit * MIN_CR) / WAD - in_QD;
+                    uint salve = balanceOf(owner) + _ratio(price, _eth, WAD); 
                     if (delta > salve) { delta = _work.debit - in_QD; } 
                     if (salve >= delta) { folded = false; // salvageable
                         // decrement ETH first because it's falling
-                        in_eth = _ratio(ONE, delta, price); 
+                        in_eth = _ratio(WAD, delta, price); 
                         uint most = _min(_eth, in_eth);
                         if (most > 0) { carry.debit -= most; // remove ETH from carry
                             _eth -= most; wind.debit += most; // sell ETH, so 
                             // original ETH is not callable or puttable by the Plunge
-                            in_QD = _ratio(price, most, ONE);
+                            in_QD = _ratio(price, most, WAD);
                             work.long.debit -= in_QD; _work.debit -= in_QD; 
                             delta -= in_QD; // address(MA).call{value: most}(""); // TODO uncomment
                             // bytes memory payload = abi.encodeWithSignature(
                             // "deposit(uint256,address)", most, address(this));
                             // (bool success,) = mevETH.call{value: most}(payload); 
                         } if (delta > 0) { _send(owner, address(this), delta, false); 
-                            in_eth = _ratio(ONE, delta, price); _work.credit += in_eth;
+                            in_eth = _ratio(WAD, delta, price); _work.credit += in_eth;
                             work.long.credit += in_eth;
                         }
                     } // "Don't get no better than this, you catch my drift?"
@@ -449,7 +455,7 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
                     work.long.debit -= _work.debit;
                     work.short.debit += _work.debit;
                 } else { // partial return to carry
-                    _work.debit -= clutch; in_eth = _ratio(ONE, clutch, price);
+                    _work.debit -= clutch; in_eth = _ratio(WAD, clutch, price);
                     _work.credit -= in_eth; work.long.credit -= in_eth; 
                     work.long.debit -= clutch; carry.credit += clutch;
                 }  
@@ -525,7 +531,7 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
                                       false, _msgSender());
         carry.debit += msg.value;
         if (!_eth) { _send(_msgSender(), address(this), amount, false);
-            uint eth = _ratio(ONE, amount, price);
+            uint eth = _ratio(WAD, amount, price);
             if (short) { work.long.credit += eth;
                 plunge.work.long.credit += eth;
                 // TODO decrement carry.credit and wind.credit?
@@ -571,7 +577,8 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
     // like Proverbs 11, when all deeds get weighed together,
     // "collect calls to the tip sayin' how ya changed" ~ Pac
     // "to improve is to change, to perfect is to change often"
-    function call(uint amt, bool qd) external { uint most;
+    function call(uint amt, bool qd, address token) 
+        external { uint most; _valid_token(token); 
         Plunge memory plunge = _fetch(_msgSender(), 
                   _get_price(), true, _msgSender());
         if (!qd) { most = _min(plunge.eth, amt);
@@ -593,14 +600,13 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
             carry.credit -= paying;
             require(carry.credit >= work.long.debit +
                     work.short.debit, "MO::call");
-            sdai.transfer(_msgSender(), paying);
+            IERC20(token).transfer(_msgSender(), paying);
         }
     } 
 
-    // TODO bool qd, this will attempt to draw _max from _balances before sDAI...
-    function mint(uint amount, address beneficiary) external {
-        require(beneficiary != address(0) && beneficiary != address(this), "MO::mint");
-        require(amount >= C_NOTE / 2, "MO::mint: 50 min"); 
+    // TODO bool qd, this will attempt to draw _max from _balances before sFRAX...
+    function mint(uint amount, address beneficiary, address token) external {
+        _valid_token(token); require(amount >= C_NOTE / 2, "MO::mint: 50 min"); 
         if (block.timestamp >= _MO[SEMESTER].start) {
             if (block.timestamp <= _MO[SEMESTER].start + LENT) { // in_days < 47
                 uint in_days = ((block.timestamp - _MO[SEMESTER].start) / 1 days) + 1; 
@@ -610,23 +616,23 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
                 require(_MO[SEMESTER].minted <= supply_cap, 
                         "MO::mint: cap exceeded"); 
                     
-                uint cost = (in_days * CENT + START_PRICE) * amount / ONE;
+                uint cost = (in_days * PENNY + START_PRICE) * amount / WAD;
                 _MO[SEMESTER].locked += cost; carry.credit += cost;
                 wind.credit += amount; // the debts associated with QD
                 // balances belong to everyone, not to any individual;
                 // amount decremented by APR payments in QD (or call)
-                uint fee = MO_FEE * amount / ONE; // .22% = 777742 QD
+                uint fee = MO_FEE * amount / WAD; // .22% = 777742 QD
                 _maturing[beneficiary].credit += amount - fee; // QD
                 // _mint(address(MA), fee); // TODO uncomment
-                require(sdai.transferFrom(_msgSender(), 
-                    address(this), cost), "MO::mint: sDAI");
+                require(IERC20(token).transferFrom(_msgSender(), 
+                    address(this), cost), "MO::mint: charge");
                 paid[_msgSender()][SEMESTER] += cost;
                 emit Minted(beneficiary, amount - fee, cost); 
             } else if (block.timestamp >= _MO[SEMESTER].start + LENT + 144 days) { // 6 months
                 // amount is disregarded for this part of the control flow (just resets iMO)
-                uint cut = _MO[SEMESTER].locked * MO_CUT / ONE; // .54% (up to 1477741 sDAI)
+                uint cut = _MO[SEMESTER].locked * MO_CUT / WAD; // .54% (up to 1477741 bucks)
                 _MO[SEMESTER].locked -= cut; carry.credit -= cut;
-                // require(sdai.transfer(address(MA), cut), "MO::mint: sDAI"); // TODO uncomment
+                // require(token.transfer(address(MA), cut), "MO::mint: cut"); // TODO uncomment
                 if (SEMESTER < 15) { // "same level...the same 
                     SEMESTER += 1; // rebel that never settled"
                     _MO[SEMESTER].start = block.timestamp + LENT; 
@@ -636,15 +642,15 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
         } else if (SEMESTER > 0) { // the first refund can only happen 6 months after first iMO
             uint ratio = _MO[SEMESTER - 1].locked * 100 / _MO[SEMESTER - 1].minted; // % backing
             if (IVERSON > ratio && paid[_msgSender()][SEMESTER - 1] > 0) { // last MO unsuccessful
-                uint cut = paid[_msgSender()][SEMESTER - 1] * MO_CUT / ONE; 
+                uint cut = paid[_msgSender()][SEMESTER - 1] * MO_CUT / WAD; 
                 uint refund = paid[_msgSender()][SEMESTER - 1] - cut;
-                sdai.transfer(_msgSender(), refund); // statutory refund
+                IERC20(token).transfer(_msgSender(), refund); // statutory refund
                 delete paid[_msgSender()][SEMESTER - 1];
             }
         }
     }
 
-    // TODO allow using sDAI anytime as collat?
+    // TODO allow using sFRAX anytime as collat?
     // TODO price feed as a param?
     function owe(uint amount, bool short) external payable { // amount is in QD 
         uint ratio = _MO[SEMESTER].locked * 100 / _MO[SEMESTER].minted; // % backing
@@ -664,7 +670,7 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
             plunge.dues.long.debit = block.timestamp;
         }
         uint _carry = balanceOf(_msgSender()) + _ratio(price,
-        plunge.eth, ONE); uint eth = _ratio(ONE, amount, price);
+        plunge.eth, WAD); uint eth = _ratio(WAD, amount, price);
         console.log("ETH before.... %s", eth);
         uint max = plunge.dues.deux ? 2 : 1; // used in require
         max *= MIN_APR; // MA.getMedian(short); // TODO uncomment
@@ -673,7 +679,7 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
         } 
         if (!short) { eth += msg.value; // TODO dynamic, get msg.value in units of what's levered
             // we are crediting the position's long with virtual credit 
-            // in units of ETH (its sDAI value is owed back to carry) 
+            // in units of ETH (its sFRAX value is owed back to carry) 
             plunge.work.long.credit += eth; work.long.credit += eth;
             plunge.work.long.debit += amount; carry.credit -= amount;
             // increments a liability (work); decrements an asset^
@@ -684,8 +690,8 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
             plunge.work.short.debit += amount; work.short.debit += amount; 
             debit = plunge.work.short.debit; credit = plunge.work.short.credit;
         }   
-        require(_ratio(price, credit, debit) >= (MIN_CR + 3 * MIN_APR) && 
-            (carry.credit / 5 > debit) && _carry > (debit * max / ONE), 
+        require(_ratio(price, credit, debit) >= MIN_CR && 
+            (carry.credit / 5 > debit) && _carry > (debit * max / WAD), 
             "MO::owe: over-leveraged"
         ); Plunges[_msgSender()] = plunge; // write to storage last 
     }

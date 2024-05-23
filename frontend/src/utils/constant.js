@@ -936,7 +936,7 @@ export const QUID = [
         "type": "uint256"
       }
     ],
-    "name": "qd_amt_to_sdai_amt",
+    "name": "qd_amt_to_sfrax_amt",
     "outputs": [
       {
         "internalType": "uint256",
@@ -969,7 +969,7 @@ export const QUID = [
   },
   {
     "inputs": [],
-    "name": "sdai",
+    "name": "sFRAX",
     "outputs": [
       {
         "internalType": "contract IERC20",

@@ -42,10 +42,14 @@ It takes 1 year for minted QD tokens to mature, after this they're redeemable (`
 
 
 - Arbitrum Launch: June 27th
-- User Adoption: 357M QD in    
+- User Adoption (2024-'25): 35.7M QD  
+in Q2 (same minted within Q4)  
+  54.4M sFRAX locked for '24.  
+   
+- User Adoption (2025-'26): 357M QD in    
  Q2
 (same minted within Q4)  
-  544M sDAI locked for 2024...  
+  544M sFRAX locked for '25.  
   
 - Contract Interaction: facilitate at least  
   1000 `Plunge` positions, which use a   

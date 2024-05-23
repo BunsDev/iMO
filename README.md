@@ -1,26 +1,28 @@
 
-## !n My Opinion...`chroot` for MKR's mom.sol...
+## !n My Opinion...interMittent Offering (!MO) 
+Flatcoin meets oil, gas, *Ag*, and *Au* (basket 🏀)...triple the capital  
+efficiency of [Synthetix](https://x.com/hal2001/status/1792316581059412427)...double the features..."tote [`deux`] like   
+mechanics...mechanisms," based on re-staking. "It's actually...  
+'very' [scientific](https://x.com/QuidMint/status/1788634658931908915), I won't go into it right now, but I'm the only guy  
+in the city that has it...I run it myself like a
+quarterback option."
 
-Ethereum (a commodity) meets ~~flatcoin~~ oil, gas, Au, Ag (basket 🏀)...  
-triple capital efficiency of Synthetix, double features. "Tote [`deux`]  
-like mechanics...mechanisms," based on sDAI/cNOTE re-staking...  
+Synthetics are cash-settled. The underlying is not the source of   
+the price action.
+There are 2 contracts (MArenate, double sized    
+MOulinette), and there's 2 types of `dues`: for synthetic `long`  
 
-there are 2 contracts (Marenate, double sized Moulinette), and     
-there's 2 types of `dues`: for synthetic `long` or `short` (think  
-of these as...*Itchy and Scratchy*)...`credit` and `debit` are the  
-same force...moving in opposite directions...a bit like *CatDog*...  
+or `short` (think of these as *Itchy and Scratchy*); `credit` and  
+`debit` are one force moving in opposite directions ([*CatDog*](https://x.com/QuidMint/status/1786703126470222054)),   
+"you're burnin' up, I'm coolin' down;
+you're [blind](https://www.investopedia.com/terms/b/blind-entry.asp), I [see](https://docs.google.com/document/d/1fD1_rP8GonSUHyRXENDudlzBkkTcAsN7L9IiTrxEuAY/edit)..." how
 
-Tu*pac* wrote *Dear Mama* on the toilet. On many Japanese toilets,  
-a hand wash sink is attached to the lid so people can wash hands  
-and reuse that water for the next flush: [this](https://x.com/Rainmaker1973/status/1791387466705908125) inspired our `clutch`  
-mechanism of preserving the value of liquidations for borrowers:
 
-I like to believe I'm [decent](https://www.youtube.com/clip/UgkxC22X7EFzoZL8TZXwulDkMFPfRf-MZns6), but I'm more of a [cheroot](https://www.dictionary.com/browse/quid) than a cherub,   
-"I do this for my [*P*olitical *A*ction *C*ommittee]: walked in the kitchen;  
+"I do this for my [[*P*olitical](https://manifoldfinance.github.io/primitives/2022/12/17/Applied-Politics-for-Crypto.html) *A*ction *C*ommittee]: walked in the kitchen;  
  found a [`Pod`] to [`Piscine`]...[Nobody's](https://x.com/QuidMint/status/1788581681693106680) satisfied until they mama,"  
 
 this [transmission](https://en.wikipedia.org/wiki/Intercarrier_method)...coming to [mix](https://youtu.be/ndQM3kVb06I) under-collat with over-collat...  
-through...Triforce? "Nobody gives you a chance, you gotta take  
+through...~~Triforce~~ "*Neminem* gives you a chance: you gotta take  
 chances. I got a [cup](https://www.youtube.com/clip/UgkxD0PZbIFBnRlmN6JwqGfKBOTw_OR7j1u4) of your [time](https://www.youtube.com/clip/UgkxIOebF-ScgdWWR7Flp__iDVeG4L22y-PK)..." value of money;  force times  
  distance is `work` (leverage), "so now...instead of [pledge](https://www.investopedia.com/terms/p/pledgedasset.asp)...we,"
   
@@ -32,19 +34,19 @@ QuidMint Foundation sees over (not over-sieze) [swappable](https://twitter.com/g
 in this crypto school of trade-offs, sweat equity, [compensation](https://www.tabers.com/tabersonline/view/Tabers-Dictionary/730522/all/compensation), and   
 "yesterday's price is not today's price," in `mint`. 30% of TVL pays  
  
- APR out of pocket (adds ETH to `wind.debit`); according to [Excel](https://docs.google.com/spreadsheets/d/1uBG8jJGNCgQArKm4FlcmNuXb1cspG6-PRcDoFaRvQws/)  
- "In the world of dollars, [QD] ain't nothin' but a quarter 🪙," meaning  
+ APR out of pocket (adds ETH to `wind.debit`); according to [Excel](https://docs.google.com/spreadsheets/d/1uBG8jJGNCgQArKm4FlcmNuXb1cspG6-PRcDoFaRvQws/),  
+ "in the world of dollars, [QD] ain't nothin' but a quarter 🪙," meaning  
  the tokenomics need to plug a 25% hole in TVL to be fully backed...
  
-QD is only minted for 46 days (of lent), twice a year, for 8 years;  
-.54% of sDAI forms our "ecosystem fund" for pre-seed infusion  
-into platforms using QD in their tokenomics (pro quo 5.4% of the  
-platforms' future receivables goes back into TVL for backing QD).  
+QD is only minted for 46 days (of Lent), twice a year, for 8 years;  
+.54% of sFRAX forms our "ecosystem fund" for pre-seed infusion  
+into BORGs (created with [MetaLex]((https://twitter.com/lex_node/status/1760701615424630848))) using QD in their tokenomics  
+(*pro quo* 5.4% of their future receivables goes back into QD TVL).    
 
 `Plunge`s pay more if they want to make money more often,  
 borrowing at 85% LTV with shorts *and* liquidation protection.  
 Expensive is only relative to what one earns at the end of it:  
-the benchmark for best-case scenario is Jim Simons' 66%.
+the benchmark for best-case scenario is Jim Simons' 66%...
 
 Any ETH deposited is insured..."I pay the incidentals,"  
 so when withdrawing, the current price is compared  
@@ -61,17 +63,15 @@ when the dealin's done:" we can't know if so-called
 
 Optimised for gas due to not compounding P&L  
 constantly, spending gas instead to keep voted  
-medians up to date. Liquidations of >760k are
+medians up to date. [Liquidations]([liquidation](https://mirror.xyz/quid.eth/LZ4pS8tVAAkZVSYqJWoihs19cdMhgWESsLr9dIhvL40)) of >$760k are
 
-selected for a lottery (777742 QD sportsmanship  
-award); `johnquid`'s [liquidation](https://mirror.xyz/quid.eth/LZ4pS8tVAAkZVSYqJWoihs19cdMhgWESsLr9dIhvL40) (plus Maren's),   
-as
-represented by 👕, is passed back and forth  
+selected for a lottery: 777,742 QD sportsmanship  
+award represented by 👕, passed back and forth  
 between `winner`s as the medium for  payouts...
 
 `deux` (2x [APR]((https://x.com/hexonaut/status/1789072324614050035))) is a way to automatically flip `work`,  
-think of it as the famous Allen `IVERSON` cross-overs...   
-from long to short or [vice versa](https://www.instagram.com/p/CnPsieFKzRQ/) at the moment that  
+think of this as...Allen `IVERSON` cross-over moves     
+from long to short, or [vice versa](https://www.instagram.com/p/CnPsieFKzRQ/), at the moment that  
 it would have otherwise been liquidated,
 or `clutch`  
 
@@ -86,24 +86,7 @@ away from *j'ai la flemme*  (passively managed QD)...
 3 Tibetan humors: `carry` is 🩸, `wind` is *hielo* bile;  
 
 another way to [see](https://youtube.com/clip/UgkxXxCLFiMg7N55Aj2SjkpA87TeBJao6EWY?si=4v3xY1nYgtJovNmx) it: salt of the 🌍, [ball ⚡️](https://youtube.com/clip/UgkxTJhmTNvuccOEkvQ9NwRrJG_kh3hhofK-?si=qlXeZ24vCvjNmnnb), and...  
-Mercury bank seems to have a great `work` record.
-
-### The Big Question (answered in a future repo)
-
-If borrowers are making money more often, where does  
-the solvency capital come from to stabilize the system?  
-How can we print gains from thin air without needing to  
-
-over-collateralize minting by 400%, or simply "kicking  
-the can down the road," as our saving grace? [Human](https://www.youtube.com/clip/UgkxE82FRchwVKme9RDS2MTL-sX1P5IhRrsh)  
-capital: "the answer's not in the [box](https://x.com/QuidMint/status/1679900489046011916), it's in the ~~band~~,"  
-
-box...office. Phat Farm's slogan is "the new American  
-[dream](https://www.youtube.com/clip/Ugkx6KgnkNJTp-w6l-UJbXc0ctnAmo8LgdOU)." There are good actors, bad actors, and those  
-whose actions are good or bad. Careers have ups and   
-
-downs...what if ~~they were [SPVs](https://en.wikipedia.org/wiki/Celebrity_bond)~~ your LinkedIn was sort  
-of a memecoin that worked more like a bond with some  
-volatility protection to get you through the tough times,  
-as well as keep your ~~followers~~ investors from losing out?
+Mercury bank seems to have a great `work` record.  
+Imagine yourself to be a particle of gas, electricity,  
+and air traveling through an 1969 VW bus engine... 
 
