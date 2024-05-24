@@ -27,16 +27,16 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
     uint constant public C_NOTE = 100 * WAD; 
     uint constant public PENNY = WAD / 100;
     uint constant public IVERSON = 76; // 76ers...
-    uint constant public MO_CUT = 99 * PENNY / 10; // in sFRAX
-    uint constant public MO_FEE = 22 * PENNY / 10; // in QD
+    uint constant public MO_CUT = 99 * PENNY / 10; 
+    uint constant public MO_FEE = 22 * PENNY / 10; 
     uint constant public MIN_CR = WAD + 3 * MIN_APR; 
     uint constant public MIN_APR = 80000000000000000;
     Offering[16] public _MO; // one !MO per 6 months
-    mapping(address => uint[16]) paid; // in sFRAX...
-    struct Offering { // 8 years x 54,444,444 sFRAX
+    mapping(address => uint[16]) paid; // in stables
+    struct Offering { // 8yr x 544,444,444 stables...
         uint start; // date 
-        uint locked; // sFRAX
         uint minted; // QD
+        uint locked;
         address[] owned;
     }  uint public SEMESTER; // interMittent Offering (a.k.a !MO)
     uint internal _PRICE; // TODO comment out when finish testing
@@ -51,12 +51,12 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
         bool deux; // pay...✌🏻xAPR for peace of mind, and flip debt
         bool clutch; // ditto ^^^^ pro-rated _unwind, no ^^^^ ^^^^ 
         Pod long; // debit = last time of long APR payment;
-        Pod short; // debit = last timeof short APR payment
+        Pod short; // debit = last time of short APR payment
     }  
     struct Piscine { Pod long; Pod short; }
     /* The 1st part is called "The Pledge"... 
     an imagineer shows you something ordinary:
-    inspect it to see if it's indeed "normal" */
+    inspect it to see if it's indeed "normal"...*/
     Pod public carry; // chop wind, carry liquidity 
     struct Plunge { // pledge to plunge into work...
         uint last; // timestamp of last state update
@@ -65,7 +65,7 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
         uint eth; // Marvel's (pet) Rock of Eternity
     }   mapping (address => Plunge) Plunges; 
     // TODO last price and last timestamp 
-    Pod public wind; Piscine public work; // internally 1 sFRAX = 1 QD
+    Pod public wind; Piscine public work;
     constructor() ERC20("QU!Dao", "QD") { 
         // _MO[0].start = 1719444444; 
         _MO[0].start = block.timestamp; 
@@ -211,10 +211,9 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
                 _maturing[addr].debit = 0; // no minting in mint() function
                 // because freshly minted QD in !MO is still _maturing...
             } 
-        } 
-        old_points = plunge.dues.points; _POINTS -= old_points; 
+        }   old_points = plunge.dues.points; _POINTS -= old_points; 
         // caller may earn a fee for paying gas to update a Plunge
-        uint fee = caller == addr ? 0 : MIN_APR / 3000;  // 0.00303 %
+        uint fee = caller == addr ? 0 : MIN_APR / 3000; // 0.00303 %
         uint _eth = plunge.eth; // carry.debit
         if (plunge.work.short.debit > 0) { 
             Pod memory _work = plunge.work.short; 
@@ -295,7 +294,7 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
         returns (Pod memory, uint, bool folded) {
         // "though eight is not enough...no,
         // it's like [clutch lest you] bust: 
-        // now your whole [plunge] is dust" ~ Hit 'em High
+        // now your whole [plunge] is dust" ~ Hit 'em High...
         if (delta >= 10 minutes) { // 52704 x 10 mins per year
             uint apr = MIN_APR; // MA.getMedian(short); // TODO uncomment
             delta /= 10 minutes; uint dues = (clutch > 0) ? 2 : 1;
@@ -310,7 +309,7 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
                 // if addr is shorting: indicates a desire
                 // to give priority towards getting rid of
                 // ETH first, before spending available QD
-                clutch = _ratio(price, _eth, WAD); // reuse var lest stack too deep
+                clutch = _ratio(price, _eth, WAD); // re-use var lest stack too deep
                 uint most = short ? _min(clutch, dues) : _min(balanceOf(addr), dues);
                 if (dues > 0 && most > 0) { 
                     if (short) { dues -= most;

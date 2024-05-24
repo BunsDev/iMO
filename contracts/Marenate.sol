@@ -323,13 +323,11 @@ contract Marenate is Ownable,
         uint total = sfrax + sdai;
         uint actual = _min(total, amount);
         if (sfrax > sdai) {
-            sfrax = _min(sfrax, actual);
-            uint delta = actual - sfrax;
+            sfrax = _min(sfrax, actual); uint delta = actual - sfrax;
             require(sFRAX.transfer(to, sfrax), "MA::sFRAX");
             require(sDAI.transfer(to, delta), "MA::sDAI");
         } else {
-            sdai = _min(sdai, actual);
-            uint delta = actual - sdai;
+            sdai = _min(sdai, actual); uint delta = actual - sdai;
             require(sDAI.transfer(to, sdai), "MA::sDAI");
             require(sFRAX.transfer(to, delta), "MA::sFRAX");
         }
