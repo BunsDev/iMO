@@ -12,11 +12,9 @@ interface IMarenate {
     uint old_stake, uint old_vote, bool short) external; 
 }
 
-contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/moulinette
-    IERC20 public sFRAX; IMarenate MA; // "I like ma short cake shorter" ~ Tune Chi
+contract Moulinette is ERC20, Ownable { IMarenate MA; 
     address constant public SFRAX = 0xA663B02CF0a4b149d2aD41910CB81e23e1c41c32; 
     address constant public SDAI = 0x83F20F44975D03b1b09e64809B757c47f942BEeA;
-    // 0xe3b3FE7bcA19cA77Ad877A5Bebab186bEcfAD906 for Arbitrum if we get grant
     address constant public QUID = 0x42cc020Ef5e9681364ABB5aba26F39626F1874A4;
     mapping(address => Pod) public _maturing; uint constant public WAD = 1e18; 
     uint constant public MAX_PER_DAY = 7_777_777 * WAD; // supply cap
@@ -46,7 +44,6 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
         // "sometimes all I think about's you" ~ Glass Animals
         uint debit; // in wind this is ETH frozen in Marenate
     }  // credit used for fee voting; debit for fee charging...
-    // "If he want smoke, give him [wind], I'm gon' blow him down"
     struct Owe { uint points; // time-weighted _balances QD credit 
         bool deux; // pay...✌🏻xAPR for peace of mind, and flip debt
         bool clutch; // ditto ^^^^ pro-rated _unwind, no ^^^^ ^^^^ 
@@ -224,7 +221,7 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
                 if (plunge.dues.clutch) { clutch += fee; 
                     // 144x per day is (24 hours * 60 minutes) / 10 minutes
                     clutch = (MIN_APR / 1000) * _work.debit / WAD; // 1.3% per day
-                } // call option to _work debit of sFRAX value at 
+                } // call option to _work debit of dollar value at 
             }   (_work, _eth, folded) = _charge(addr, _eth,
                  _work, price, time, clutch, true); 
             if (folded) { // clutch == 1 flips the debt
@@ -366,7 +363,7 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
                 _maturing[owner].credit += _work.debit; // TODO uncomment 
                 // _maturing[owner].credit += _work.debit - (_work.debit * MA.getMedian(false) / WAD); 
                 // _maturing credit takes 1 year to get
-                // into _balances (redeemable for sFRAX)
+                // into _balances (redeemable for dollar)
                 work.short.credit -= _work.credit;
                 _work.debit = 0; _work.credit = 0;  
             } // in_QD is worth more than _work.debit, price went up... 
@@ -603,7 +600,7 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
         }
     } 
 
-    // TODO bool qd, this will attempt to draw _max from _balances before sFRAX...
+    // TODO bool qd, this will attempt to draw _max from _balances before...
     function mint(uint amount, address beneficiary, address token) external {
         _valid_token(token); require(amount >= C_NOTE / 2, "MO::mint: 50 min"); 
         if (block.timestamp >= _MO[SEMESTER].start) {
@@ -649,8 +646,6 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
         }
     }
 
-    // TODO allow using sFRAX anytime as collat?
-    // TODO price feed as a param?
     function owe(uint amount, bool short) external payable { // amount is in QD 
         uint ratio = _MO[SEMESTER].locked * 100 / _MO[SEMESTER].minted; // % backing
         require(block.timestamp >= _MO[0].start + LENT, "MO::owe: early"); 
@@ -678,7 +673,7 @@ contract Moulinette is ERC20, Ownable { // http://en.wiktionary.org/wiki/mouline
         } 
         if (!short) { eth += msg.value; // TODO dynamic, get msg.value in units of what's levered
             // we are crediting the position's long with virtual credit 
-            // in units of ETH (its sFRAX value is owed back to carry) 
+            // in units of ETH (its dollar value is owed back to carry) 
             plunge.work.long.credit += eth; work.long.credit += eth;
             plunge.work.long.debit += amount; carry.credit -= amount;
             // increments a liability (work); decrements an asset^
