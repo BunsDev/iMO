@@ -63,8 +63,10 @@ contract Moulinette is ERC20, Ownable { IMarenate MA;
     }   mapping (address => Plunge) Plunges; 
     // TODO last price and last timestamp 
     Pod public wind; Piscine public work;
-    constructor() ERC20("QU!Dao", "QD") { 
-        // _MO[0].start = 1719444444; 
+    address public mock;
+    constructor(address _sdai) ERC20("QU!Dao", "QD") { 
+        // _MO[0].start = 1717171717; 
+        mock = _sdai;
         _MO[0].start = block.timestamp; 
     }
     event Minted (address indexed reciever, uint cost_in_usd, uint amt);
@@ -573,8 +575,8 @@ contract Moulinette is ERC20, Ownable { IMarenate MA;
     // like Proverbs 11, when all deeds get weighed together,
     // "collect calls to the tip sayin' how ya changed" ~ Pac
     // "to improve is to change, to perfect is to change often"
-    function call(uint amt, bool qd, address token) 
-        external { uint most; _valid_token(token); 
+    function call(uint amt, bool qd/*, address token*/) 
+        external { uint most; // _valid_token(token); // TODO uncomment
         Plunge memory plunge = _fetch(_msgSender(), 
                   _get_price(), true, _msgSender());
         if (!qd) { most = _min(plunge.eth, amt);
@@ -596,13 +598,15 @@ contract Moulinette is ERC20, Ownable { IMarenate MA;
             carry.credit -= paying;
             require(carry.credit >= work.long.debit +
                     work.short.debit, "MO::call");
-            IERC20(token).transfer(_msgSender(), paying);
+            IERC20(mock).transfer(_msgSender(), paying);
+            // IERC20(token).transfer(_msgSender(), paying); // TODO uncomment
         }
     } 
 
     // TODO bool qd, this will attempt to draw _max from _balances before...
-    function mint(uint amount, address beneficiary, address token) external {
-        _valid_token(token); require(amount >= C_NOTE / 2, "MO::mint: 50 min"); 
+    function mint(uint amount, address beneficiary/*, address token*/) external {
+        address token = mock;
+        // _valid_token(token); require(amount >= C_NOTE / 2, "MO::mint: 50 min"); // TODO uncomment
         if (block.timestamp >= _MO[SEMESTER].start) {
             if (block.timestamp <= _MO[SEMESTER].start + LENT) { // in_days < 47
                 uint in_days = ((block.timestamp - _MO[SEMESTER].start) / 1 days) + 1; 
@@ -620,15 +624,16 @@ contract Moulinette is ERC20, Ownable { IMarenate MA;
                 uint fee = MO_FEE * amount / WAD; // .22% = 777742 QD
                 _maturing[beneficiary].credit += amount - fee; // QD
                 // _mint(address(MA), fee); // TODO uncomment
+
                 require(IERC20(token).transferFrom(_msgSender(), 
                     address(this), cost), "MO::mint: charge");
                 paid[_msgSender()][SEMESTER] += cost;
                 emit Minted(beneficiary, amount - fee, cost); 
             } else if (block.timestamp >= _MO[SEMESTER].start + LENT + 144 days) { // 6 months
                 // amount is disregarded for this part of the control flow (just resets iMO)
-                uint cut = _MO[SEMESTER].locked * MO_CUT / WAD; // .54% (up to 1477741 bucks)
+                uint cut = _MO[SEMESTER].locked * MO_CUT / WAD; // .99% (up to 2699973 bucks)
                 _MO[SEMESTER].locked -= cut; carry.credit -= cut;
-                // require(token.transfer(address(MA), cut), "MO::mint: cut"); // TODO uncomment
+                // require(IERC20(token).transfer(address(MA), cut), "MO::mint: cut"); // TODO uncomment
                 if (SEMESTER < 15) { // "same level...the same 
                     SEMESTER += 1; // rebel that never settled"
                     _MO[SEMESTER].start = block.timestamp + LENT; 

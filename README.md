@@ -6,9 +6,7 @@ Tote [`deux`] like   mechanics...mechanisms," based on re-staking.
  the only guy  in the city that has it...I run it myself like
 quarterback  
 
-options." Synthetics are cash-settled. There are 2 contracts  
-(MArenate, double sized MOulinette), and there's 2 types of   
-
+options." Synthetics are cash-settled, with 2 types of payable  
 `dues`: for synthetic `long` or `short` (think of these as *Itchy  
 and Scratchy*); `credit` and `debit` are one force moving in  
 opposite directions ([*CatDog*](https://x.com/QuidMint/status/1786703126470222054)), "you're burnin' up, I'm coolin'  
@@ -38,7 +36,7 @@ need to plug a 25% hole in TVL to be fully backed...made whole.
 QD is only minted for 46 days (of Lent), twice a year, for 8 years;  
 .54% of `raised` forms an "ecosystem fund" for the most unique  
 BORGs (created with [MetaLex]((https://twitter.com/lex_node/status/1760701615424630848))) using QD in their business model  
-(*pro quo* 5.4% of their future receivables goes back into QD TVL).    
+(*pro quo* 5.4% of their future receivables goes back into QD TVL). 
 
 `Plunge`s pay more if they want to make money more often,  
 borrowing at 85% LTV with shorts *and* liquidation protection.  

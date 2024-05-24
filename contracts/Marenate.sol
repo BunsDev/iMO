@@ -33,7 +33,7 @@ interface INonfungiblePositionManager is IERC721 { // reward QD<>USDC or QD<>WET
     );
 }
 
-contract Marenate is Ownable, 
+contract Marenate is 
     VRFConsumerBaseV2, 
     IERC721Receiver { 
     // for tracking time deltas...
@@ -56,27 +56,37 @@ contract Marenate is Ownable,
     uint public requestId; 
     uint randomness; // 🎲
     Moulinette MO; // MO = Modus Operandi 
+    
     mapping(uint => uint) public totalsUSDC; // week # -> liquidity
     uint public liquidityUSDC; // in UniV3 liquidity units
     uint public maxUSDC; // in the same units
 
+    address[] public owners;
+    mapping(address => bool) public isOwner;
     mapping(uint => uint) public totalsETH; // week # -> liquidity
     uint public liquidityETH; // for the ETH<>QD pool
     uint public maxTotalETH;
-
+    
     uint constant public LAMBO = 16508; // youtu.be/sitXeGjm4Mc 
     uint constant public LOTTO = 608358 * 1e18;
     uint constant public MIN_APR = 90000000000000000; // copy-pasted from Moulinette
     
+    uint constant public FIVE_CENTS = 5 * PENNY; 
+    uint constant public QUID_MINT = 41 * PENNY; 
+    uint constant public META_LEX = 54 * PENNY;
+    // together these are the 0.99% from mint()
+    uint constant public PENNY = WAD / 100;
+    uint constant public WAD = 1e18; 
+
     address constant public PRICE = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419; // CANTO 0x6D882e6d7A04691FCBc5c3697E970597C68ADF39
-    address constant public QUID = 0x42cc020Ef5e9681364ABB5aba26F39626F1874A4;
     address constant public F8N_0 = 0x3B3ee1931Dc30C1957379FAc9aba94D1C48a5405; // can only test 
     address constant public F8N_1 = 0x0299cb33919ddA82c72864f7Ed7314a3205Fb8c4; // on mainnet :)
+    address constant public QUID = 0x42cc020Ef5e9681364ABB5aba26F39626F1874A4;
     address constant public NFPM = 0xC36442b4a4522E871399CD717aBDD847Ab11FE88;
     address constant public USDC = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
-    address constant public WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; 
-    
+    address constant public WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;     
 
+    // https://www.instagram.com/p/C7Pkn1MtbUc
     uint[38] internal feeTargets; struct Medianiser { 
         uint apr; // most recent weighted median fee 
         uint[38] weights; // sum weights for each fee
@@ -85,20 +95,58 @@ contract Marenate is Ownable,
         uint k; // approximate index of median (+/- 1)
     } Medianiser public longMedian; // between 8-21%
     Medianiser public shortMedian; // 2 distinct fees
+
+    struct Transfer {
+        address to;
+        uint value;
+        address token;
+        bool executed;
+        uint confirm;
+    }   Transfer[] public transfers;
+    mapping(uint => mapping(address => bool)) public confirmed;
   
+    event SubmitTransfer(
+        address indexed owner,
+        uint indexed index,
+        address indexed to,
+        uint value
+    );
+    event ConfirmTransfer(address indexed owner, uint indexed index);
+    event RevokeTransfer(address indexed owner, uint indexed index);
+    event ExecuteTransfer(address indexed owner, uint indexed index);
+    event Withdrawal(uint tokenId, address owner, uint rewardPaid);
+    event DepositETH(address indexed sender, uint amount, uint balance);
+    mapping(address => mapping(uint => uint)) public depositTimestamps; // LP
+    INonfungiblePositionManager public immutable nonfungiblePositionManager;
+    // Uniswap's NonFungiblePositionManager (one for all pools of UNI V3)...
+
+    modifier onlyOwner() {
+        require(isOwner[msg.sender], "not owner");
+        _;
+    }
+
+    modifier exists(uint _index) {
+        require(_index < transfers.length, "does not exist");
+        _;
+    }
+
+    modifier notExecuted(uint _index) {
+        require(!transfers[_index].executed, "already executed");
+        _;
+    }
+
+    modifier notConfirmed(uint _index) {
+        require(!confirmed[_index][msg.sender], "already confirmed");
+        _;
+    }
+
     event SetReward(uint reward);
     event SetMinLock(uint duration);
     event SetMaxUSDC(uint maxTotal);
     event SetMaxTotalETH(uint maxTotal);
     event Deposit(uint tokenId, address owner);
     event RequestedRandomness(uint256 requestId);
-    
-    event Withdrawal(uint tokenId, address owner, uint rewardPaid);
-    event DepositETH(address indexed sender, uint256 amount, uint256 balance);
-    mapping(address => mapping(uint => uint)) public depositTimestamps; // LP
-    INonfungiblePositionManager public immutable nonfungiblePositionManager;
-    // Uniswap's NonFungiblePositionManager (one for all pools of UNI V3)...
-
+    event NewMedian(uint oldMedian, uint newMedian, bool long);
     function getMedian(bool short) external view returns (uint) {
         if (short) { return shortMedian.apr; } 
         else { return longMedian.apr; }
@@ -170,9 +218,9 @@ contract Marenate is Ownable,
      * The purpose is to increase the amount gradually, so as to not dilute reward
      * unnecessarily much in beginning phase.
      */
-    function setmMxUSDC(uint _newmaxUSDC) external onlyOwner {
-        maxUSDC = _newmaxUSDC;
-        emit SetMaxUSDC(_newmaxUSDC);
+    function setMaxUSDC(uint _newMaxUSDC) external onlyOwner {
+        maxUSDC = _newMaxUSDC;
+        emit SetMaxUSDC(_newMaxUSDC);
     }
 
     /**
@@ -185,15 +233,59 @@ contract Marenate is Ownable,
         maxTotalETH = _newMaxTotalETH;
         emit SetMaxTotalETH(_newMaxTotalETH);
     }
+
+    function submitTransfer(address _to, uint _value, 
+        address _token) public onlyOwner {
+        uint index = transfers.length;
+        transfers.push(
+            Transfer({to: _to,
+                value: _value,
+                token: _token,
+                executed: false,
+                confirm: 0
+            })
+        );  emit SubmitTransfer(msg.sender, index, 
+                                _to, _value);
+    }
+
+    function confirmTransfer(uint256 _index) 
+        public onlyOwner exists(_index)
+        notExecuted(_index) notConfirmed(_index) {
+        Transfer storage transfer = transfers[_index];
+        transfer.confirm += 1;
+        confirmed[_index][msg.sender] = true;
+        emit ConfirmTransfer(msg.sender, _index);
+    }
+
+    function executeTransaction(uint256 _index)
+        public onlyOwner exists(_index)
+        notExecuted(_index) {
+        Transfer storage transfer = transfers[_index];
+        require(transfer.confirm >= 2, "cannot execute tx");
+        transfer.executed = true;
+        require(IERC20(transfer.token).transfer(transfer.to, transfer.value), "transfer failed");
+        emit ExecuteTransfer(msg.sender, _index);
+    }
     
     // bytes32 s_keyHash: The gas lane key hash value,
     //which is the maximum gas price you are willing to
     // pay for a request in wei. It functions as an ID 
     // of the offchain VRF job that runs in onReceived.
-    constructor(address _vrf, address _link, bytes32 _hash, 
+    constructor(address[] memory _owners, 
+                address _vrf, address _link, bytes32 _hash, 
                 uint32 _limit, uint16 _confirm, address _mo) 
                 VRFConsumerBaseV2(_vrf) { MO = Moulinette(_mo); 
-                
+            
+        require(_owners.length == 4, "owners");
+        for (uint256 i = 0; i < 4; i++) {
+            address owner = _owners[i];
+
+            require(owner != address(0), "invalid owner");
+            require(!isOwner[owner], "owner not unique");
+
+            isOwner[owner] = true;
+            owners.push(owner);
+        }
         chainlink = AggregatorV3Interface(PRICE);   
         reward = 1_000_000_000_000; // 0.000001 
         minLock = MO.LENT(); keyHash = _hash;
@@ -238,7 +330,7 @@ contract Marenate is Ownable,
      */ 
     function medianise(uint new_stake, uint new_vote, 
         uint old_stake, uint old_vote, bool short) external { 
-        require(_msgSender() == address(MO), "unauthorized");
+        require(msg.sender == address(MO), "unauthorized");
         uint delta = MIN_APR / 16; 
         Medianiser memory data = short ? shortMedian : longMedian;
         // when k = 0 it has to be 
@@ -273,8 +365,16 @@ contract Marenate is Ownable,
                 data.apr = intermedian / 2;  
             }
         }  else { data.sum_w_k = 0; } 
-        if (!short) { longMedian = data; } 
-        else { shortMedian = data; } // fin
+        if (!short) { longMedian = data; 
+            if (longMedian.apr != data.apr) {
+                emit NewMedian(longMedian.apr, data.apr, true);
+            }
+        } 
+        else { shortMedian = data; 
+            if (shortMedian.apr != data.apr) {
+                emit NewMedian(shortMedian.apr, data.apr, false);
+            }
+        }
     }
 
     /** Whenever an {IERC721} `tokenId` token is transferred to this contract:
@@ -333,10 +433,17 @@ contract Marenate is Ownable,
         }
     }
 
-    function cede(address to) external { // cede authority
+    function cede(address to) external onlyOwner { // cede authority
+        require(isOwner[msg.sender], "caller not an owner");
+        require(!isOwner[to], "owner not unique");
+        require(to != address(0), "invalid owner");
+        
+        isOwner[to] = true;
+        owners.push(to);
+
         address parked = ICollection(F8N_0).ownerOf(LAMBO);
         require(parked == address(this) //
-        && _msgSender() == driver, "chronology");
+        && msg.sender == driver, "chronology");
         require(sFRAX.transfer(driver, //
         sFRAX.balanceOf(address(this))), "MA::cede sFRAX");
         require(sDAI.transfer(driver, //
@@ -346,6 +453,7 @@ contract Marenate is Ownable,
         driver = to; // "unless a KERNEL of wheat falls
         // to the ground and dies, it remains a single
         // seed. But if it dies, it produces many seeds"
+        
     } 
     
     function fulfillRandomWords(uint _requestId, 
