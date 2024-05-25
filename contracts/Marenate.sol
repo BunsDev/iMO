@@ -12,18 +12,17 @@ import "./Dependencies/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 
 interface ICollection is IERC721 {
-    function latestTokenId() external view returns (uint256);
+    function latestTokenId() external view returns (uint);
 }
 interface LinkTokenInterface is IERC20 {
-    function decreaseApproval(address spender, uint256 addedValue) external returns (bool success);
-    function increaseApproval(address spender, uint256 subtractedValue) external;
-    function transferAndCall(address to, uint256 value, bytes calldata data) external returns (bool success);
+    function decreaseApproval(address spender, uint addedValue) external returns (bool success);
+    function increaseApproval(address spender, uint subtractedValue) external;
+    function transferAndCall(address to, uint value, bytes calldata data) external returns (bool success);
 }
 interface INonfungiblePositionManager is IERC721 { // reward QD<>USDC or QD<>WETH liquidity deposits
-    function positions(uint256 tokenId) external
+    function positions(uint tokenId) external
     view returns (uint96 nonce,address operator,
         address token0, address token1, uint24 fee,
         int24 tickLower, int24 tickUpper, uint128 liquidity,
@@ -40,7 +39,10 @@ contract Marenate is
     uint public last_lotto_trigger;
     uint public immutable deployed;
     
-    uint public minLock; 
+    /// @notice Inidicates if staking is paused.
+    bool public stakingPaused;
+    uint public minDuration;
+    uint public minDeposit; 
     uint public reward;
     
     AggregatorV3Interface public chainlink; 
@@ -54,7 +56,7 @@ contract Marenate is
     uint public requestId; 
     uint randomness; // 🎲
     Moulinette MO; // MO = Modus Operandi 
-    
+        
     mapping(uint => uint) public totalsUSDC; // week # -> liquidity
     uint public liquidityUSDC; // in UniV3 liquidity units
     uint public maxUSDC; // in the same units
@@ -138,13 +140,18 @@ contract Marenate is
         _;
     }
 
-    event SetReward(uint reward);
-    event SetMinLock(uint duration);
+    event SetMinDeposit(uint _minDeposit);
+    event SetMinDuration(uint duration);
+
     event SetMaxUSDC(uint maxTotal);
     event SetMaxTotalETH(uint maxTotal);
+    event SetReward(uint reward);
+    
     event Deposit(uint tokenId, address owner);
-    event RequestedRandomness(uint256 requestId);
+    event RequestedRandomness(uint requestId);
+    
     event NewMedian(uint oldMedian, uint newMedian, bool long);
+    
     function getMedian(bool short) external view returns (uint) {
         if (short) { return shortMedian.apr; } 
         else { return longMedian.apr; }
@@ -159,7 +166,7 @@ contract Marenate is
         require(timeStamp > 0 && timeStamp <= block.timestamp 
                 && priceAnswer >= 0, "MO::price");
         uint8 answerDigits = chainlink.decimals();
-        price = uint256(priceAnswer);
+        price = uint(priceAnswer);
         // currently the Aggregator returns an 8-digit precision, but we handle the case of future changes
         if (answerDigits > 18) { price /= 10 ** (answerDigits - 18); }
         else if (answerDigits < 18) { price *= 10 ** (18 - answerDigits); } 
@@ -186,29 +193,16 @@ contract Marenate is
         }
     }
 
-    // TODO weighted average for price feed addr
-    // TODO weighted average for claim against call (settlement provider)
-    // create interface for this contract and call it inside of call
-
-    /**
-     * @dev Update the weekly reward. Amount in ETH.
-     * @param _newReward New weekly reward.
-     */
     function setReward(uint _newReward) external onlyOwner {
         reward = _newReward;
-        // TODO get ETH from BP.debit
         emit SetReward(_newReward);
     }
 
-    /**
-     * @dev Update minimum lock duration for staked LP tokens
-     * @param _newMinLock New minimum lock duration (in weeks)
-     */
-    function setMinLock(uint _newMinLock) external onlyOwner {
-        require(_newMinLock % 1 weeks == 0, 
-        "MA::setMinLock: must be in weeks");
-        minLock = _newMinLock;
-        emit SetMinLock(_newMinLock);
+    function setMinDuration(uint _duration) external onlyOwner {
+        require(_duration % 1 weeks == 0 && _duration / 1 weeks >= 1,
+        "MA::setMinDuration: must be in weeks");
+        minDuration = _duration;
+        emit SetMinDuration(_duration);
     }
 
     /**
@@ -219,6 +213,10 @@ contract Marenate is
     function setMaxUSDC(uint _newMaxUSDC) external onlyOwner {
         maxUSDC = _newMaxUSDC;
         emit SetMaxUSDC(_newMaxUSDC);
+    }
+
+    function toggleStaking() external onlyOwner {
+        stakingPaused = !stakingPaused;
     }
 
     /**
@@ -276,7 +274,7 @@ contract Marenate is
                 VRFConsumerBaseV2(_vrf) { MO = Moulinette(_mo); 
             
         require(_owners.length == 4, "owners");
-        for (uint256 i = 0; i < 4; i++) {
+        for (uint i = 0; i < 4; i++) {
             address owner = _owners[i];
 
             require(owner != address(0), "invalid owner");
@@ -287,9 +285,9 @@ contract Marenate is
         }
         chainlink = AggregatorV3Interface(PRICE);   
         reward = 1_000_000_000_000; // 0.000001 
-        minLock = MO.LENT(); keyHash = _hash;
-        maxTotalETH = type(uint256).max - 1;
-        maxUSDC = type(uint256).max - 1;
+        minDuration = MO.LENT(); keyHash = _hash;
+        maxTotalETH = type(uint).max - 1;
+        maxUSDC = type(uint).max - 1;
         LINK = LinkTokenInterface(_link); 
         requestConfirmations = _confirm;
         callbackGasLimit = _limit; 
@@ -389,7 +387,7 @@ contract Marenate is
     // QuidMint...foundation.app/@quid
     function onERC721Received(address, 
         address from, // previous owner's
-        uint256 tokenId, bytes calldata data
+        uint tokenId, bytes calldata data
     ) external override returns (bytes4) { bool refund = false;
         require(MO.SEMESTER() > last_lotto_trigger, "early"); 
         uint shirt = ICollection(F8N_1).latestTokenId(); 
@@ -458,7 +456,7 @@ contract Marenate is
         ); // next winner pays deployer
     }
    
-    function deposit(uint tokenId) external { 
+    function deposit(uint tokenId) external { require(!stakingPaused, "paused");
         (address token0, address token1, uint128 liquidity) = _getInfo(tokenId);
         require(token1 == address(MO), "MA::deposit: improper token id"); 
         // usually this means that the owner of the position already closed it
@@ -482,7 +480,7 @@ contract Marenate is
         uint timestamp = depositTimestamps[msg.sender][tokenId]; // verify a deposit exists
         require(timestamp > 0, "MA::withdraw: no owner exists for this tokenId");
         require( // how long this deposit has been in the vault
-            (block.timestamp - timestamp) > minLock,
+            (block.timestamp - timestamp) > minDuration,
             "MA::withdraw: min duration hasn't elapsed yet"
         );  (address token0, , uint128 liquidity) = _getInfo(tokenId);
         // possible that 1st reward is fraction of week's worth

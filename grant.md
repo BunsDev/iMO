@@ -20,7 +20,7 @@ to keep..." on [commodifying](https://twitter.com/QuidMint/status/17880417642820
 
   - **Maintenance:** 42000 USD
     - Solidity [audit](https://www.protectorguild.co/) + general  
-    counsel [retainer](https://twitter.com/lex_node/status/1760701615424630848): 30k  
+    counsel retainer: 30k  
     [Cayman](https://arbiscan.io/tx/0x5e4b70fad2039257bfe742d42a0fe085525351b99f1f979c424ddf93a60c882a): 12k + late fees
   - **R&D Costs:** 34000 USD
     - **Full-Time Equivalent (FTE)**: 2 months 
@@ -33,9 +33,8 @@ to keep..." on [commodifying](https://twitter.com/QuidMint/status/17880417642820
 Maker & Spark account for 57% of  ETH TVL (incl. LSTs) between all lending markets.  
 There is an increasing demand for bringing sDAI to L2; QU!D focuses on Arbitrum...  
 [Derivatives](https://twitter.com/lex_node/status/1740509787690086847) derive their value from an underlying asset. Our ~~certicificate of deposit~~...   
-[capital deepening](https://www.wallstreetmojo.com/capital-deepening/) token (QD) derives its value from the collateral used to call `mint`.  
-It takes 1 year for minted QD tokens to mature, after this they're redeemable (`call`).
-
+[capital deepening](https://www.wallstreetmojo.com/capital-deepening/) token (QD) derives its value from that of both sDAI and sFRAX...  
+It takes 1 year for minted QD tokens to mature, after this they become redeemable.
 
 
 ### Use of funds, milestones, and goals (KPIs):
@@ -49,13 +48,14 @@ in Q2 (same minted within Q4)
 - User Adoption (2025-'26): 357M QD in    
  Q2
 (same minted within Q4)  
-  544M sFRAX locked for '25.  
+  544M sDAI locked for '25.  
   
 - Contract Interaction: facilitate at least  
   1000 `Plunge` positions, which use a   
   wholesale strategy instead of importing  
   liquidity the step-wise [way]((https://twitter.com/zellic_io/status/1688666477552193536)) we're used to 
-- Partnerships: Milestone 2 and onwards
+- Partnerships: Milestone 2 and onwards  
+  
 
 ### Milestone 1:
 

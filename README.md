@@ -1,14 +1,15 @@
 
 ## !n My Opinion...interMittent Offering (!MO) 
 
-Tote [`deux`] like   mechanics...mechanisms," based on re-staking.  
+"Tote [`deux`] like mechanics...mechanisms," based on re-staking;  
 "it's actually...'very' [scientific](https://x.com/QuidMint/status/1788634658931908915), I won't go into it right now, but I'm  
- the only guy  in the city that has it...I run it myself like
+ the only guy  in the [city](https://x.com/vibhu/status/1771182771253194766) that has it...I run it myself like
 quarterback  
 
 options." Synthetics are cash-settled, with 2 types of payable  
 `dues`: for synthetic `long` or `short` (think of these as *Itchy  
 and Scratchy*); `credit` and `debit` are one force moving in  
+
 opposite directions ([*CatDog*](https://x.com/QuidMint/status/1786703126470222054)), "you're burnin' up, I'm coolin'  
 down; you're [blind](https://www.investopedia.com/terms/b/blind-entry.asp), I [see](https://docs.google.com/document/d/1fD1_rP8GonSUHyRXENDudlzBkkTcAsN7L9IiTrxEuAY/edit)..." how "I do this for my [*P*olitical  
 *A*ction *C*ommittee]: walked in the kitchen; found a [`Pod`]  
