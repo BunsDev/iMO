@@ -186,19 +186,6 @@ export const QUID = [
   },
   {
     "inputs": [],
-    "name": "CENT",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "C_NOTE",
     "outputs": [
       {
@@ -212,7 +199,7 @@ export const QUID = [
   },
   {
     "inputs": [],
-    "name": "DIGITS",
+    "name": "IVERSON",
     "outputs": [
       {
         "internalType": "uint256",
@@ -303,25 +290,12 @@ export const QUID = [
   },
   {
     "inputs": [],
-    "name": "ONE",
+    "name": "PENNY",
     "outputs": [
       {
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "PRICE",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -368,6 +342,19 @@ export const QUID = [
   },
   {
     "inputs": [],
+    "name": "SFRAX",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "STACK",
     "outputs": [
       {
@@ -406,6 +393,19 @@ export const QUID = [
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "WAD",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -422,12 +422,12 @@ export const QUID = [
       },
       {
         "internalType": "uint256",
-        "name": "locked",
+        "name": "minted",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "minted",
+        "name": "locked",
         "type": "uint256"
       }
     ],
@@ -562,19 +562,6 @@ export const QUID = [
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "chainlink",
-    "outputs": [
-      {
-        "internalType": "contract AggregatorV3Interface",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address[]",
@@ -631,32 +618,7 @@ export const QUID = [
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "feeTargets",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bool",
-        "name": "clutch",
-        "type": "bool"
-      }
-    ],
+    "inputs": [],
     "name": "flip",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -793,47 +755,6 @@ export const QUID = [
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "longMedian",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "apr",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "total",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "sum_w_k",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "k",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "maren",
-    "outputs": [
-      {
-        "internalType": "address payable",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -849,6 +770,19 @@ export const QUID = [
     "name": "mint",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "mock",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -914,7 +848,7 @@ export const QUID = [
       },
       {
         "internalType": "bool",
-        "name": "long",
+        "name": "short",
         "type": "bool"
       }
     ],
@@ -936,7 +870,7 @@ export const QUID = [
         "type": "uint256"
       }
     ],
-    "name": "qd_amt_to_sfrax_amt",
+    "name": "qd_amt_to_dollar_amt",
     "outputs": [
       {
         "internalType": "uint256",
@@ -968,23 +902,10 @@ export const QUID = [
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "sFRAX",
-    "outputs": [
-      {
-        "internalType": "contract IERC20",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address payable",
-        "name": "_maren",
+        "name": "_addr",
         "type": "address"
       }
     ],
@@ -1004,34 +925,6 @@ export const QUID = [
     "name": "set_price",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "shortMedian",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "apr",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "total",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "sum_w_k",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "k",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {

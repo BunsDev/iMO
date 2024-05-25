@@ -12,7 +12,7 @@ interface IMarenate {
     uint old_stake, uint old_vote, bool short) external; 
 }
 
-contract Moulinette is ERC20, Ownable { IMarenate MA; 
+contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
     address constant public SFRAX = 0xA663B02CF0a4b149d2aD41910CB81e23e1c41c32; 
     address constant public SDAI = 0x83F20F44975D03b1b09e64809B757c47f942BEeA;
     address constant public QUID = 0x42cc020Ef5e9681364ABB5aba26F39626F1874A4;
@@ -45,10 +45,14 @@ contract Moulinette is ERC20, Ownable { IMarenate MA;
         uint debit; // in wind this is ETH frozen in Marenate
     }  // credit used for fee voting; debit for fee charging...
     struct Owe { uint points; // time-weighted _balances QD credit 
-        bool deux; // pay...✌🏻xAPR for peace of mind, and flip debt
-        bool clutch; // ditto ^^^^ pro-rated _unwind, no ^^^^ ^^^^ 
-        Pod long; // debit = last time of long APR payment;
+        Pod long; // debit = last time of long APR payment
         Pod short; // debit = last time of short APR payment
+        bool clutch; // pro-rated _unwind ✌🏻xAPR peace of mind
+        // "we freeze it and own it...squeeze it and hold it:
+        // something European chromed out with the clutch...
+        // glaciers have melted to the see...I wish the tide 
+        // would take me over...I've been down on my knees
+        // and you just keep on getting closer...go slow"
     }  
     struct Piscine { Pod long; Pod short; }
     /* The 1st part is called "The Pledge"... 
@@ -65,9 +69,9 @@ contract Moulinette is ERC20, Ownable { IMarenate MA;
     Pod public wind; Piscine public work;
     address public mock;
     constructor(address _sdai) ERC20("QU!Dao", "QD") { 
-        // _MO[0].start = 1717171717; 
         mock = _sdai;
         _MO[0].start = block.timestamp; 
+        // _MO[0].start = 1717171717; 
     }
     event Minted (address indexed reciever, uint cost_in_usd, uint amt);
     // Events are emitted, so only when we emit profits
@@ -219,21 +223,20 @@ contract Moulinette is ERC20, Ownable { IMarenate MA;
             fee *= _work.debit / WAD;
             time = plunge.dues.short.debit > block.timestamp ? 
                 0 : block.timestamp - plunge.dues.short.debit; 
-            if (plunge.dues.deux) { clutch = 1; // used in _unwind
-                if (plunge.dues.clutch) { clutch += fee; 
-                    // 144x per day is (24 hours * 60 minutes) / 10 minutes
-                    clutch = (MIN_APR / 1000) * _work.debit / WAD; // 1.3% per day
-                } // call option to _work debit of dollar value at 
+            if (plunge.dues.clutch) { // clutch += fee; 
+                // 144x per day is (24 hours * 60 minutes) / 10 minutes
+                clutch = (MIN_APR / 1000) * _work.debit / WAD; // 1.3% per day
             }   (_work, _eth, folded) = _charge(addr, _eth,
                  _work, price, time, clutch, true); 
             if (folded) { // clutch == 1 flips the debt
-                if (clutch == 1) { plunge.dues.short.debit = 0;
-                    plunge.work.short.credit = 0;
-                    plunge.work.short.debit = 0;
-                    plunge.work.long.credit = _work.credit;
-                    plunge.work.long.debit = _work.debit;
-                    plunge.dues.long.debit = block.timestamp + 1 days; 
-                }   else if (clutch > 1) { // slow drip option
+                // if (clutch == 1) { plunge.dues.short.debit = 0;
+                //     plunge.work.short.credit = 0;
+                //     plunge.work.short.debit = 0;
+                //     plunge.work.long.credit = _work.credit;
+                //     plunge.work.long.debit = _work.debit;
+                //     plunge.dues.long.debit = block.timestamp + 1 days; 
+                // } else   
+                if (clutch > 1) { // slow drip option
                     plunge.dues.short.debit = block.timestamp; 
                 }   else { plunge.dues.short.debit = 0; }
             } else { plunge.dues.short.debit = block.timestamp; }   
@@ -243,24 +246,23 @@ contract Moulinette is ERC20, Ownable { IMarenate MA;
                 fee *= _work.debit / WAD; // liquidator's fee for gas
                 time = plunge.dues.long.debit > block.timestamp ? 
                     0 : block.timestamp - plunge.dues.long.debit; 
-                if (plunge.dues.deux) { clutch = 1; // used in _unwind
-                    if (plunge.dues.clutch) { clutch += fee; // 144x per
-                        // day is (24 hours * 60 minutes) / 10 minutes
-                        clutch += (MIN_APR / 1000) * _work.debit / WAD;
-                    } 
+                if (plunge.dues.clutch) { // clutch += fee;
+                    // 144x per day is (24 hours * 60 minutes) / 10 minutes
+                     clutch += (MIN_APR / 1000) * _work.debit / WAD;
                 }   (_work, _eth, folded) = _charge(addr, _eth,
                     _work, price, time, clutch, false); 
                 if (folded) { // festina...lent...eh? make haste
-                    if (clutch == 1) { plunge.dues.long.debit = 0;
-                        plunge.work.long.credit = 0;
-                        plunge.work.long.debit = 0;
-                        plunge.work.short.credit = _work.credit;
-                        plunge.work.short.debit = _work.debit;
-                        plunge.dues.short.debit = block.timestamp + 1 days;
+                    // if (clutch == 1) { plunge.dues.long.debit = 0;
+                    //     plunge.work.long.credit = 0;
+                    //     plunge.work.long.debit = 0;
+                    //     plunge.work.short.credit = _work.credit;
+                    //     plunge.work.short.debit = _work.debit;
+                    //     plunge.dues.short.debit = block.timestamp + 1 days;
                         // a grace period is provided for calling put(),
                         // otherwise can get stuck in an infinite loop
                         // of throwing back & forth between directions
-                    }   else if (clutch > 1) { // slow drip option
+                    // }   else 
+                    if (clutch > 1) { // slow drip option
                         plunge.dues.long.debit = block.timestamp; 
                     }   else { plunge.dues.long.debit = 0; }
                 } else { plunge.dues.long.debit = block.timestamp; }  
@@ -396,12 +398,14 @@ contract Moulinette is ERC20, Ownable { IMarenate MA;
                             work.short.credit -= _work.credit;
                             _work.credit = 0; _work.debit = 0;
                     }
-                }   else if (clutch == 1) { // no return to carry
-                        work.short.credit -= _work.credit;
-                        work.long.credit += _work.credit;
-                        work.short.debit -= _work.debit;
-                        work.long.debit += _work.debit;
-                } else { // partial return to carry
+                }   
+                // else if (clutch == 1) { // no return to carry
+                //         work.short.credit -= _work.credit;
+                //         work.long.credit += _work.credit;
+                //         work.short.debit -= _work.debit;
+                //         work.long.debit += _work.debit;
+                // } 
+                else { // partial return to carry
                     _work.debit -= clutch; in_eth = _ratio(WAD, clutch, price);
                     _work.credit -= in_eth; work.short.credit -= in_eth; 
                     work.short.debit -= clutch; carry.credit += clutch;
@@ -447,12 +451,14 @@ contract Moulinette is ERC20, Ownable { IMarenate MA;
                             work.long.credit -= _work.credit;
                             _work.credit = 0; _work.debit = 0;
                     }
-                } else if (clutch == 1) { // no return to carry
-                    work.long.credit -= _work.credit;
-                    work.short.credit += _work.credit;
-                    work.long.debit -= _work.debit;
-                    work.short.debit += _work.debit;
-                } else { // partial return to carry
+                } 
+                // else if (clutch == 1) { // no return to carry
+                //     work.long.credit -= _work.credit;
+                //     work.short.credit += _work.credit;
+                //     work.long.debit -= _work.debit;
+                //     work.short.debit += _work.debit;
+                // } 
+                else { // partial return to carry
                     _work.debit -= clutch; in_eth = _ratio(WAD, clutch, price);
                     _work.credit -= in_eth; work.long.credit -= in_eth; 
                     work.long.debit -= clutch; carry.credit += clutch;
@@ -480,11 +486,10 @@ contract Moulinette is ERC20, Ownable { IMarenate MA;
         MA = IMarenate(_addr); renounceOwnership();
     } 
 
-    function flip(bool clutch) external { uint price = _get_price(); // or engine
+    function flip() external { uint price = _get_price(); // or engine
         Plunge memory plunge = _fetch(_msgSender(), price, true, _msgSender());
-        if (clutch) { plunge.dues.deux = true; plunge.dues.clutch = true; } else {
-            plunge.dues.deux = !plunge.dues.deux; plunge.dues.clutch = false;
-        }   Plunges[_msgSender()] = plunge; // write to storage, we're done
+        plunge.dues.clutch = !plunge.dues.clutch;
+        Plunges[_msgSender()] = plunge;
     }
 
     function fold(bool short) external { 
@@ -671,7 +676,7 @@ contract Moulinette is ERC20, Ownable { IMarenate MA;
         uint _carry = balanceOf(_msgSender()) + _ratio(price,
         plunge.eth, WAD); uint eth = _ratio(WAD, amount, price);
         console.log("ETH before.... %s", eth);
-        uint max = plunge.dues.deux ? 2 : 1; // used in require
+        uint max = plunge.dues.clutch ? 2 : 1; // used in require
         max *= MIN_APR; // MA.getMedian(short); // TODO uncomment
         if (msg.value > 0) { wind.debit += msg.value; // sell ETH 
             // address(MA).call{value: msg.value}(""); // TODO uncomment

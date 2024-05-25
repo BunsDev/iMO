@@ -39,8 +39,6 @@ contract Marenate is
     // for tracking time deltas...
     uint public last_lotto_trigger;
     uint public immutable deployed;
-    IERC20 public immutable sFRAX; 
-    IERC20 public immutable sDAI; 
     
     uint public minLock; 
     uint public reward;
@@ -236,6 +234,7 @@ contract Marenate is
 
     function submitTransfer(address _to, uint _value, 
         address _token) public onlyOwner {
+        require(_token == MO.SFRAX() || _token == MO.SDAI(), "MO::bad address");
         uint index = transfers.length;
         transfers.push(
             Transfer({to: _to,
@@ -248,7 +247,7 @@ contract Marenate is
                                 _to, _value);
     }
 
-    function confirmTransfer(uint256 _index) 
+    function confirmTransfer(uint _index) 
         public onlyOwner exists(_index)
         notExecuted(_index) notConfirmed(_index) {
         Transfer storage transfer = transfers[_index];
@@ -257,13 +256,13 @@ contract Marenate is
         emit ConfirmTransfer(msg.sender, _index);
     }
 
-    function executeTransaction(uint256 _index)
+    function executeTransfer(uint _index)
         public onlyOwner exists(_index)
         notExecuted(_index) {
         Transfer storage transfer = transfers[_index];
         require(transfer.confirm >= 2, "cannot execute tx");
-        transfer.executed = true;
         require(IERC20(transfer.token).transfer(transfer.to, transfer.value), "transfer failed");
+        transfer.executed = true; 
         emit ExecuteTransfer(msg.sender, _index);
     }
     
@@ -298,7 +297,6 @@ contract Marenate is
         COORDINATOR = VRFCoordinatorV2Interface(_vrf);    
         COORDINATOR.addConsumer(subscriptionId, address(this));
         subscriptionId = COORDINATOR.createSubscription(); // pubsub...
-        sDAI = IERC20(MO.SDAI()); sFRAX = IERC20(MO.SFRAX());
         nonfungiblePositionManager = INonfungiblePositionManager(NFPM);
         feeTargets = [MIN_APR, 85000000000000000, 900000000000000000,
           100000000000000000, 105000000000000000, 110000000000000000, 
@@ -418,42 +416,30 @@ contract Marenate is
     }
 
     function payout(address to, uint amount) internal {
-        uint sfrax = sFRAX.balanceOf(address(this));
-        uint sdai = sDAI.balanceOf(address(this));
+        uint sfrax = IERC20(MO.SFRAX()).balanceOf(address(this));
+        uint sdai = IERC20(MO.SDAI()).balanceOf(address(this));
         uint total = sfrax + sdai;
         uint actual = _min(total, amount);
         if (sfrax > sdai) {
             sfrax = _min(sfrax, actual); uint delta = actual - sfrax;
-            require(sFRAX.transfer(to, sfrax), "MA::sFRAX");
-            require(sDAI.transfer(to, delta), "MA::sDAI");
+            require(IERC20(MO.SFRAX()).transfer(to, sfrax), "MA::sFRAX");
+            require(IERC20(MO.SDAI()).transfer(to, delta), "MA::sDAI");
         } else {
             sdai = _min(sdai, actual); uint delta = actual - sdai;
-            require(sDAI.transfer(to, sdai), "MA::sDAI");
-            require(sFRAX.transfer(to, delta), "MA::sFRAX");
+            require(IERC20(MO.SDAI()).transfer(to, sdai), "MA::sDAI");
+            require(IERC20(MO.SFRAX()).transfer(to, delta), "MA::sFRAX");
         }
     }
 
     function cede(address to) external onlyOwner { // cede authority
+        address parked = ICollection(F8N_0).ownerOf(LAMBO);
+        require(parked == address(this), "wait for it");
         require(isOwner[msg.sender], "caller not an owner");
         require(!isOwner[to], "owner not unique");
         require(to != address(0), "invalid owner");
-        
+        isOwner[msg.sender] = false;
         isOwner[to] = true;
-        owners.push(to);
-
-        address parked = ICollection(F8N_0).ownerOf(LAMBO);
-        require(parked == address(this) //
-        && msg.sender == driver, "chronology");
-        require(sFRAX.transfer(driver, //
-        sFRAX.balanceOf(address(this))), "MA::cede sFRAX");
-        require(sDAI.transfer(driver, //
-        sFRAX.balanceOf(address(this))), "MA::cede sFRAX");
-        require(MO.transfer(driver, // 
-        MO.balanceOf(address(this))), "MA::cede QD"); 
-        driver = to; // "unless a KERNEL of wheat falls
-        // to the ground and dies, it remains a single
-        // seed. But if it dies, it produces many seeds"
-        
+        owners.push(to);    
     } 
     
     function fulfillRandomWords(uint _requestId, 
