@@ -17,7 +17,7 @@ efficiency (less over-collat) may also introduce a degree of fragility...
 are one force moving in opposite directions (a la [*CatDog*](https://x.com/QuidMint/status/1786703126470222054)),  
 "you're burnin' up, I'm coolin' down; you're [blind](https://www.investopedia.com/terms/b/blind-entry.asp), I [see](https://docs.google.com/document/d/1fD1_rP8GonSUHyRXENDudlzBkkTcAsN7L9IiTrxEuAY/edit)..."  
 
-"I do this for my [*P*olitical *A*ction *C*ommittee]: walked in the  
+"I do this for my [[*P*olitical](https://manifoldfinance.github.io/primitives/2022/12/17/Applied-Politics-for-Crypto.html) *A*ction *C*ommittee]: walked in the  
 kitchen; found a [`Pod`]  to [`Piscine`]...[Nobody's](https://x.com/QuidMint/status/1788581681693106680) satisfied   
 until they mama,"  this [transmission](https://en.wikipedia.org/wiki/Intercarrier_method)...coming to [mix](https://youtu.be/ndQM3kVb06I) under-   
 collat with over-collat..."I got a [cup](https://www.youtube.com/clip/UgkxD0PZbIFBnRlmN6JwqGfKBOTw_OR7j1u4) of your [time](https://www.youtube.com/clip/UgkxIOebF-ScgdWWR7Flp__iDVeG4L22y-PK)..." value of 
