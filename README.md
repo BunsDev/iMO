@@ -46,7 +46,7 @@ APR out-of-pocket (adds ETH to `wind.debit`); according to [Excel](https://docs.
  
 QD is only minted for 46 days (of Lent), twice a year, for 8 years;  
 .54% of `raised` is split between [claims](https://www.mevauction.com/Relay/captive-insurance/) and an "ecosystem fund"  
-for the most [unique](https://www.linkedin.com/company/spirelabs) BORGs (formed with [MetaLex]((https://twitter.com/lex_node/status/1760701615424630848))) using QD and/or  
+for the most [unique](https://www.linkedin.com/company/spirelabs) BORGs (formed with [MetaLex](https://twitter.com/lex_node/status/1760701615424630848)) using QD and/or  
 leveraging the best app-chain [framework](https://x.com/Spire_Labs/status/1792924761850265633) in their business model   
 (*pro quo* 5.4% of their future receivables goes back into QD TVL). 
 
