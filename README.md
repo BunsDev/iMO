@@ -8,8 +8,8 @@ the latter, we need a basic feel for the concept's [chemical](https://mirror.xyz
 
  We've heavily reduced all the variables involved, so you end up with a  
 system that is very basic, increasing the chances that it's resistant to  
-all types of attacks. It's worth keeping in mind, though, that capital  
-efficiency (less over-collat) may also introduce a degree of fragility. 
+all types of attacks. It's worth keeping in mind that optimising capital  
+efficiency (less over-collat) may also introduce a degree of fragility... 
 
 "Tote tools like mechanics...mechanisms," based on re-staking;   
 2 types of cash-settled `dues`: for synthetic `long` or `short`  
@@ -47,7 +47,7 @@ APR out-of-pocket (adds ETH to `wind.debit`); according to [Excel](https://docs.
 QD is only minted for 46 days (of Lent), twice a year, for 8 years;  
 .54% of `raised` is split between [claims](https://www.mevauction.com/Relay/captive-insurance/) and an "ecosystem fund"  
 for the most [unique](https://www.linkedin.com/company/spirelabs) BORGs (formed with [MetaLex]((https://twitter.com/lex_node/status/1760701615424630848))) using QD and/or  
-leveraging  their business model  
+leveraging the best app-chain [framework](https://x.com/Spire_Labs/status/1792924761850265633) in their business model   
 (*pro quo* 5.4% of their future receivables goes back into QD TVL). 
 
 
