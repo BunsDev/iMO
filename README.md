@@ -25,7 +25,7 @@ collat with over-collat..."I got a [cup](https://www.youtube.com/clip/UgkxD0PZbI
 treasuries, LSDs, LRTs, EIGEN deposits, sUSDe...all share  
 the property that at some point in the future they will be  
 redeemable for their underlying property. The future is a  
-projection: the net present value of force times distance: 
+projection (the net present value of force times distance): 
 
 `work` (leverage is always inter-subjective, profitable or not  
 depending on the circumstances). The present has value as  
