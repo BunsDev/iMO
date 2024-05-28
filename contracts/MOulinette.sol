@@ -71,7 +71,7 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
     constructor(address _sdai) ERC20("QU!Dao", "QD") { 
         mock = _sdai;
         _MO[0].start = block.timestamp; 
-        // _MO[0].start = 1717171717; 
+        // _MO[0].start = 1717777777; 
     }
     event Minted (address indexed reciever, uint cost_in_usd, uint amt);
     // Events are emitted, so only when we emit profits

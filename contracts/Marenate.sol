@@ -462,9 +462,9 @@ contract Marenate is
         // usually this means that the owner of the position already closed it
         require(liquidity > 0, "MA::deposit: cannot deposit empty amount");
         // TODO address not WETH
-        if (token0 == WETH) { totalsETH[ _roll()] += liquidity; liquidityETH += liquidity;
+        if (token0 == WETH) { totalsETH[_roll()] += liquidity; liquidityETH += liquidity;
             require(liquidityETH <= maxTotalETH, "MA::deposit: totalLiquidity exceed max");
-        } else if (token0 == USDC) { totalsUSDC[ _roll()] += liquidity; liquidityUSDC += liquidity;
+        } else if (token0 == USDC) { totalsUSDC[_roll()] += liquidity; liquidityUSDC += liquidity;
             require(liquidityUSDC <= maxUSDC, "MA::deposit: totalLiquidity exceed max");
         } else { require(false, "MA::deposit: improper token id"); }
         depositTimestamps[msg.sender][tokenId] = block.timestamp;
