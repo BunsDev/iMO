@@ -85,4 +85,3 @@ premium (up to [3x](https://x.com/santiagoroel/status/1791114254117998865) surge
 partially for paying APR...while profitable trades...  
 (`fold` by active management) could potentially   
 capture gains away from (passively managed QD).
-
