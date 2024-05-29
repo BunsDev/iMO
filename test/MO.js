@@ -58,7 +58,7 @@ describe("Moulinette contract", function () {
         // wait for price to get to .99
         await time.increase(3974000) // 46 days * 24 hours * 60 minutes * 60 seconds
         const amt = '500000000000000000000'
-        await MO.connect(addr3).mint(amt, addr2) // beneficiary different from sender
+        await MO.connect(addr3).mint(amt, addr3) // beneficiary different from sender
         await MO.connect(addr4).mint(amt, addr2) // beneficiary different from sender
         await MO.connect(addr5).mint(amt, addr2) // beneficiary different from sender
 
@@ -145,7 +145,7 @@ describe("Moulinette contract", function () {
             addr4, addr5, currentTime } = await loadFixture(deployAndMintMOFixture)
 
         var ethBefore = await ethers.provider.getBalance(addr2)
-        const amt = '5000000000000000000'
+        const amt = '500000044440000000'
 
         
         var in_carry_before = await MO.carry()
@@ -164,7 +164,10 @@ describe("Moulinette contract", function () {
         var in_work = await MO.work()
         console.log('in_work', in_work)
 
-        await MO.connect(addr1).put(addr2, amt, false, false)
+        // we never minted any QD to addr1
+        await expect(MO.connect(addr1).put(addr2, amt, false, false)).to.be.revertedWith("ERC20: transfer amount exceeds balance")
+
+        await MO.connect(addr3).put(addr2, amt, false, false)
 
         in_carry_after = await MO.carry()
         console.log('AFTER_in_carry_after', in_carry_after)

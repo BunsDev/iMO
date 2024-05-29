@@ -177,9 +177,13 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
         if (!matured) { // TODO _transfer if to == address(this) wind.credit--
             delta = _it(from, to, value);
             console.log("DELTA...%s", delta);
-            if (delta > 0) { _transfer(from, to, delta); }
+            if (delta > 0) { 
+                 console.log("BALANCE...%s", balanceOf(from));
+                _transfer(from, to, delta); 
+            }
         } else { // fire doesn't erase blood, QD is never burned
             delta = _min(super.balanceOf(from), value);
+            console.log("ENTRAAAAA...%s", delta);
             _transfer(from, to, delta); value -= delta;
             if (value > 0) {
                 require(_it(from, to, value) == 0, 
@@ -534,11 +538,11 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
                                       false, _msgSender());
         carry.debit += msg.value;
         if (!_eth) { _send(_msgSender(), address(this), amount, false);
-            uint eth = _ratio(WAD, amount, price);
-            if (short) { work.long.credit += eth;
+            carry.credit -= amount; uint eth = _ratio(WAD, amount, price);
+            if (!short) { work.long.credit += eth;
                 plunge.work.long.credit += eth;
-                // TODO decrement carry.credit and wind.credit?
             } else { 
+                console.log("BRAAAAAAAAA");
                 most = _min(eth, plunge.work.short.credit);
                 plunge.work.short.credit -= eth;
                 work.short.credit -= eth;
@@ -593,7 +597,12 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
             wind.credit -= most; _burn(_msgSender(), most); 
             for (uint i = 0; i < SEMESTER; i++) {
                 debt_minted += _MO[SEMESTER].minted;
-            }   uint debt_surplus = wind.credit - debt_minted;
+            }   
+            uint total_debt = wind.credit - super.balanceOf(address(this));
+            // the contract's balance of QD is not part of circulating supply, so it can be burned 
+            // at any time against the total outstanding debt, or used for liquidation protection
+            // total_debt includes trading profits minted in _unwind() as well as debt from mint()
+            uint debt_surplus = total_debt > debt_minted ? total_debt - debt_minted : 0;
             uint share = plunge.dues.points * debt_surplus / _POINTS;
             uint paying = most - (debt_surplus - share); // dilution
             // so that plunges that have been around since

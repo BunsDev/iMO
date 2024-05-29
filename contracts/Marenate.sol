@@ -175,6 +175,9 @@ contract Marenate is
     receive() external payable { // receive from MO
         emit DepositETH(msg.sender, msg.value, address(this).balance);
     }  
+    fallback() external payable {}
+    
+
     function _min(uint _a, uint _b) internal pure returns (uint) {
         return (_a < _b) ? _a : _b;
     }
