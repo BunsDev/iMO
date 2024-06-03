@@ -563,7 +563,7 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
             carry.credit -= amount; // amount is in units of QD
             _send(_msgSender(), address(this), amount, false);
         }   
-        else if (eth) { // amount is in units of ETH
+        else { // amount is in units of ETH
             most = _min(Plunges[_msgSender()].eth, amount);
             uint attached = msg.value;
             if (amount > most) {
@@ -694,7 +694,8 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
         require(block.timestamp >= _MO[0].start + LENT, "MO::owe: early"); 
         require(ratio > IVERSON, "MO::owe: under-backed");
         uint debit; uint credit; 
-        uint price = _get_price(false);
+        uint xag_price = _get_price(false);
+        uint eth_price = _get_price(true);
         Plunge memory plunge = _fetch(_msgSender(), price, 
                                       false, _msgSender()); 
         if (short) { 
@@ -714,17 +715,16 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
         max *= MIN_APR; // MA.getMedian(short); // TODO uncomment
         if (msg.value > 0) { wind.debit += msg.value; // sell ETH 
             // address(MA).call{value: msg.value}(""); // TODO uncomment
-            xag += msg.value;
+            xag += _ratio(WAD, _ratio(eth_price, msg.value, WAD), xag_price);
         } 
-        if (!short) {  // TODO dynamic, get msg.value in units of what's levered
+        carry.credit -= amount
+        if (!short) { 
             // we are crediting the position's long with virtual credit 
             // in units of ETH (its dollar value is owed back to carry) 
             plunge.work.long.credit += xag; work.long.credit += xag;
-            plunge.work.long.debit += amount; carry.credit -= amount;
-            // increments a liability (work); decrements an asset^
-            work.long.debit += amount; // debit is collat backing credit
+            plunge.work.long.debit += amount; work.long.debit += amount; // debit is collat backing credit
             debit = plunge.work.long.debit; credit = plunge.work.long.credit;
-        } else { xag -= msg.value; carry.credit -= amount;
+        } else {
             plunge.work.short.credit += xag; work.short.credit += xag; 
             plunge.work.short.debit += amount; work.short.debit += amount; 
             debit = plunge.work.short.debit; credit = plunge.work.short.credit;
