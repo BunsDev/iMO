@@ -30,26 +30,29 @@ to keep..." on [commodifying](https://twitter.com/QuidMint/status/17880417642820
 
 ### Project Overview:
 
+
+
+
 Maker & Spark account for 57% of  ETH TVL (incl. LSTs) between all lending markets.  
 There is an increasing demand for bringing sDAI to L2; QU!D focuses on Arbitrum...  
 [Derivatives](https://twitter.com/lex_node/status/1740509787690086847) derive their value from an underlying asset. Our ~~certicificate of deposit~~...   
-[capital deepening](https://www.wallstreetmojo.com/capital-deepening/) token (QD) derives its value from that of both sDAI and sFRAX...  
-It takes 1 year for minted QD tokens to mature, after this they become redeemable.
+
+[capital deepening](https://www.wallstreetmojo.com/capital-deepening/) token (QD) derives its value from stable collateral used to `mint`;  
+we don't rely exclusively on DSR (stable UniV3 positions like DAI<>USDC qualify).  
+It takes 1 year for minted QD tokens to mature, after this they become redeemable.  
+
+
+
 
 
 ### Use of funds, milestones, and goals (KPIs):
 
 
 - Arbitrum Launch: June 27th
-- User Adoption (2024-'25): 35.7M QD  
-in Q2 (same minted within Q4)  
-  54.4M sFRAX locked for '24.  
-   
-- User Adoption (2025-'26): 357M QD in    
- Q2
-(same minted within Q4)  
-  544M sDAI locked for '25.  
+- User Adoption (2024-'25): 357M in  
+QD minted for Q2 (same within Q4)  
   
+     
 - Contract Interaction: facilitate at least  
   1000 `Plunge` positions, which use a   
   wholesale strategy instead of importing  

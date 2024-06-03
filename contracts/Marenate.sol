@@ -45,7 +45,6 @@ contract Marenate is
     uint public minDeposit; 
     uint public reward;
     
-    AggregatorV3Interface public chainlink; 
     VRFCoordinatorV2Interface COORDINATOR;
     LinkTokenInterface LINK; bytes32 keyHash;
     uint64 public subscriptionId;
@@ -69,7 +68,7 @@ contract Marenate is
     
     uint constant public LAMBO = 16508; // youtu.be/sitXeGjm4Mc 
     uint constant public LOTTO = 608358 * 1e18;
-    uint constant public MIN_APR = 90000000000000000; // copy-pasted from Moulinette
+    uint constant public MIN_APR = 120000000000000000; // copy-pasted from Moulinette
     
     uint constant public FIVE_CENTS = 5 * PENNY; 
     uint constant public QUID_MINT = 41 * PENNY; 
@@ -77,8 +76,10 @@ contract Marenate is
     // together these are the 0.99% from mint()
     uint constant public PENNY = WAD / 100;
     uint constant public WAD = 1e18; 
-
-    address constant public PRICE = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419; // CANTO 0x6D882e6d7A04691FCBc5c3697E970597C68ADF39
+    
+    address constant public ETH_PRICE = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419; // CANTO 0x6D882e6d7A04691FCBc5c3697E970597C68ADF39
+    // https://data.chain.link/feeds/ethereum/mainnet/xag-usd 
+    address constant public PRICE = 0x379589227b15F1a12195D3f2d90bBc9F31f95235; 
     address constant public F8N_0 = 0x3B3ee1931Dc30C1957379FAc9aba94D1C48a5405; // can only test 
     address constant public F8N_1 = 0x0299cb33919ddA82c72864f7Ed7314a3205Fb8c4; // on mainnet :)
     address constant public QUID = 0x42cc020Ef5e9681364ABB5aba26F39626F1874A4;
@@ -87,9 +88,9 @@ contract Marenate is
     address constant public WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;     
 
     // https://www.instagram.com/p/C7Pkn1MtbUc
-    uint[38] internal feeTargets; struct Medianiser { 
+    uint[31] internal feeTargets; struct Medianiser { 
         uint apr; // most recent weighted median fee 
-        uint[38] weights; // sum weights for each fee
+        uint[31] weights; // sum weights for each fee
         uint total; // _POINTS > sum of ALL weights... 
         uint sum_w_k; // sum(weights[0..k]) sum of sums
         uint k; // approximate index of median (+/- 1)
@@ -161,7 +162,13 @@ contract Marenate is
      * Returns the latest price obtained from the Chainlink ETH:USD aggregator 
      * reference contract...https://docs.chain.link/docs/get-the-latest-price
      */
-    function getPrice() external view returns (uint price) {
+    function getPrice(bool eth) external view returns (uint price) {
+        AggregatorV3Interface chainlink; 
+        if (eth) {
+            chainlink = AggregatorV3Interface(ETH_PRICE);
+        } else {
+            chainlink = AggregatorV3Interface(PRICE);
+        }
         (, int priceAnswer,, uint timeStamp,) = chainlink.latestRoundData();
         require(timeStamp > 0 && timeStamp <= block.timestamp 
                 && priceAnswer >= 0, "MO::price");
@@ -285,8 +292,7 @@ contract Marenate is
 
             isOwner[owner] = true;
             owners.push(owner);
-        }
-        chainlink = AggregatorV3Interface(PRICE);   
+        }   
         reward = 1_000_000_000_000; // 0.000001 
         minDuration = MO.LENT(); keyHash = _hash;
         maxTotalETH = type(uint).max - 1;
@@ -299,19 +305,17 @@ contract Marenate is
         COORDINATOR.addConsumer(subscriptionId, address(this));
         subscriptionId = COORDINATOR.createSubscription(); // pubsub...
         nonfungiblePositionManager = INonfungiblePositionManager(NFPM);
-        feeTargets = [MIN_APR, 85000000000000000, 900000000000000000,
-          100000000000000000, 105000000000000000, 110000000000000000, 
-          115000000000000000, 120000000000000000, 125000000000000000, 
-          130000000000000000, 135000000000000000, 140000000000000000, 
-          145000000000000000, 150000000000000000, 155000000000000000, 
-          160000000000000000, 165000000000000000, 170000000000000000, 
-          175000000000000000, 180000000000000000, 185000000000000000, 
-          190000000000000000, 195000000000000000, 200000000000000000, 
-          205000000000000000, 210000000000000000, 215000000000000000, 
-          220000000000000000, 225000000000000000, 230000000000000000, 
-          235000000000000000, 240000000000000000, 245000000000000000, 
-          250000000000000000, 255000000000000000, 260000000000000000, 
-          265000000000000000, 270000000000000000]; uint[38] memory blank;
+        feeTargets = [MIN_APR, 125000000000000000,130000000000000000, 
+          135000000000000000, 140000000000000000, 145000000000000000, 
+          150000000000000000, 155000000000000000, 160000000000000000, 
+          165000000000000000, 170000000000000000, 175000000000000000, 
+          180000000000000000, 185000000000000000, 190000000000000000, 
+          195000000000000000, 200000000000000000, 205000000000000000,
+          210000000000000000, 215000000000000000, 220000000000000000, 
+          225000000000000000, 230000000000000000, 235000000000000000, 
+          240000000000000000, 245000000000000000, 250000000000000000, 
+          255000000000000000, 260000000000000000, 265000000000000000, 
+          270000000000000000]; uint[31] memory blank; // no more than credit card
         longMedian = Medianiser(MIN_APR, blank, 0, 0, 0);
         shortMedian = Medianiser(MIN_APR, blank, 0, 0, 0); 
     }

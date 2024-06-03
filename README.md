@@ -1,8 +1,8 @@
 
 ## !n My Opinion...interMittent Offering (!MO) 
 
- 
-A significant portion of usage across all lending markets comes from  
+The word "dollar" was originally known as a ([silver](https://www.zerohedge.com/markets/why-powerful-silver-bull-market-may-be-ahead)) "piece of eight"...   
+a significant portion of usage across all lending markets comes from  
 `carry` trades between assets and their derivatives. To understand  
 the latter, we need a basic feel for the concept's [chemical](https://mirror.xyz/quid.eth/LZ4pS8tVAAkZVSYqJWoihs19cdMhgWESsLr9dIhvL40) origins...  
 
@@ -11,7 +11,11 @@ system that is very basic, increasing the chances that it's resistant to
 all types of attacks. It's worth keeping in mind that optimising capital  
 efficiency (less over-collat) may also introduce a degree of fragility... 
 
-"Tote tools like mechanics...mechanisms," based on re-staking;   
+"Tote tools like mechanics...mechanisms," based on re-staking;  
+Unlike rehypothecation, in crypto restaking the initial owner of  
+ the stake retains control, keeping with the self-custody ethos.
+
+
 2 types of cash-settled `dues`: for synthetic `long` or `short`  
 (think of these as *Itchy and Scratchy*); `credit` and `debit`   
 are one force moving in opposite directions (a la [*CatDog*](https://x.com/QuidMint/status/1786703126470222054)),  
@@ -77,11 +81,11 @@ selected for a lottery: 777,742 QD sportsmanship
 award represented by 👕, passed back and forth  
 between `winner`s as the medium for  payouts...
 
-2x [APR](https://x.com/hexonaut/status/1789072324614050035) is a surcharge for spreading liquidations  
+2x APR is a surcharge for spreading liquidations  
 over time (pro-rated price), giving the position a  
 chance to recover as long as you keep paying the  
 
-premium (up to [3x](https://x.com/santiagoroel/status/1791114254117998865) surge price). The yield  is used   
-partially for paying APR...while profitable trades...  
-(`fold` by active management) could potentially   
-capture gains away from (passively managed QD).
+premium (up to 27%). Trades which `_unwind`  
+profitably may potentially capture gains from  
+idle QD minted at a discount (active mgmt  
+may win out versus passive management).

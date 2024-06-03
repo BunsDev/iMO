@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 interface IMarenate {
-    function getPrice() external returns (uint);
+    function getPrice(bool eth) external returns (uint);
     function getMedian(bool short) external returns (uint);
     function medianise(uint new_stake, uint new_vote, 
     uint old_stake, uint old_vote, bool short) external; 
@@ -28,7 +28,7 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
     uint constant public MO_CUT = 99 * PENNY / 10; 
     uint constant public MO_FEE = 22 * PENNY / 10; 
     uint constant public MIN_CR = WAD + 3 * MIN_APR; 
-    uint constant public MIN_APR = 80000000000000000;
+    uint constant public MIN_APR = 120000000000000000;
     Offering[16] public _MO; // one !MO per 6 months
     mapping(address => uint[16]) paid; // in stables
     struct Offering { // 8yr x 544,444,444 stables...
@@ -37,6 +37,7 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
         uint locked;
         address[] owned;
     }  uint public SEMESTER; // interMittent Offering (a.k.a !MO)
+    uint internal _ETH_PRICE; // TODO comment out when finish testing
     uint internal _PRICE; // TODO comment out when finish testing
     uint internal _POINTS; // used in weights (medianiser); call() 
     struct Pod { // used in Pools (incl. individual Plunges')...
@@ -87,12 +88,21 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
         return (_a < _b) ? _a : _b;
     }
     // TODO comment out after finish testing, and uncomment in constructor
-    function set_price(uint price) external onlyOwner { // set ETH price in USD
-        _PRICE = price;
+    function set_price(uint price, bool eth) external onlyOwner { // set ETH price in USD
+        if (eth) {
+            _ETH_PRICE = price;
+        } else {
+            _PRICE = price;
+        }
     }
      // TODO comment out after finish testing, and uncomment in constructor
-    function get_price() external view returns (uint) { // set ETH price in USD
-        return _PRICE;
+    function get_price(bool eth) external view returns (uint) { // set ETH price in USD
+        if (eth) {
+            return _ETH_PRICE;
+        }
+        else {
+            return _PRICE;
+        }
     }
    
     function _valid_token(address token) internal {
@@ -107,7 +117,7 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
     // TODO transfer fee
     function transfer(address recipient, uint256 amount) public override(ERC20) returns (bool) {
         _fetch(_msgSender(), 
-               _get_price(), false, _msgSender()
+               _get_price(false), false, _msgSender()
         );     _send(_msgSender(), recipient, amount, true); 
         return true;
     }
@@ -115,7 +125,7 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
     function transferFrom(address from, address to, uint256 value) public override(ERC20) returns (bool) {
         _spendAllowance(from, _msgSender(), value);
         _fetch(_msgSender(),  
-               _get_price(), false, _msgSender()
+               _get_price(false), false, _msgSender()
         );     _send(from, to, value, true); 
         return true;
     }
@@ -192,9 +202,10 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
         }   
     }
    
-    function _get_price() internal returns (uint) {
-        if (_PRICE != 0) { return _PRICE; } // TODO comment when done testing
-        else { return MA.getPrice(); }
+    function _get_price(bool eth) internal returns (uint) {
+        if (eth && _ETH_PRICE != 0)  { return _ETH_PRICE; } // TODO comment when done testing
+        else if (!eth && _PRICE != 0) { return _PRICE; } // TODO comment when done testing
+        else { return MA.getPrice(eth); }
     }
    
     // return Plunge after charging APR; if need be...liquidate (preventable)
@@ -361,7 +372,7 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
                    uint clutch, bool short, uint price) internal 
                    returns (Pod memory, uint, bool folded) { 
         uint in_QD = _ratio(price, _work.credit, WAD); // to $
-        require(in_QD > 0, "_unwind"); folded = true; uint in_eth;
+        require(in_QD > 0, "_unwind"); folded = true; uint in_xag;
         if (short) { // plunge into pool (caught the wind on low) 
             if (_work.debit > in_QD) { // value of credit fell
                 work.short.debit -= _work.debit; // return what
@@ -384,7 +395,7 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
                     // in on your position and [reconstruction] is my mission"
                     if (salve >= delta) { folded = false; // salvageable...
                         // decrement QD first because ETH is rising
-                        in_eth = _ratio(WAD, delta, price);
+                        in_xag = _ratio(WAD, delta, price);
                         uint most = _min(balanceOf(owner), delta);
                         if (most > 0) { delta -= most;
                             _send(owner, address(this), most, false);
@@ -392,8 +403,8 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
                         } if (delta > 0) { most = _ratio(WAD, delta, price);
                             _eth -= most; wind.debit += most; carry.debit -= most;    
                             // address(MA).call{value: most}(""); // TODO uncomment
-                        } _work.credit -= in_eth;
-                        work.short.credit -= in_eth;
+                        } _work.credit -= in_xag;
+                        work.short.credit -= in_xag;
                     } else { emit Short(owner, _work.debit);
                         carry.credit += _work.debit; 
                         if (_work.debit > IVERSON * STACK) { 
@@ -410,8 +421,8 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
                 //         work.long.debit += _work.debit;
                 // } 
                 else { // partial return to carry
-                    _work.debit -= clutch; in_eth = _ratio(WAD, clutch, price);
-                    _work.credit -= in_eth; work.short.credit -= in_eth; 
+                    _work.debit -= clutch; in_xag = _ratio(WAD, clutch, price);
+                    _work.credit -= in_xag; work.short.credit -= in_xag; 
                     work.short.debit -= clutch; carry.credit += clutch;
                 } 
             }   
@@ -431,8 +442,8 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
                     if (delta > salve) { delta = _work.debit - in_QD; } 
                     if (salve >= delta) { folded = false; // salvageable
                         // decrement ETH first because it's falling
-                        in_eth = _ratio(WAD, delta, price); 
-                        uint most = _min(_eth, in_eth);
+                        in_xag = _ratio(WAD, delta, price); 
+                        uint most = _min(_eth, in_xag);
                         if (most > 0) { carry.debit -= most; // remove ETH from carry
                             _eth -= most; wind.debit += most; // sell ETH, so 
                             // original ETH is not callable or puttable by the Plunge
@@ -443,8 +454,8 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
                             // "deposit(uint256,address)", most, address(this));
                             // (bool success,) = mevETH.call{value: most}(payload); 
                         } if (delta > 0) { _send(owner, address(this), delta, false); 
-                            in_eth = _ratio(WAD, delta, price); _work.credit += in_eth;
-                            work.long.credit += in_eth;
+                            in_xag = _ratio(WAD, delta, price); _work.credit += in_xag;
+                            work.long.credit += in_xag;
                         }
                     } // "Don't get no better than this, you catch my drift?"
                     else { emit Long(owner, _work.debit);
@@ -463,8 +474,8 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
                 //     work.short.debit += _work.debit;
                 // } 
                 else { // partial return to carry
-                    _work.debit -= clutch; in_eth = _ratio(WAD, clutch, price);
-                    _work.credit -= in_eth; work.long.credit -= in_eth; 
+                    _work.debit -= clutch; in_xag = _ratio(WAD, clutch, price);
+                    _work.credit -= in_xag; work.long.credit -= in_xag; 
                     work.long.debit -= clutch; carry.credit += clutch;
                 }  
             } 
@@ -477,7 +488,7 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
     // mint...flip...vote...put...owe...fold...call
     // "lookin' too hot...simmer down, or soon get" 
     function clocked(address[] memory plunges) external returns (uint fee){ 
-        uint price = _get_price();  
+        uint price = _get_price(false);  
         fee = balanceOf(_msgSender());
         // crystallisation is netting 
         // a position wthout closing 
@@ -490,14 +501,14 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
         MA = IMarenate(_addr); renounceOwnership();
     } 
 
-    function flip() external { uint price = _get_price(); // or engine
+    function flip() external { uint price = _get_price(false); 
         Plunge memory plunge = _fetch(_msgSender(), price, true, _msgSender());
         plunge.dues.clutch = !plunge.dues.clutch;
         Plunges[_msgSender()] = plunge;
     }
 
     function fold(bool short) external { 
-        Pod memory _work; uint price = _get_price();
+        Pod memory _work; uint price = _get_price(false);
         Plunge memory plunge = _fetch(_msgSender(), price,
                                       true, _msgSender());
         if (short) { 
@@ -519,7 +530,7 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
             (MIN_APR * 3 - delta * 6) && 
             apr % delta == 0, "MO::vote");
         uint old_vote; // a vote of confidence gives...credit 
-        uint price = _get_price(); Plunge memory plunge = _fetch(
+        uint price = _get_price(false); Plunge memory plunge = _fetch(
             _msgSender(), price, true, _msgSender()
         );  if (short) {
                 old_vote = plunge.dues.short.credit;
@@ -532,52 +543,64 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
         Plunges[_msgSender()] = plunge;
     }
 
-    function put(address beneficiary, uint amount, bool _eth, bool short)
-        external payable { uint price = _get_price(); uint most;
-        Plunge memory plunge = _fetch(beneficiary, price,
+    function put(address beneficiary, uint amount, bool eth)
+        external payable { uint most; uint delta;
+        uint xag_price = _get_price(false); 
+        uint eth_price = _get_price(true);
+        Plunge memory plunge = _fetch(beneficiary, xag_price,
                                       false, _msgSender());
-        carry.debit += msg.value;
-        if (!_eth) { _send(_msgSender(), address(this), amount, false);
-            carry.credit -= amount; uint eth = _ratio(WAD, amount, price);
-            if (!short) { work.long.credit += eth;
-                plunge.work.long.credit += eth;
-            } else { 
-                console.log("BRAAAAAAAAA");
-                most = _min(eth, plunge.work.short.credit);
-                plunge.work.short.credit -= eth;
-                work.short.credit -= eth;
-            }  // do nothing with remainder (amount - most)
-        }   else { 
-            if (short && plunge.work.short.credit == 0) { 
-                most = _min(Plunges[_msgSender()].eth, amount);
-                Plunges[_msgSender()].eth -= most;
-                plunge.eth += most + msg.value;
-                // TODO charge 9% upfront 
-            }   else { // sell ETH (throw caution to the wind)
-                    if (plunge.work.short.credit > 0) { 
-                        most = _min(amount, plunge.work.short.credit);
-                        require(msg.value + plunge.eth >= most, "MO::put: short");
-                        plunge.work.short.credit -= most; work.short.credit -= most;
-                        uint delta;
-                        if (most > msg.value) { 
-                            delta = most - msg.value;
-                            carry.debit -= delta;
-                            plunge.eth -= delta; 
-                        } 
-                        else { delta = msg.value - most;
-                            plunge.eth += delta;
-                            carry.debit += delta; 
-                        }
-                    } else if (plunge.work.long.credit > 0) { 
-                        most = _min(msg.value + plunge.eth, amount);
-                        if (most > msg.value) { 
-                            uint delta = most - msg.value;
-                            carry.debit -= delta;
-                            plunge.eth -= delta; 
-                        }   plunge.work.long.credit += most;
-                    }   // address(MA).call{value: most}(""); // TODO uncomment
+        if (!eth) { 
+            uint in_xag = _ratio(WAD, amount, xag_price); // units of Ag
+            if (plunge.work.long.credit > 0) { 
+                work.long.credit += in_xag;
+                plunge.work.long.credit += in_xag;
+            } else if (plunge.work.short.credit > 0) { 
+                most = _min(in_xag, plunge.work.short.credit);
+                plunge.work.short.credit -= most;
+                work.short.credit -= most;
+                amount = _ratio(most, in_xag, WAD);
+            }  
+            carry.credit -= amount; // amount is in units of QD
+            _send(_msgSender(), address(this), amount, false);
+        }   
+        else if (eth) { // amount is in units of ETH
+            most = _min(Plunges[_msgSender()].eth, amount);
+            uint attached = msg.value;
+            if (amount > most) {
+                require(attached >= amount - most, "MO::put: insufficient funds");
+                // address(MA).call{value: attached}(""); // TODO uncomment
+            }
+            uint eth_in_usd = _ratio(attached, eth_price, WAD);
+            // sell ETH (throw caution to the wind) to prop up work 
+            if (plunge.work.short.credit > 0) {
+                uint xag_in_usd = _ratio(plunge.work.short.credit, xag_price, WAD);
+                if (xag_in_usd > eth_in_usd) {
+                    delta = xag_in_usd - eth_in_usd; // value of credit - msg.value
+                    eth_in_usd = _ratio(most, eth_price, WAD);
+                    attached = _min(eth_in_usd, delta);
+                    most = _ratio(WAD, attached, xag_price);
+                    plunge.work.short.credit -= most; work.short.credit -= most;
+                    Plunges[_msgSender()].eth -= _ratio(WAD, attached, eth_price);
                 }
-        }   Plunges[beneficiary] = plunge;
+                else { // msg.value worth more than credit
+                    work.short.credit -= plunge.work.short.credit;
+                    plunge.work.short.credit = 0;
+                    delta = eth_in_usd - xag_in_usd;
+                    attached = _ratio(WAD, delta, eth_price); // this remainder gets deposited
+                    plunge.eth += attached;
+                    carry.debit -= msg.value - attached; // amount used to clear work credit
+                }                    
+            } 
+            else if (plunge.work.long.credit > 0) { 
+                // address(MA).call{value: most}(""); // TODO uncomment
+                Plunges[_msgSender()].eth -= most;
+                carry.debit -= most;
+                eth_in_usd += _ratio(most, eth_price, WAD);
+                delta = _ratio(WAD, eth_in_usd, xag_price);
+                work.long.credit += delta; plunge.work.short.credit += delta;
+            }   
+        }
+        Plunges[beneficiary] = plunge;
     }
 
     // https://www.youtube.com/watch?v=C5ZDAEqQkvA
@@ -587,7 +610,7 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
     function call(uint amt, bool qd/*, address token*/) 
         external { uint most; // _valid_token(token); // TODO uncomment
         Plunge memory plunge = _fetch(_msgSender(), 
-                  _get_price(), true, _msgSender());
+             _get_price(false), true, _msgSender());
         if (!qd) { most = _min(plunge.eth, amt);
             plunge.eth -= most; carry.debit -= most;
             payable(_msgSender()).transfer(most); 
@@ -618,6 +641,7 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
     } 
 
     // TODO bool qd, this will attempt to draw _max from _balances before...
+    //
     function mint(uint amount, address beneficiary/*, address token*/) external {
         address token = mock;
         // _valid_token(token); require(amount >= C_NOTE / 2, "MO::mint: 50 min"); // TODO uncomment
@@ -669,7 +693,8 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
         uint ratio = _MO[SEMESTER].locked * 100 / _MO[SEMESTER].minted; // % backing
         require(block.timestamp >= _MO[0].start + LENT, "MO::owe: early"); 
         require(ratio > IVERSON, "MO::owe: under-backed");
-        uint price = _get_price(); uint debit; uint credit; 
+        uint debit; uint credit; 
+        uint price = _get_price(false);
         Plunge memory plunge = _fetch(_msgSender(), price, 
                                       false, _msgSender()); 
         if (short) { 
@@ -683,23 +708,24 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
             plunge.dues.long.debit = block.timestamp;
         }
         uint _carry = balanceOf(_msgSender()) + _ratio(price,
-        plunge.eth, WAD); uint eth = _ratio(WAD, amount, price);
-        console.log("ETH before.... %s", eth);
+        plunge.eth, WAD); uint xag = _ratio(WAD, amount, price);
+        console.log("ETH before.... %s", xag);
         uint max = plunge.dues.clutch ? 2 : 1; // used in require
         max *= MIN_APR; // MA.getMedian(short); // TODO uncomment
         if (msg.value > 0) { wind.debit += msg.value; // sell ETH 
             // address(MA).call{value: msg.value}(""); // TODO uncomment
+            xag += msg.value;
         } 
-        if (!short) { eth += msg.value; // TODO dynamic, get msg.value in units of what's levered
+        if (!short) {  // TODO dynamic, get msg.value in units of what's levered
             // we are crediting the position's long with virtual credit 
             // in units of ETH (its dollar value is owed back to carry) 
-            plunge.work.long.credit += eth; work.long.credit += eth;
+            plunge.work.long.credit += xag; work.long.credit += xag;
             plunge.work.long.debit += amount; carry.credit -= amount;
             // increments a liability (work); decrements an asset^
             work.long.debit += amount; // debit is collat backing credit
             debit = plunge.work.long.debit; credit = plunge.work.long.credit;
-        } else { eth -= msg.value; carry.credit -= amount;
-            plunge.work.short.credit += eth; work.short.credit += eth; 
+        } else { xag -= msg.value; carry.credit -= amount;
+            plunge.work.short.credit += xag; work.short.credit += xag; 
             plunge.work.short.debit += amount; work.short.debit += amount; 
             debit = plunge.work.short.debit; credit = plunge.work.short.credit;
         }   
