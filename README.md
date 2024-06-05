@@ -57,19 +57,10 @@ supply of QD, there will always be at least 2.7M available on any
 given week while the supply of 271M is locked for 54 weeks 'til  
 `call` makes it possible for that amount to be redeemed out... 
 
-
 `Plunge`s pay more if they want to make money more often,  
 borrowing at 85% LTV with shorts *and* liquidation protection.  
 Expensive is only relative to what one earns at the end of it:  
 the benchmark for best-case scenario is Jim Simons' 66%.
-
-I'm just a line cook...as in credit line, cook as in books.  
-Any ETH deposited is insured..."I pay the incidentals,"  
-so when withdrawing, the current price is compared  
-to what it was at time of deposit (over the course of   
-multiple deposits, overall "entry price" is averaged).   
-
-
 
 ### It's the  de*ferral* reserve (not...federal)...  
 "You never count your money...while you're sittin'...  
