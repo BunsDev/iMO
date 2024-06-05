@@ -13,9 +13,9 @@ interface IMarenate {
 }
 
 contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
-    address constant public SFRAX = 0xA663B02CF0a4b149d2aD41910CB81e23e1c41c32; 
+    address constant public SFRAX = 0xA663B02CF0a4b149d2aD41910CB81e23e1c41c32; // TODO this is FRAX not sFRAX
     address constant public SDAI = 0x83F20F44975D03b1b09e64809B757c47f942BEeA;
-    address constant public USDE = 0x4c9EDD5852cd905f086C759E8383e09bff1E68B3;
+    address constant public USDE = 0x4c9EDD5852cd905f086C759E8383e09bff1E68B3; // TODO this is USDe not sUSDe
     address constant public QUID = 0x42cc020Ef5e9681364ABB5aba26F39626F1874A4;
     mapping(address => Pod) public _maturing; uint constant public WAD = 1e18; 
     uint constant public MAX_PER_DAY = 7_777_777 * WAD; // supply cap
@@ -656,7 +656,7 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
     } 
 
     // TODO bool qd, this will attempt to draw _max from _balances before...
-    //
+    
     function mint(uint amount, address beneficiary/*, address token*/) external {
         address token = mock;
         // _valid_token(token); require(amount >= C_NOTE / 2, "MO::mint: 50 min"); // TODO uncomment
