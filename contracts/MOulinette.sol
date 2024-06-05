@@ -15,6 +15,7 @@ interface IMarenate {
 contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
     address constant public SFRAX = 0xA663B02CF0a4b149d2aD41910CB81e23e1c41c32; 
     address constant public SDAI = 0x83F20F44975D03b1b09e64809B757c47f942BEeA;
+    address constant public USDE = 0x4c9EDD5852cd905f086C759E8383e09bff1E68B3;
     address constant public QUID = 0x42cc020Ef5e9681364ABB5aba26F39626F1874A4;
     mapping(address => Pod) public _maturing; uint constant public WAD = 1e18; 
     uint constant public MAX_PER_DAY = 7_777_777 * WAD; // supply cap
@@ -106,8 +107,8 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
     }
    
     function _valid_token(address token) internal {
-        require(token == SFRAX || token == SDAI, 
-        || token == USDE "MO::bad address"); // mint 
+        require(token == SFRAX || token == SDAI 
+        || token == USDE, "MO::bad address"); // mint 
         // or call may take as input or output these
     }
 
@@ -710,7 +711,7 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
         uint debit; uint credit; 
         uint xag_price = _get_price(false);
         uint eth_price = _get_price(true);
-        Plunge memory plunge = _fetch(_msgSender(), price, 
+        Plunge memory plunge = _fetch(_msgSender(), xag_price, 
                                       false, _msgSender()); 
         if (short) { 
             require(plunge.work.long.debit == 0 
@@ -722,8 +723,8 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
             "MO::owe: already short");
             plunge.dues.long.debit = block.timestamp;
         }
-        uint _carry = balanceOf(_msgSender()) + _ratio(price,
-        plunge.eth, WAD); uint xag = _ratio(WAD, amount, price);
+        uint _carry = balanceOf(_msgSender()) + _ratio(eth_price,
+        plunge.eth, WAD); uint xag = _ratio(WAD, amount, xag_price);
         console.log("ETH before.... %s", xag);
         uint max = plunge.dues.clutch ? 2 : 1; // used in require
         max *= MIN_APR; // MA.getMedian(short); // TODO uncomment
@@ -731,7 +732,7 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
             // address(MA).call{value: msg.value}(""); // TODO uncomment
             xag += _ratio(WAD, _ratio(eth_price, msg.value, WAD), xag_price);
         } 
-        carry.credit -= amount
+        carry.credit -= amount;
         if (!short) { 
             // we are crediting the position's long with virtual credit 
             // in units of ETH (its dollar value is owed back to carry) 
@@ -743,7 +744,7 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
             plunge.work.short.debit += amount; work.short.debit += amount; 
             debit = plunge.work.short.debit; credit = plunge.work.short.credit;
         }   
-        require(_ratio(price, credit, debit) >= MIN_CR && 
+        require(_ratio(xag_price, credit, debit) >= MIN_CR && 
             (carry.credit / 5 > debit) && _carry > (debit * max / WAD), 
             "MO::owe: over-leveraged"
         ); Plunges[_msgSender()] = plunge; // write to storage last 

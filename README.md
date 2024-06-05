@@ -26,7 +26,7 @@ in the future they'll be redeemable for their underlying property.
 
 I dread bread redemption...the futures are a projection (net present  
 value of force times distance): `work` (leverage is inter-subjective,  
- a.k.a....dependant on the circumstances). Present's value enables  
+ a.k.a...dependant on the circumstances). Present's value enables  
 
 a certain kind of future, which depends (in turn) on a certain state:   
 the present 🎁 "so now...instead of [pledge](https://www.investopedia.com/terms/p/pldgedasset.asp)...we," `Plunge` to `mint`;  
