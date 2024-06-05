@@ -94,7 +94,7 @@ contract Marenate is
         uint total; // _POINTS > sum of ALL weights... 
         uint sum_w_k; // sum(weights[0..k]) sum of sums
         uint k; // approximate index of median (+/- 1)
-    } Medianiser public longMedian; // between 8-21%
+    } Medianiser public longMedian; // between 12-27%
     Medianiser public shortMedian; // 2 distinct fees
 
     struct Transfer {

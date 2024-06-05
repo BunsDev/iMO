@@ -1,58 +1,61 @@
 
 ## !n My Opinion...interMittent Offering (!MO) 
 
-The word "dollar" was originally known as a ([silver](https://www.zerohedge.com/markets/why-powerful-silver-bull-market-may-be-ahead)) "piece of eight"...   
-a significant portion of usage across all lending markets comes from  
-`carry` trades between assets and their derivatives. To understand  
-the latter, we need a basic feel for the concept's [chemical](https://mirror.xyz/quid.eth/LZ4pS8tVAAkZVSYqJWoihs19cdMhgWESsLr9dIhvL40) origins...  
+The word "dollar" originally referred to a ([silver](https://www.zerohedge.com/markets/why-powerful-silver-bull-market-may-be-ahead)) "piece of eight," today  
+a significant portion of $ usage across all lending markets comes from  
+`carry` trades between assets and their derivatives. We've reduced all  
 
- We've heavily reduced all the variables involved, so you end up with a  
-system that is very basic, increasing the chances that it's resistant to  
-all types of attacks. It's worth keeping in mind that optimising capital  
-efficiency (less over-collat) may also introduce a degree of fragility... 
+the variables involved, so you end up with a system that is very basic,  
+increasing the chances that it's resistant to all types of attacks. Worth  
+keeping in mind that optimising capital efficiency may also introduce 2  
 
-"Tote tools like mechanics...mechanisms," based on re-staking;  
-Unlike rehypothecation, in crypto restaking the initial owner of  
- the stake retains control, keeping with the self-custody ethos.
+types of cash-settled `dues`: `long` or `short` (*Itchy and Scratchy*  
+as synthetic `credit` and `debit` in [*CatDog*](https://x.com/QuidMint/status/1786703126470222054)), "you're burning up,  
+I'm cooling down...you're [blind](https://www.investopedia.com/terms/b/blind-entry.asp)...I [see](https://docs.google.com/document/d/1fD1_rP8GonSUHyRXENDudlzBkkTcAsN7L9IiTrxEuAY/edit)..." reductions in fixed costs  
 
-
-2 types of cash-settled `dues`: for synthetic `long` or `short`  
-(think of these as *Itchy and Scratchy*); `credit` and `debit`   
-are one force moving in opposite directions (a la [*CatDog*](https://x.com/QuidMint/status/1786703126470222054)),  
-"you're burnin' up, I'm coolin' down; you're [blind](https://www.investopedia.com/terms/b/blind-entry.asp), I [see](https://docs.google.com/document/d/1fD1_rP8GonSUHyRXENDudlzBkkTcAsN7L9IiTrxEuAY/edit)..."  
-
-"I do this for my [[*P*olitical](https://manifoldfinance.github.io/primitives/2022/12/17/Applied-Politics-for-Crypto.html) *A*ction *C*ommittee]: walked in the  
+accumulate, as variable costs  get amplified by the  volume...   
+I turn it up for my [*P*olitical](https://manifoldfinance.github.io/primitives/2022/12/17/Applied-Politics-for-Crypto.html) *A*ction *C*ommittee, "walked in the  
 kitchen; found a [`Pod`]  to [`Piscine`]...[Nobody's](https://x.com/QuidMint/status/1788581681693106680) satisfied   
 until they mama,"  this [transmission](https://en.wikipedia.org/wiki/Intercarrier_method)...coming to [mix](https://youtu.be/ndQM3kVb06I) under-   
 collat with over-collat..."I got a [cup](https://www.youtube.com/clip/UgkxD0PZbIFBnRlmN6JwqGfKBOTw_OR7j1u4) of your [time](https://www.youtube.com/clip/UgkxIOebF-ScgdWWR7Flp__iDVeG4L22y-PK)..." value of 
 
-treasuries, LSDs, LRTs, EIGEN deposits, sUSDe...all share  
-the property that at some point in the future they will be  
-redeemable for their underlying property. The future is a  
-projection (the net present value of force times distance): 
+accounts payable (`call`able):
+sUSDe...sDAI...sFRAX...all sharing  
+the property of QD (account receivable, or credit extended) that  
+in the future they'll be redeemable for their underlying property.  
 
-`work` (leverage is always inter-subjective, profitable or not  
-depending on the circumstances). The present has value as  
-it enables a certain kind of future, which depends (in turn) on  
-a certain state of the present..."so now...instead of [pledge](https://www.investopedia.com/terms/p/pldgedasset.asp)...we,"  
+I dread bread redemption...the future is a projection (net present  
+value of force times distance): `work` (leverage is inter-subjective,  
+ a.k.a....dependant on the circumstances). Present's value enables  
 
-`Plunge` to `mint`...`flip`...`vote`...`put`...`owe`...`fold`...`call`;  
-"lookin' too hot? simmer down, or soon you'll get," `clocked`...  
-though liquidations are [optional](https://www.youtube.com/watch?v=1O25uUy90hU) (only for the less risk-averse)...  
+a certain kind of future, which depends (in turn) on a certain state:   
+the present 🎁 "so now...instead of [pledge](https://www.investopedia.com/terms/p/pldgedasset.asp)...we," `Plunge` to `mint`;  
 
-QuidMint Foundation sees over (not over-sieze) [swappable](https://twitter.com/guil_lambert/status/1772423853316219051) options  
-in this crypto school of trade-offs, sweat equity, [compensation](https://www.tabers.com/tabersonline/view/Tabers-Dictionary/730522/all/compensation), and  
-"yesterday's price is not today's price," in `mint`. 30% of TVL pays  
+`vote` when you `put`...
+`fold` when you`owe`...
+`call` to exit, "or  
+ soon you'll get
+ `clocked`...to "simmer down [if] lookin' too hot,"  
+though liquidations are [optional](https://www.youtube.com/watch?v=1O25uUy90hU) (to the less risk-averse)...seeing  
+over (not over-siezing) QuidMint Foundation [swappable](https://twitter.com/guil_lambert/status/1772423853316219051) options.
 
-APR out-of-pocket (adds ETH to `wind.debit`); according to [Excel](https://docs.google.com/spreadsheets/d/1uBG8jJGNCgQArKm4FlcmNuXb1cspG6-PRcDoFaRvQws/),  
-"in the world of  dollars, [QD] ain't nothin' but a quarter 🪙," i.e. the  
-'tokenomics' need to plug a 25% hole in TVL to be...made whole...
+School trade-offs, sweat equity, [compensation](https://www.tabers.com/tabersonline/view/Tabers-Dictionary/730522/all/compensation)...grace under pressure?   
+"It's not a performance, it's a ~~ritual~~" perp form, enhanced..."yesterday's  
+price is not today's price." 30% of [PCV]() pays APR out-of-pocket (adds  
+
+ETH to `wind.debit`); according to [Excel](https://docs.google.com/spreadsheets/d/1uBG8jJGNCgQArKm4FlcmNuXb1cspG6-PRcDoFaRvQws/), "in the world of  dollars,  
+[QD] ain't nothin' but a quarter 🪙," for plugging a 25% hole in SCR.
  
 QD is only minted for 46 days (of Lent), twice a year, for 8 years;  
-.54% of `raised` is split between [claims](https://www.mevauction.com/Relay/captive-insurance/) and an "ecosystem fund"  
-for the most [unique](https://www.linkedin.com/company/spirelabs) BORGs (formed with [MetaLex](https://twitter.com/lex_node/status/1760701615424630848)) using QD and/or  
-leveraging the best app-chain [framework](https://x.com/Spire_Labs/status/1792924761850265633) in their business model   
-(*pro quo* 5.4% of their future receivables goes back into QD TVL). 
+.22% QD is the cost to start-up, so after deployment, the amount  
+is paid to one randomly `clocked` borrower per `SEMESTER`, as in  
+[Maren](https://youtube.com/clip/UgkxqTN7HrgUTmngIZrZqfEFUQaI7GM3ZuTo)ate.sol got schooled like [been there]((https://mirror.xyz/quid.eth/LZ4pS8tVAAkZVSYqJWoihs19cdMhgWESsLr9dIhvL40)), done that, bought the  
+
+T-shirt, and .54% of the `raised` was paid to liquidity providers on  
+UniswapV3. This means to support entering and exiting from 357M  
+supply of QD, there will always be at least 2.7M available on any  
+given week while the supply of 271M is locked for 54 weeks 'til  
+`call` makes it possible for that amount to be redeemed out... 
 
 
 `Plunge`s pay more if they want to make money more often,  
@@ -60,20 +63,22 @@ borrowing at 85% LTV with shorts *and* liquidation protection.
 Expensive is only relative to what one earns at the end of it:  
 the benchmark for best-case scenario is Jim Simons' 66%.
 
+I'm just a line cook...as in credit line, cook as in books.  
 Any ETH deposited is insured..."I pay the incidentals,"  
 so when withdrawing, the current price is compared  
 to what it was at time of deposit (over the course of   
 multiple deposits, overall "entry price" is averaged).   
-There is an upfront cost and a continuous premium. 
+
+
 
 ### It's the  de*ferral* reserve (not...federal)...  
 "You never count your money...while you're sittin'...  
 at the table...there'll be time enough for countin'...  
 when the dealin's done:" we can't know if so-called  
-"bad debt" actually happens...in our best interests  
-(e.g. parable of the Chinese farmer, a la John 13:7).   
+"bad [debt](https://x.com/QuidMint/status/1788634658931908915)" actually happens...in our best interests  
+(e.g. parable of the Chinese farmer, a la John 13:7),   
 
-Optimised for gas due to not compounding P&L  
+optimised for gas due to not compounding P&L  
 constantly, spending gas instead to keep voted  
 medians up to date. Liquidations over $760k are
 

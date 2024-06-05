@@ -106,7 +106,9 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
     }
    
     function _valid_token(address token) internal {
-        require(token == SFRAX || token == SDAI, "MO::bad address");
+        require(token == SFRAX || token == SDAI, 
+        || token == USDE "MO::bad address"); // mint 
+        // or call may take as input or output these
     }
 
     /** Quasi-ERC404 functionality (ERC 4A4 :)
@@ -289,9 +291,12 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
                 ((block.timestamp - plunge.last) / 1 hours) 
                 * balanceOf(addr) / WAD
             ); 
+            
+
             // carry.credit; // is subtracted from 
             // rebalance fee targets (governance)
             if (plunge.dues.long.credit != 0) { 
+
                 // MA.medianise(plunge.dues.points, 
                 //     plunge.dues.long.credit, old_points, 
                 //     plunge.dues.long.credit, false
@@ -621,6 +626,13 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
             for (uint i = 0; i < SEMESTER; i++) {
                 debt_minted += _MO[SEMESTER].minted;
             }   
+            // the product of time and 
+
+            // stake = collat x total stakes / total collat
+
+            // verify that stake / total stakes has same ratio
+            // as this collat / total collat 
+
             uint total_debt = wind.credit - super.balanceOf(address(this));
             // the contract's balance of QD is not part of circulating supply, so it can be burned 
             // at any time against the total outstanding debt, or used for liquidation protection
@@ -628,10 +640,12 @@ contract Moulinette is ERC20, Ownable { IMarenate MA; // ""
             uint debt_surplus = total_debt > debt_minted ? total_debt - debt_minted : 0;
             uint share = plunge.dues.points * debt_surplus / _POINTS;
             uint paying = most - (debt_surplus - share); // dilution
+
             // so that plunges that have been around since
             // the beginning don't take the same proportion
             // as recently joined plegdes, which may other-
             // wise have the same stake-based equity in wind
+
             carry.credit -= paying;
             require(carry.credit >= work.long.debit +
                     work.short.debit, "MO::call");
