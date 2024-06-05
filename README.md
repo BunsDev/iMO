@@ -1,5 +1,5 @@
 
-## !n My Opinion...interMittent Offering (!MO) 
+## !n My...Opinion...inter...Mittent...Offering (!MO) 
 
 The word "dollar" originally referred to a ([silver](https://www.zerohedge.com/markets/why-powerful-silver-bull-market-may-be-ahead)) "piece of eight," today  
 a significant portion of $ usage across all lending markets comes from  
@@ -17,7 +17,7 @@ accumulate, as variable costs  get amplified by the  volume...
 I turn it up for my [*P*olitical](https://manifoldfinance.github.io/primitives/2022/12/17/Applied-Politics-for-Crypto.html) *A*ction *C*ommittee, "walked in the  
 kitchen; found a [`Pod`]  to [`Piscine`]...[Nobody's](https://x.com/QuidMint/status/1788581681693106680) satisfied   
 until they mama,"  this [transmission](https://en.wikipedia.org/wiki/Intercarrier_method)...coming to [mix](https://youtu.be/ndQM3kVb06I) under-   
-collat with over-collat..."I got a [cup](https://www.youtube.com/clip/UgkxD0PZbIFBnRlmN6JwqGfKBOTw_OR7j1u4) of your [time](https://www.youtube.com/clip/UgkxIOebF-ScgdWWR7Flp__iDVeG4L22y-PK)..." value of 
+collat with over-collat...I've got a [cup](https://www.youtube.com/clip/UgkxD0PZbIFBnRlmN6JwqGfKBOTw_OR7j1u4) of your [time](https://www.youtube.com/clip/UgkxIOebF-ScgdWWR7Flp__iDVeG4L22y-PK) value of 
 
 accounts payable (`call`able):
 sUSDe...sDAI...sFRAX...all sharing  
