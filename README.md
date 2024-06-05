@@ -24,7 +24,7 @@ sUSDe...sDAI...sFRAX...all sharing
 the property of QD (account receivable, or credit extended) that  
 in the future they'll be redeemable for their underlying property.  
 
-I dread bread redemption...the future is a projection (net present  
+I dread bread redemption...the futures are a projection (net present  
 value of force times distance): `work` (leverage is inter-subjective,  
  a.k.a....dependant on the circumstances). Present's value enables  
 
