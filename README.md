@@ -57,7 +57,7 @@ supply of QD, there will always be at least 2.7M available on any
 given week while the supply of 271M is locked for 54 weeks 'til  
 `call` makes it possible for that amount to be redeemed out... 
 
-`Plunge`s pay more if they want to make money more often,  
+`Plunge`s pay more if they want to lose money less often, by   
 borrowing at 85% LTV with shorts *and* liquidation protection.  
 Expensive is only relative to what one earns at the end of it:  
 the benchmark for best-case scenario is Jim Simons' 66%.

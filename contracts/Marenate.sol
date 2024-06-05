@@ -79,7 +79,8 @@ contract Marenate is
     
     address constant public ETH_PRICE = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419; // CANTO 0x6D882e6d7A04691FCBc5c3697E970597C68ADF39
     // https://data.chain.link/feeds/ethereum/mainnet/xag-usd 
-    address constant public PRICE = 0x379589227b15F1a12195D3f2d90bBc9F31f95235; 
+    address constant public AG_PRICE = 0x379589227b15F1a12195D3f2d90bBc9F31f95235; 
+    address constant public AU_PRICE = 0x214eD9Da11D2fbe465a6fc601a91E62EbEc1a0D6;
     address constant public F8N_0 = 0x3B3ee1931Dc30C1957379FAc9aba94D1C48a5405; // can only test 
     address constant public F8N_1 = 0x0299cb33919ddA82c72864f7Ed7314a3205Fb8c4; // on mainnet :)
     address constant public QUID = 0x42cc020Ef5e9681364ABB5aba26F39626F1874A4;
@@ -167,7 +168,7 @@ contract Marenate is
         if (eth) {
             chainlink = AggregatorV3Interface(ETH_PRICE);
         } else {
-            chainlink = AggregatorV3Interface(PRICE);
+            chainlink = AggregatorV3Interface(AG_PRICE);
         }
         (, int priceAnswer,, uint timeStamp,) = chainlink.latestRoundData();
         require(timeStamp > 0 && timeStamp <= block.timestamp 
