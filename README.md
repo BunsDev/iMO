@@ -36,12 +36,12 @@ the present 🎁 "so now...instead of [pledge](https://www.investopedia.com/term
 `call` to exit, "or  
  soon you'll get
  `clocked`...to "simmer down [if] lookin' too hot,"  
-though liquidations are [optional](https://www.youtube.com/watch?v=1O25uUy90hU) (to the less risk-averse)...seeing  
+though liquidations are optional (to the less risk-averse)...seeing  
 over (not over-siezing) QuidMint Foundation [swappable](https://twitter.com/guil_lambert/status/1772423853316219051) options.
 
-School trade-offs, sweat equity, [compensation](https://www.tabers.com/tabersonline/view/Tabers-Dictionary/730522/all/compensation)...grace under pressure?   
+School trade-offs, sweat equity, [compensation](https://www.tabers.com/tabersonline/view/Tabers-Dictionary/730522/all/compensation)...[grace]((https://www.youtube.com/watch?v=1O25uUy90hU)) under pressure?   
 "It's not a performance, it's a ~~ritual~~" perp form, enhanced..."yesterday's  
-price is not today's price." 30% of [PCV]() pays APR out-of-pocket (adds  
+price is not today's price." 30% of [PCV](https://gist.github.com/0xngmi/c92ce3fce377a0e72c1e90052db98bf1?permalink_comment_id=5071272#gistcomment-5071272) pays APR out-of-pocket (adds  
 
 ETH to `wind.debit`); according to [Excel](https://docs.google.com/spreadsheets/d/1uBG8jJGNCgQArKm4FlcmNuXb1cspG6-PRcDoFaRvQws/), "in the world of  dollars,  
 [QD] ain't nothin' but a quarter 🪙," for plugging a 25% hole in SCR.
